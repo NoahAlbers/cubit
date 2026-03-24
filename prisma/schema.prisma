@@ -103,19 +103,19 @@ enum AccessType {
 // ─── Models ──────────────────────────────────────────────────────────────────
 
 model Role {
-  id          String   @id @default(uuid())
-  name        String   @unique
+  id          String           @id @default(uuid())
+  name        String           @unique
   description String?
-  isSystem    Boolean  @default(false)
+  isSystem    Boolean          @default(false)
   permissions RolePermission[]
   members     Member[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 }
 
 model Permission {
-  id          String   @id @default(uuid())
-  key         String   @unique
+  id          String           @id @default(uuid())
+  key         String           @unique
   category    String
   name        String
   description String?
@@ -215,11 +215,11 @@ model MemberPlan {
 }
 
 model Key {
-  id              String    @id @default(uuid())
-  serialNumber    String    @unique
+  id              String      @id @default(uuid())
+  serialNumber    String      @unique
   memberId        String
-  member          Member    @relation(fields: [memberId], references: [id])
-  status          KeyStatus @default(ACTIVE)
+  member          Member      @relation(fields: [memberId], references: [id])
+  status          KeyStatus   @default(ACTIVE)
   type            String?
   assignedDate    DateTime?
   deactivatedDate DateTime?
@@ -281,10 +281,10 @@ model NotificationPreference {
   member           Member           @relation(fields: [memberId], references: [id])
   notificationType NotificationType
   enabled          Boolean          @default(true)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   @@unique([memberId, notificationType])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model Equipment {
@@ -318,10 +318,10 @@ model EquipmentCertification {
   certifiedBy    Member?   @relation("Certifier", fields: [certifiedById], references: [id])
   expirationDate DateTime?
   notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@unique([memberId, equipmentId])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model MaintenanceLog {
@@ -340,7 +340,7 @@ model MaintenanceLog {
 }
 
 model WaiverTemplate {
-  id                 String @id @default(uuid())
+  id                 String  @id @default(uuid())
   name               String
   description        String?
   isRequired         Boolean @default(false)
@@ -365,10 +365,10 @@ model MemberWaiver {
   docusealSubmissionId String?
 
   expirationDate DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@unique([memberId, waiverId])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model SystemSetting {
