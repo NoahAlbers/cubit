@@ -11,3 +11,408 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum MemberStatus {
+  PROSPECTIVE
+  ACTIVE
+  HOLD
+  PAST_DUE
+  SUSPENDED
+  CANCELED
+  ALUMNI
+}
+
+enum MembershipType {
+  STANDARD
+  STUDENT
+  SCHOLARSHIP
+  SPONSORSHIP
+}
+
+enum KeyStatus {
+  ACTIVE
+  INACTIVE
+  LOST
+  RETURNED
+}
+
+enum PaymentMethod {
+  PAYPAL
+  CASH
+  CHECK
+  CREDIT_CARD
+  STRIPE
+  OTHER
+}
+
+enum TransactionSource {
+  MANUAL
+  PAYPAL_SYNC
+  STRIPE_WEBHOOK
+}
+
+enum NotificationType {
+  WELCOME
+  MAGIC_LINK
+  PAYMENT_RECEIPT
+  PAYMENT_FAILED
+  RENEWAL_REMINDER
+  PLAN_EXPIRING
+  KEY_DEACTIVATED
+  PASSWORD_RESET
+  ADMIN_NEW_SIGNUP
+  ADMIN_PAYMENT_FAILED
+  ADMIN_OVERDUE_DIGEST
+  ANNOUNCEMENT
+}
+
+enum NotificationChannel {
+  EMAIL
+  IN_APP
+  SMS
+}
+
+enum NotificationStatus {
+  QUEUED
+  SENT
+  FAILED
+  BOUNCED
+}
+
+enum EquipmentStatus {
+  OPERATIONAL
+  MAINTENANCE
+  OUT_OF_ORDER
+  RETIRED
+}
+
+enum WaiverStatus {
+  PENDING
+  COMPLETED
+  EXPIRED
+}
+
+enum AccessType {
+  ENTRY
+  EXIT
+  DENIED
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  isSystem    Boolean  @default(false)
+  permissions RolePermission[]
+  members     Member[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Permission {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  category    String
+  name        String
+  description String?
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+}
+
+model Member {
+  id                    String         @id @default(uuid())
+  email                 String         @unique
+  passwordHash          String?
+  firstName             String
+  lastName              String
+  phone                 String?
+  paypalEmail           String?
+  paypalSubscriptionId  String?
+  emergencyContactName  String?
+  emergencyContactEmail String?
+  emergencyContactPhone String?
+  picture               String?
+  roleId                String
+  role                  Role           @relation(fields: [roleId], references: [id])
+  status                MemberStatus   @default(PROSPECTIVE)
+  statusReason          String?
+  membershipType        MembershipType @default(STANDARD)
+  dateOfBirth           DateTime?
+  joinDate              DateTime?
+  referredById          String?
+  referredBy            Member?        @relation("Referrals", fields: [referredById], references: [id])
+  referrals             Member[]       @relation("Referrals")
+  lastLoginAt           DateTime?
+  magicLinkToken        String?
+  magicLinkExpires      DateTime?
+  resetToken            String?
+  resetTokenExpires     DateTime?
+
+  // Relations
+  plans                   MemberPlan[]
+  keys                    Key[]
+  transactions            Transaction[]
+  notes                   MemberNote[]             @relation("MemberNotes")
+  authoredNotes           MemberNote[]             @relation("AuthoredNotes")
+  notifications           Notification[]
+  notificationPreferences NotificationPreference[]
+  certifications          EquipmentCertification[] @relation("CertifiedMember")
+  certifiedOthers         EquipmentCertification[] @relation("Certifier")
+  waivers                 MemberWaiver[]
+  maintenanceLogs         MaintenanceLog[]
+  accessLogs              AccessLog[]
+  dashboardConfig         DashboardConfig?
+  hostedGuests            Guest[]
+
+  // Future - Stripe
+  stripeCustomerId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Plan {
+  id                      String           @id @default(uuid())
+  name                    String
+  description             String?
+  monthlyCost             Decimal          @db.Decimal(10, 2)
+  keysIncluded            Int              @default(1)
+  isActive                Boolean          @default(true)
+  eligibleMembershipTypes MembershipType[]
+  paypalPlanId            String?
+  stripePriceId           String?
+
+  memberPlans MemberPlan[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MemberPlan {
+  id        String    @id @default(uuid())
+  memberId  String
+  planId    String
+  startDate DateTime
+  endDate   DateTime?
+  member    Member    @relation(fields: [memberId], references: [id])
+  plan      Plan      @relation(fields: [planId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Key {
+  id              String    @id @default(uuid())
+  serialNumber    String    @unique
+  memberId        String
+  member          Member    @relation(fields: [memberId], references: [id])
+  status          KeyStatus @default(ACTIVE)
+  type            String?
+  assignedDate    DateTime?
+  deactivatedDate DateTime?
+  accessLogs      AccessLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Transaction {
+  id                  String            @id @default(uuid())
+  memberId            String
+  member              Member            @relation(fields: [memberId], references: [id])
+  amount              Decimal           @db.Decimal(10, 2)
+  transactionDate     DateTime
+  description         String?
+  method              PaymentMethod     @default(OTHER)
+  confirmation        String?
+  paypalTransactionId String?
+  source              TransactionSource @default(MANUAL)
+  notes               String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MemberNote {
+  id       String  @id @default(uuid())
+  memberId String
+  member   Member  @relation("MemberNotes", fields: [memberId], references: [id])
+  authorId String
+  author   Member  @relation("AuthoredNotes", fields: [authorId], references: [id])
+  content  String  @db.Text
+  isPinned Boolean @default(false)
+  isSystem Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id              String              @id @default(uuid())
+  memberId        String
+  member          Member              @relation(fields: [memberId], references: [id])
+  type            NotificationType
+  channel         NotificationChannel @default(EMAIL)
+  subject         String?
+  status          NotificationStatus  @default(QUEUED)
+  sentAt          DateTime?
+  resendMessageId String?
+  errorMessage    String?
+
+  createdAt DateTime @default(now())
+}
+
+model NotificationPreference {
+  id               String           @id @default(uuid())
+  memberId         String
+  member           Member           @relation(fields: [memberId], references: [id])
+  notificationType NotificationType
+  enabled          Boolean          @default(true)
+
+  @@unique([memberId, notificationType])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Equipment {
+  id                    String          @id @default(uuid())
+  name                  String
+  description           String?
+  location              String?
+  status                EquipmentStatus @default(OPERATIONAL)
+  requiresCertification Boolean         @default(false)
+  category              String?
+  serialNumber          String?
+  purchaseDate          DateTime?
+  warrantyExpiration    DateTime?
+  photoUrl              String?
+
+  certifications  EquipmentCertification[]
+  maintenanceLogs MaintenanceLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EquipmentCertification {
+  id             String    @id @default(uuid())
+  memberId       String
+  member         Member    @relation("CertifiedMember", fields: [memberId], references: [id])
+  equipmentId    String
+  equipment      Equipment @relation(fields: [equipmentId], references: [id])
+  certifiedDate  DateTime
+  certifiedById  String?
+  certifiedBy    Member?   @relation("Certifier", fields: [certifiedById], references: [id])
+  expirationDate DateTime?
+  notes          String?
+
+  @@unique([memberId, equipmentId])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MaintenanceLog {
+  id              String    @id @default(uuid())
+  equipmentId     String
+  equipment       Equipment @relation(fields: [equipmentId], references: [id])
+  performedById   String?
+  performedBy     Member?   @relation(fields: [performedById], references: [id])
+  maintenanceDate DateTime
+  description     String    @db.Text
+  nextDueDate     DateTime?
+  cost            Decimal?  @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WaiverTemplate {
+  id                 String @id @default(uuid())
+  name               String
+  description        String?
+  isRequired         Boolean @default(false)
+  isActive           Boolean @default(true)
+  docusealTemplateId String?
+
+  memberWaivers MemberWaiver[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model MemberWaiver {
+  id                   String         @id @default(uuid())
+  memberId             String
+  member               Member         @relation(fields: [memberId], references: [id])
+  waiverId             String
+  waiver               WaiverTemplate @relation(fields: [waiverId], references: [id])
+  status               WaiverStatus   @default(PENDING)
+  completedDate        DateTime?
+  documentUrl          String?
+  docusealSubmissionId String?
+
+  expirationDate DateTime?
+
+  @@unique([memberId, waiverId])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SystemSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       Json
+  category    String
+  label       String
+  description String?
+  fieldType   String   @default("text")
+  options     Json?
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
+}
+
+model DashboardConfig {
+  id        String   @id @default(uuid())
+  memberId  String   @unique
+  member    Member   @relation(fields: [memberId], references: [id])
+  widgets   Json
+  updatedAt DateTime @updatedAt
+}
+
+model AccessLog {
+  id          String     @id @default(uuid())
+  memberId    String?
+  member      Member?    @relation(fields: [memberId], references: [id])
+  keyId       String?
+  key         Key?       @relation(fields: [keyId], references: [id])
+  accessPoint String?
+  accessType  AccessType
+  timestamp   DateTime   @default(now())
+  rawData     Json?
+}
+
+model Guest {
+  id           String   @id @default(uuid())
+  name         String
+  email        String?
+  hostMemberId String?
+  host         Member?  @relation(fields: [hostMemberId], references: [id])
+  visitDate    DateTime
+  purpose      String?
+  waiverSigned Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+}
