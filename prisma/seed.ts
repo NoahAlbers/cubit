@@ -1,7 +1,10 @@
-import { PrismaClient, MembershipType } from "../lib/generated/prisma";
+import { PrismaClient } from "../lib/generated/prisma/client";
+import { MembershipType } from "../lib/generated/prisma/enums";
+import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+const prisma = new PrismaClient({ adapter });
 
 // ─── Permissions ────────────────────────────────────────────────────────────
 
