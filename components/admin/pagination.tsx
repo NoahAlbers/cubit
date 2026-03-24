@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -24,6 +24,7 @@ export function Pagination({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const start = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
@@ -34,13 +35,13 @@ export function Pagination({
     for (const [key, value] of Object.entries(updates)) {
       params.set(key, value);
     }
-    router.push(`/admin/members?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 text-sm">
       <div className="text-muted-foreground">
-        Showing {start}-{end} of {totalCount} members
+        Showing {start}-{end} of {totalCount} items
       </div>
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
