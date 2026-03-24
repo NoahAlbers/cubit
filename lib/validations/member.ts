@@ -28,3 +28,39 @@ export const createMemberSchema = z.object({
 });
 
 export type CreateMemberInput = z.infer<typeof createMemberSchema>;
+
+export const memberProfileSchema = z.object({
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  email: z.string().email(),
+  phone: z.string().optional().nullable(),
+  paypalEmail: z.string().email().optional().nullable().or(z.literal("")),
+  membershipType: z.enum(["STANDARD", "STUDENT", "SCHOLARSHIP", "SPONSORSHIP"]),
+  dateOfBirth: z.string().optional().nullable(),
+  joinDate: z.string().optional().nullable(),
+});
+
+export const emergencyContactSchema = z.object({
+  emergencyContactName: z.string().optional().nullable(),
+  emergencyContactEmail: z.string().email().optional().nullable().or(z.literal("")),
+  emergencyContactPhone: z.string().optional().nullable(),
+});
+
+export const statusChangeSchema = z.object({
+  status: z.enum(["PROSPECTIVE", "ACTIVE", "HOLD", "PAST_DUE", "SUSPENDED", "CANCELED", "ALUMNI"]),
+  reason: z.string().optional(),
+});
+
+export const addKeySchema = z.object({
+  serialNumber: z.string().min(1, "Serial number is required"),
+  type: z.string().optional(),
+});
+
+export const addTransactionSchema = z.object({
+  transactionDate: z.string(),
+  amount: z.string().min(1),
+  method: z.enum(["PAYPAL", "CASH", "CHECK", "CREDIT_CARD", "STRIPE", "OTHER"]),
+  confirmation: z.string().optional(),
+  description: z.string().optional(),
+  notes: z.string().optional(),
+});
