@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src=no --import-alias=\"@/*\" --use-npm --yes)",
       "Bash(npm install:*)",
-      "Bash(npx shadcn@latest init --defaults)"
+      "Bash(npx shadcn@latest init --defaults)",
+      "Bash(npx shadcn@latest add button input label card table dialog dropdown-menu select checkbox badge tabs textarea toast separator sheet avatar)",
+      "Bash(npx shadcn@latest add button input label card table dialog dropdown-menu select checkbox badge tabs textarea sonner separator sheet avatar)",
+      "Bash(timeout 15 npm run dev)"
     ]
   }
 }
