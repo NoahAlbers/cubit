@@ -1,4 +1,4 @@
-import { PrismaClient, MembershipType } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 
@@ -73,12 +73,12 @@ const permissions = [
 // ─── Plans ──────────────────────────────────────────────────────────────────
 
 const plans = [
-  { name: "Standard Membership", monthlyCost: 60.00, keysIncluded: 1, eligibleMembershipTypes: [MembershipType.STANDARD, MembershipType.SPONSORSHIP] },
-  { name: "Student Membership (18-28)", monthlyCost: 30.00, keysIncluded: 1, eligibleMembershipTypes: [MembershipType.STUDENT] },
-  { name: "Standard + 1 Key", monthlyCost: 90.00, keysIncluded: 2, eligibleMembershipTypes: [MembershipType.STANDARD] },
-  { name: "Standard + 2 Keys", monthlyCost: 120.00, keysIncluded: 3, eligibleMembershipTypes: [MembershipType.STANDARD] },
-  { name: "Standard + 3 Keys", monthlyCost: 150.00, keysIncluded: 4, eligibleMembershipTypes: [MembershipType.STANDARD] },
-  { name: "Scholarship", monthlyCost: 0.00, keysIncluded: 1, eligibleMembershipTypes: [MembershipType.SCHOLARSHIP] },
+  { name: "Standard Membership", monthlyCost: 60.00, keysIncluded: 1, eligibleMembershipTypes: ["STANDARD", "SPONSORSHIP"] },
+  { name: "Student Membership (18-28)", monthlyCost: 30.00, keysIncluded: 1, eligibleMembershipTypes: ["STUDENT"] },
+  { name: "Standard + 1 Key", monthlyCost: 90.00, keysIncluded: 2, eligibleMembershipTypes: ["STANDARD"] },
+  { name: "Standard + 2 Keys", monthlyCost: 120.00, keysIncluded: 3, eligibleMembershipTypes: ["STANDARD"] },
+  { name: "Standard + 3 Keys", monthlyCost: 150.00, keysIncluded: 4, eligibleMembershipTypes: ["STANDARD"] },
+  { name: "Scholarship", monthlyCost: 0.00, keysIncluded: 1, eligibleMembershipTypes: ["SCHOLARSHIP"] },
 ];
 
 // ─── System Settings ────────────────────────────────────────────────────────
