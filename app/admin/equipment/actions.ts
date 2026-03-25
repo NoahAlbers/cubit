@@ -97,7 +97,7 @@ export async function getEquipment(params: EquipmentSearchInput) {
 
   const uniqueCategories = categories
     .map((c: any) => c.category)
-    .filter((c): c is string => c !== null);
+    .filter((c: any): c is string => c !== null);
 
   return { equipment: serializedEquipment, totalCount, categories: uniqueCategories };
 }
