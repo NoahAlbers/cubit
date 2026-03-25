@@ -127,7 +127,9 @@ export async function getWaiverCompliance(waiverId: string) {
     }),
   ]);
 
-  const waiverMap = new Map(waivers.map((w: any) => [w.memberId, w]));
+  const waiverMap = new Map<string, { memberId: string; status: string; completedDate: Date | null }>(
+    waivers.map((w: any) => [w.memberId, w])
+  );
 
   const compliance = members.map((m: any) => {
     const waiver = waiverMap.get(m.id);
