@@ -18,13 +18,13 @@ export async function getRoles() {
     },
   });
 
-  return roles.map((role) => ({
+  return roles.map((role: any) => ({
     id: role.id,
     name: role.name,
     description: role.description,
     isSystem: role.isSystem,
     memberCount: role._count.members,
-    permissions: role.permissions.map((rp) => ({
+    permissions: role.permissions.map((rp: any) => ({
       id: rp.permission.id,
       key: rp.permission.key,
       name: rp.permission.name,
@@ -87,7 +87,7 @@ export async function createRole(data: unknown) {
       name,
       description: description || null,
       permissions: {
-        create: permissionIds.map((permissionId) => ({ permissionId })),
+        create: permissionIds.map((permissionId: any) => ({ permissionId })),
       },
     },
   });
@@ -133,7 +133,7 @@ export async function updateRole(roleId: string, data: unknown) {
       name,
       description: description || null,
       permissions: {
-        create: permissionIds.map((permissionId) => ({ permissionId })),
+        create: permissionIds.map((permissionId: any) => ({ permissionId })),
       },
     },
   });

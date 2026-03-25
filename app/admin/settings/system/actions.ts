@@ -12,7 +12,7 @@ export async function getSettings() {
     orderBy: [{ category: "asc" }, { label: "asc" }],
   });
 
-  return settings.map((s) => ({
+  return settings.map((s: any) => ({
     id: s.id,
     key: s.key,
     value: s.value,

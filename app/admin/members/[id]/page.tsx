@@ -72,7 +72,7 @@ export default async function MemberDetailPage({
   }
 
   // Find current active plan for keys included count
-  const currentPlan = member.plans.find((p) => !p.endDate);
+  const currentPlan = member.plans.find((p: any) => !p.endDate);
   const keysIncluded = currentPlan?.plan.keysIncluded ?? 0;
 
   // Serialize data for client components
@@ -94,7 +94,7 @@ export default async function MemberDetailPage({
     emergencyContactPhone: member.emergencyContactPhone,
   };
 
-  const serializedPlans = member.plans.map((mp) => ({
+  const serializedPlans = member.plans.map((mp: any) => ({
     id: mp.id,
     startDate: mp.startDate.toISOString(),
     endDate: mp.endDate?.toISOString() ?? null,
@@ -105,13 +105,13 @@ export default async function MemberDetailPage({
     },
   }));
 
-  const serializedAvailablePlans = activePlans.map((p) => ({
+  const serializedAvailablePlans = activePlans.map((p: any) => ({
     id: p.id,
     name: p.name,
     monthlyCost: p.monthlyCost.toString(),
   }));
 
-  const serializedKeys = member.keys.map((k) => ({
+  const serializedKeys = member.keys.map((k: any) => ({
     id: k.id,
     serialNumber: k.serialNumber,
     type: k.type,
@@ -119,7 +119,7 @@ export default async function MemberDetailPage({
     assignedDate: k.assignedDate?.toISOString() ?? null,
   }));
 
-  const serializedTransactions = member.transactions.map((t) => ({
+  const serializedTransactions = member.transactions.map((t: any) => ({
     id: t.id,
     transactionDate: t.transactionDate.toISOString(),
     amount: t.amount.toString(),
@@ -129,7 +129,7 @@ export default async function MemberDetailPage({
     confirmation: t.confirmation,
   }));
 
-  const serializedNotes = member.notes.map((n) => ({
+  const serializedNotes = member.notes.map((n: any) => ({
     id: n.id,
     content: n.content,
     isPinned: n.isPinned,
@@ -141,19 +141,19 @@ export default async function MemberDetailPage({
     },
   }));
 
-  const serializedMemberWaivers = member.waivers.map((w) => ({
+  const serializedMemberWaivers = member.waivers.map((w: any) => ({
     waiverId: w.waiverId,
     status: w.status,
     completedDate: w.completedDate?.toISOString() ?? null,
   }));
 
-  const serializedWaiverTemplates = waiverTemplates.map((t) => ({
+  const serializedWaiverTemplates = waiverTemplates.map((t: any) => ({
     id: t.id,
     name: t.name,
     isRequired: t.isRequired,
   }));
 
-  const serializedCertifications = member.certifications.map((c) => ({
+  const serializedCertifications = member.certifications.map((c: any) => ({
     id: c.id,
     certifiedDate: c.certifiedDate.toISOString(),
     expirationDate: c.expirationDate?.toISOString() ?? null,

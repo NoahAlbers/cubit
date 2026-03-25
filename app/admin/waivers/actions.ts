@@ -28,7 +28,7 @@ export async function getWaiverTemplates() {
     }),
   ]);
 
-  const serialized = templates.map((t) => ({
+  const serialized = templates.map((t: any) => ({
     id: t.id,
     name: t.name,
     description: t.description,
@@ -127,9 +127,9 @@ export async function getWaiverCompliance(waiverId: string) {
     }),
   ]);
 
-  const waiverMap = new Map(waivers.map((w) => [w.memberId, w]));
+  const waiverMap = new Map(waivers.map((w: any) => [w.memberId, w]));
 
-  const compliance = members.map((m) => {
+  const compliance = members.map((m: any) => {
     const waiver = waiverMap.get(m.id);
     return {
       memberId: m.id,

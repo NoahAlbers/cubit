@@ -65,7 +65,7 @@ export default async function MemberDashboardPage() {
   const activePlan = member.plans[0];
   const latestKey = member.keys[0];
   const pendingWaivers = member.waivers.filter(
-    (w) => w.status === "PENDING" && w.waiver.isRequired
+    (w: any) => w.status === "PENDING" && w.waiver.isRequired
   );
 
   return (
@@ -93,7 +93,7 @@ export default async function MemberDashboardPage() {
                 You have {pendingWaivers.length} required waiver
                 {pendingWaivers.length > 1 ? "s" : ""} that need to be
                 completed:{" "}
-                {pendingWaivers.map((w) => w.waiver.name).join(", ")}
+                {pendingWaivers.map((w: any) => w.waiver.name).join(", ")}
               </p>
             </div>
           </CardContent>

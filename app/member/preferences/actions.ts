@@ -27,7 +27,7 @@ export async function getPreferences(): Promise<PreferenceItem[]> {
   });
 
   const existingMap = new Map(
-    existing.map((p) => [p.notificationType, p.enabled])
+    existing.map((p: any) => [p.notificationType, p.enabled])
   );
 
   return MEMBER_NOTIFICATION_TYPES.map((type) => ({

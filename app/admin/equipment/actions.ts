@@ -84,7 +84,7 @@ export async function getEquipment(params: EquipmentSearchInput) {
   ]);
 
   // Serialize dates for client
-  const serializedEquipment = equipment.map((e) => ({
+  const serializedEquipment = equipment.map((e: any) => ({
     id: e.id,
     name: e.name,
     description: e.description,
@@ -96,7 +96,7 @@ export async function getEquipment(params: EquipmentSearchInput) {
   }));
 
   const uniqueCategories = categories
-    .map((c) => c.category)
+    .map((c: any) => c.category)
     .filter((c): c is string => c !== null);
 
   return { equipment: serializedEquipment, totalCount, categories: uniqueCategories };

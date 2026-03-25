@@ -41,7 +41,7 @@ export async function updateDashboardConfig(
   const user = await requirePermission("dashboard.configure");
 
   // Validate widget IDs
-  const validIds = new Set<string>(AVAILABLE_WIDGETS.map((w) => w.widgetId));
+  const validIds = new Set<string>(AVAILABLE_WIDGETS.map((w: any) => w.widgetId));
   for (const w of widgets) {
     if (!validIds.has(w.widgetId)) {
       return { success: false, error: `Unknown widget: ${w.widgetId}` };

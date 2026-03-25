@@ -80,7 +80,7 @@ export default async function MemberPaymentsPage({
             <>
               {/* Mobile card view */}
               <div className="divide-y sm:hidden">
-                {transactions.map((tx) => (
+                {transactions.map((tx: any) => (
                   <div key={tx.id} className="px-4 py-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">
@@ -114,7 +114,7 @@ export default async function MemberPaymentsPage({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {transactions.map((tx) => (
+                    {transactions.map((tx: any) => (
                       <TableRow key={tx.id}>
                         <TableCell className="whitespace-nowrap">
                           {new Date(tx.transactionDate).toLocaleDateString()}

@@ -84,7 +84,7 @@ export async function getMembers(params: MemberSearchInput) {
   ]);
 
   // Serialize dates for client
-  const serializedMembers = members.map((m) => ({
+  const serializedMembers = members.map((m: any) => ({
     id: m.id,
     firstName: m.firstName,
     lastName: m.lastName,

@@ -44,7 +44,7 @@ export default async function MemberCertificationsPage() {
             </p>
           ) : (
             <div className="divide-y">
-              {certifications.map((cert) => {
+              {certifications.map((cert: any) => {
                 const isExpired =
                   cert.expirationDate &&
                   new Date(cert.expirationDate) < new Date();
@@ -96,7 +96,7 @@ export default async function MemberCertificationsPage() {
             <p className="text-sm text-muted-foreground">No waivers found.</p>
           ) : (
             <div className="divide-y">
-              {waivers.map((mw) => (
+              {waivers.map((mw: any) => (
                 <div
                   key={mw.id}
                   className="flex items-center justify-between py-3 first:pt-0 last:pb-0"

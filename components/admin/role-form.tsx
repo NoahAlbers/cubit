@@ -36,7 +36,7 @@ export function RoleForm({
   const [name, setName] = useState(role?.name ?? "");
   const [description, setDescription] = useState(role?.description ?? "");
   const [selectedPermissions, setSelectedPermissions] = useState<Set<string>>(
-    () => new Set(role?.permissions.map((p) => p.id) ?? [])
+    () => new Set(role?.permissions.map((p: any) => p.id) ?? [])
   );
 
   const isSystemRole = role?.isSystem ?? false;

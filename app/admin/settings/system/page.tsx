@@ -8,7 +8,7 @@ export default async function SystemSettingsPage() {
   // Collect unique updatedBy IDs and fetch names
   const updaterIds = [
     ...new Set(
-      settings.map((s) => s.updatedBy).filter((id): id is string => !!id)
+      settings.map((s: any) => s.updatedBy).filter((id: any): id is string => !!id)
     ),
   ];
 
