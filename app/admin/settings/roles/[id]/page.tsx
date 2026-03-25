@@ -14,7 +14,7 @@ export default async function RoleEditPage({ params }: Props) {
     getPermissions(),
   ]);
 
-  const role = roles.find((r) => r.id === id);
+  const role = roles.find((r: any) => r.id === id);
   if (!role) {
     notFound();
   }
