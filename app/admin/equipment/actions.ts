@@ -7,7 +7,7 @@ import {
   createEquipmentSchema,
   type EquipmentSearchInput,
 } from "@/lib/validations/equipment";
-import { Prisma } from "@/lib/generated/prisma/client";
+import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 export async function getEquipment(params: EquipmentSearchInput) {

@@ -2,7 +2,7 @@
 
 import { requireAuth, isOwnResource } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
-import { NotificationType } from "@/lib/generated/prisma/client";
+import { NotificationType } from "@prisma/client";
 
 // Member-facing notification types (exclude system/admin types)
 const MEMBER_NOTIFICATION_TYPES: NotificationType[] = [

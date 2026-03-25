@@ -7,7 +7,7 @@ import {
   createMemberSchema,
   type MemberSearchInput,
 } from "@/lib/validations/member";
-import { Prisma } from "@/lib/generated/prisma/client";
+import { Prisma } from "@prisma/client";
 
 const ACTIVE_STATUSES = ["ACTIVE", "HOLD", "PAST_DUE", "PROSPECTIVE"];
 

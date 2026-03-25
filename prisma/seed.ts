@@ -1,5 +1,4 @@
-import { PrismaClient } from "../lib/generated/prisma/client";
-import { MembershipType } from "../lib/generated/prisma/enums";
+import { PrismaClient, MembershipType } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 

@@ -11,7 +11,10 @@
       "Bash(npx prisma:*)",
       "Bash(ls C:/Users/alber/Desktop/cubit/lib/generated/prisma/*.ts)",
       "Bash(npm ls:*)",
-      "Bash(ls \"C:/Users/alber/Desktop/cubit/app/\\(auth\\)\")"
+      "Bash(ls \"C:/Users/alber/Desktop/cubit/app/\\(auth\\)\")",
+      "Bash(npx shadcn@latest add switch --yes --cwd C:/Users/alber/Desktop/cubit)",
+      "Bash(DATABASE_URL=\"\" npx prisma generate)",
+      "Bash(DATABASE_URL=\"postgresql://dummy:dummy@localhost:5432/dummy\" npm run build)"
     ]
   }
 }
