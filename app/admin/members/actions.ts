@@ -7,8 +7,6 @@ import {
   createMemberSchema,
   type MemberSearchInput,
 } from "@/lib/validations/member";
-import { Prisma } from "@prisma/client";
-
 const ACTIVE_STATUSES = ["ACTIVE", "HOLD", "PAST_DUE", "PROSPECTIVE"];
 
 export async function getMembers(params: MemberSearchInput) {
@@ -26,7 +24,8 @@ export async function getMembers(params: MemberSearchInput) {
     pageSize,
   } = parsed;
 
-  const where: Prisma.MemberWhereInput = {};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const where: Record<string, any> = {};
 
   // Search filter
   if (search && search.trim()) {
@@ -40,22 +39,23 @@ export async function getMembers(params: MemberSearchInput) {
 
   // Status filter
   if (status && status.length > 0) {
-    where.status = { in: status as Prisma.EnumMemberStatusFilter["in"] };
+    where.status = { in: status };
   } else if (!showInactive) {
     where.status = {
-      in: ACTIVE_STATUSES as Prisma.EnumMemberStatusFilter["in"],
+      in: ACTIVE_STATUSES,
     };
   }
 
   // Membership type filter
   if (membershipType && membershipType.length > 0) {
     where.membershipType = {
-      in: membershipType as Prisma.EnumMembershipTypeFilter["in"],
+      in: membershipType,
     };
   }
 
   // Build orderBy
-  let orderBy: Prisma.MemberOrderByWithRelationInput[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let orderBy: Record<string, any>[] = [];
   if (sortField === "name") {
     orderBy = [
       { lastName: sortDirection },

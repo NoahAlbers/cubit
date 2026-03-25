@@ -7,7 +7,6 @@ import {
   createEquipmentSchema,
   type EquipmentSearchInput,
 } from "@/lib/validations/equipment";
-import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 export async function getEquipment(params: EquipmentSearchInput) {
@@ -25,7 +24,7 @@ export async function getEquipment(params: EquipmentSearchInput) {
     pageSize,
   } = parsed;
 
-  const where: Prisma.EquipmentWhereInput = {};
+  const where: Record<string, unknown> = {};
 
   // Search by name
   if (search && search.trim()) {
@@ -39,7 +38,7 @@ export async function getEquipment(params: EquipmentSearchInput) {
 
   // Status filter
   if (status) {
-    where.status = status as Prisma.EnumEquipmentStatusFilter["equals"];
+    where.status = status;
   }
 
   // Category filter
@@ -55,7 +54,7 @@ export async function getEquipment(params: EquipmentSearchInput) {
   }
 
   // Build orderBy
-  let orderBy: Prisma.EquipmentOrderByWithRelationInput[] = [];
+  let orderBy: Record<string, string>[] = [];
   if (sortField === "name") {
     orderBy = [{ name: sortDirection }];
   } else if (sortField === "status") {
