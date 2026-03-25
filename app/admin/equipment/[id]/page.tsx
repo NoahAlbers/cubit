@@ -80,7 +80,8 @@ export default async function EquipmentDetailPage({
     warrantyExpiration: toDateString(equipment.warrantyExpiration),
   };
 
-  const serializedCertifications = equipment.certifications.map((c) => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const serializedCertifications = equipment.certifications.map((c: any) => ({
     id: c.id,
     certifiedDate: c.certifiedDate.toISOString(),
     expirationDate: c.expirationDate?.toISOString() ?? null,
@@ -98,7 +99,8 @@ export default async function EquipmentDetailPage({
       : null,
   }));
 
-  const serializedLogs = equipment.maintenanceLogs.map((l) => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const serializedLogs = equipment.maintenanceLogs.map((l: any) => ({
     id: l.id,
     maintenanceDate: l.maintenanceDate.toISOString(),
     description: l.description,
