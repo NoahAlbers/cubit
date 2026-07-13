@@ -154,14 +154,9 @@ interface SidebarProps {
 }
 
 export function Sidebar({ open, onOpenChange }: SidebarProps) {
-  return (
-    <>
-      {/* Desktop sidebar — rendered inline by parent */}
-      <div className="hidden lg:flex lg:h-full lg:flex-col">
-        <SidebarContent />
-      </div>
-
-      {/* Mobile sidebar — Sheet drawer */}
+  // Mobile usage: the parent controls the drawer via open/onOpenChange
+  if (onOpenChange) {
+    return (
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent
           side="left"
@@ -172,6 +167,9 @@ export function Sidebar({ open, onOpenChange }: SidebarProps) {
           <SidebarContent />
         </SheetContent>
       </Sheet>
-    </>
-  );
+    );
+  }
+
+  // Desktop usage: rendered inline by the parent's <aside>
+  return <SidebarContent />;
 }
