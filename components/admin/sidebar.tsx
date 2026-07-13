@@ -41,6 +41,7 @@ const navItems: NavItem[] = [
       { label: "Roles", href: "/admin/settings/roles" },
       { label: "System", href: "/admin/settings/system" },
       { label: "Dashboard", href: "/admin/settings/dashboard" },
+      { label: "Embeds", href: "/admin/settings/embeds" },
     ],
   },
   { label: "Reports", href: "/admin/reports", icon: BarChart, disabled: true },
