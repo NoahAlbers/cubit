@@ -1,52 +1,49 @@
 import { notFound } from "next/navigation";
-import { getRoles, getPermissions, deleteRole } from "../actions";
-import { RoleForm } from "@/components/admin/role-form";
-import { DeleteRoleButton } from "./delete-button";
+import { prisma } from "@/lib/prisma";
+import { requirePermission, hasPermission } from "@/lib/permissions";
+import { RoleForm } from "../role-form";
 
-interface Props {
+export const dynamic = "force-dynamic";
+
+export default async function EditRolePage({
+  params,
+}: {
   params: Promise<{ id: string }>;
-}
-
-export default async function RoleEditPage({ params }: Props) {
+}) {
+  const user = await requirePermission("roles.view");
   const { id } = await params;
-  const [roles, permissionGroups] = await Promise.all([
-    getRoles(),
-    getPermissions(),
+
+  const [role, permissions] = await Promise.all([
+    prisma.role.findUnique({
+      where: { id },
+      include: {
+        permissions: { include: { permission: true } },
+        _count: { select: { members: true } },
+      },
+    }),
+    prisma.permission.findMany({
+      orderBy: [{ category: "asc" }, { name: "asc" }],
+    }),
   ]);
-
-  const role = roles.find((r: any) => r.id === id);
-  if (!role) {
-    notFound();
-  }
-
-  const isSuperAdmin = role.name === "Super Admin";
+  if (!role) notFound();
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">
-          Edit Role: {role.name}
-        </h2>
-        {!role.isSystem && role.memberCount === 0 && (
-          <DeleteRoleButton roleId={role.id} roleName={role.name} />
-        )}
-        {!role.isSystem && role.memberCount > 0 && (
-          <p className="text-xs text-muted-foreground">
-            Cannot delete — {role.memberCount} member(s) assigned
-          </p>
-        )}
-        {role.isSystem && (
-          <p className="text-xs text-muted-foreground">
-            System role — cannot delete
-          </p>
-        )}
-      </div>
-      <RoleForm
-        mode="edit"
-        role={role}
-        permissionGroups={permissionGroups}
-        isSuperAdmin={isSuperAdmin}
-      />
-    </div>
+    <RoleForm
+      roleId={role.id}
+      defaults={{
+        name: role.name,
+        description: role.description ?? "",
+        permissionKeys: role.permissions.map((rp) => rp.permission.key),
+      }}
+      permissions={permissions.map((p) => ({
+        key: p.key,
+        category: p.category,
+        name: p.name,
+      }))}
+      isSystem={role.isSystem}
+      isSuperAdmin={role.name === "Super Admin"}
+      memberCount={role._count.members}
+      canManage={hasPermission(user, "roles.manage")}
+    />
   );
 }

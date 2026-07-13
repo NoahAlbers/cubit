@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,7 +7,43 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─── Enums ───────────────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Roles & permissions (dynamic — admins can create custom roles)
+// ---------------------------------------------------------------------------
+
+model Role {
+  id          String           @id @default(uuid())
+  name        String           @unique
+  description String?
+  isSystem    Boolean          @default(false) // Super Admin / Admin / Member — cannot be deleted
+  permissions RolePermission[]
+  members     Member[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+model Permission {
+  id          String           @id @default(uuid())
+  key         String           @unique // e.g. "members.view"
+  category    String // e.g. "members"
+  name        String // "View members"
+  description String?
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+}
+
+// ---------------------------------------------------------------------------
+// Members
+// ---------------------------------------------------------------------------
 
 enum MemberStatus {
   PROSPECTIVE
@@ -29,107 +60,6 @@ enum MembershipType {
   STUDENT
   SCHOLARSHIP
   SPONSORSHIP
-}
-
-enum KeyStatus {
-  ACTIVE
-  INACTIVE
-  LOST
-  RETURNED
-}
-
-enum PaymentMethod {
-  PAYPAL
-  CASH
-  CHECK
-  CREDIT_CARD
-  STRIPE
-  OTHER
-}
-
-enum TransactionSource {
-  MANUAL
-  PAYPAL_SYNC
-  STRIPE_WEBHOOK
-}
-
-enum NotificationType {
-  WELCOME
-  MAGIC_LINK
-  PAYMENT_RECEIPT
-  PAYMENT_FAILED
-  RENEWAL_REMINDER
-  PLAN_EXPIRING
-  KEY_DEACTIVATED
-  PASSWORD_RESET
-  ADMIN_NEW_SIGNUP
-  ADMIN_PAYMENT_FAILED
-  ADMIN_OVERDUE_DIGEST
-  ANNOUNCEMENT
-}
-
-enum NotificationChannel {
-  EMAIL
-  IN_APP
-  SMS
-}
-
-enum NotificationStatus {
-  QUEUED
-  SENT
-  FAILED
-  BOUNCED
-}
-
-enum EquipmentStatus {
-  OPERATIONAL
-  MAINTENANCE
-  OUT_OF_ORDER
-  RETIRED
-}
-
-enum WaiverStatus {
-  PENDING
-  COMPLETED
-  EXPIRED
-}
-
-enum AccessType {
-  ENTRY
-  EXIT
-  DENIED
-}
-
-// ─── Models ──────────────────────────────────────────────────────────────────
-
-model Role {
-  id          String           @id @default(uuid())
-  name        String           @unique
-  description String?
-  isSystem    Boolean          @default(false)
-  permissions RolePermission[]
-  members     Member[]
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-}
-
-model Permission {
-  id          String           @id @default(uuid())
-  key         String           @unique
-  category    String
-  name        String
-  description String?
-  roles       RolePermission[]
-}
-
-model RolePermission {
-  id           String     @id @default(uuid())
-  roleId       String
-  permissionId String
-  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-
-  @@unique([roleId, permissionId])
 }
 
 model Member {
@@ -149,19 +79,17 @@ model Member {
   role                  Role           @relation(fields: [roleId], references: [id])
   status                MemberStatus   @default(PROSPECTIVE)
   statusReason          String?
+  statusChangedAt       DateTime?
   membershipType        MembershipType @default(STANDARD)
   dateOfBirth           DateTime?
   joinDate              DateTime?
-  referredById          String?
-  referredBy            Member?        @relation("Referrals", fields: [referredById], references: [id])
-  referrals             Member[]       @relation("Referrals")
   lastLoginAt           DateTime?
-  magicLinkToken        String?
+  magicLinkToken        String?        @unique
   magicLinkExpires      DateTime?
-  resetToken            String?
+  resetToken            String?        @unique
   resetTokenExpires     DateTime?
+  stripeCustomerId      String?
 
-  // Relations
   plans                   MemberPlan[]
   keys                    Key[]
   transactions            Transaction[]
@@ -174,15 +102,18 @@ model Member {
   waivers                 MemberWaiver[]
   maintenanceLogs         MaintenanceLog[]
   accessLogs              AccessLog[]
-  dashboardConfig         DashboardConfig?
   hostedGuests            Guest[]
-
-  // Future - Stripe
-  stripeCustomerId String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([lastName, firstName])
 }
+
+// ---------------------------------------------------------------------------
+// Plans & billing
+// ---------------------------------------------------------------------------
 
 model Plan {
   id                      String           @id @default(uuid())
@@ -207,32 +138,34 @@ model MemberPlan {
   planId    String
   startDate DateTime
   endDate   DateTime?
-  member    Member    @relation(fields: [memberId], references: [id])
+  member    Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
   plan      Plan      @relation(fields: [planId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([memberId])
 }
 
-model Key {
-  id              String      @id @default(uuid())
-  serialNumber    String      @unique
-  memberId        String
-  member          Member      @relation(fields: [memberId], references: [id])
-  status          KeyStatus   @default(ACTIVE)
-  type            String?
-  assignedDate    DateTime?
-  deactivatedDate DateTime?
-  accessLogs      AccessLog[]
+enum PaymentMethod {
+  PAYPAL
+  CASH
+  CHECK
+  CREDIT_CARD
+  STRIPE
+  OTHER
+}
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum TransactionSource {
+  MANUAL
+  PAYPAL_SYNC
+  STRIPE_WEBHOOK
 }
 
 model Transaction {
   id                  String            @id @default(uuid())
   memberId            String
-  member              Member            @relation(fields: [memberId], references: [id])
+  member              Member            @relation(fields: [memberId], references: [id], onDelete: Cascade)
   amount              Decimal           @db.Decimal(10, 2)
   transactionDate     DateTime
   description         String?
@@ -244,47 +177,137 @@ model Transaction {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([memberId, transactionDate])
 }
+
+// ---------------------------------------------------------------------------
+// RFID keys & access (integrates with MelbourneMakerSpace/RFIDLock)
+// ---------------------------------------------------------------------------
+
+enum KeyStatus {
+  ACTIVE
+  INACTIVE
+  LOST
+  RETURNED
+}
+
+model Key {
+  id              String      @id @default(uuid())
+  serialNumber    String      @unique
+  memberId        String
+  member          Member      @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  status          KeyStatus   @default(ACTIVE)
+  type            String? // "fob" | "card"
+  assignedDate    DateTime?
+  deactivatedDate DateTime?
+  accessLogs      AccessLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum AccessType {
+  ENTRY
+  EXIT
+  DENIED
+}
+
+model AccessLog {
+  id          String     @id @default(uuid())
+  memberId    String?
+  member      Member?    @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  keyId       String?
+  key         Key?       @relation(fields: [keyId], references: [id], onDelete: SetNull)
+  serial      String? // raw serial as scanned, kept even if key is deleted
+  accessPoint String?
+  accessType  AccessType
+  timestamp   DateTime   @default(now())
+  rawData     Json?
+
+  @@index([timestamp])
+}
+
+// ---------------------------------------------------------------------------
+// Notes & notifications
+// ---------------------------------------------------------------------------
 
 model MemberNote {
   id       String  @id @default(uuid())
   memberId String
-  member   Member  @relation("MemberNotes", fields: [memberId], references: [id])
-  authorId String
-  author   Member  @relation("AuthoredNotes", fields: [authorId], references: [id])
+  member   Member  @relation("MemberNotes", fields: [memberId], references: [id], onDelete: Cascade)
+  authorId String?
+  author   Member? @relation("AuthoredNotes", fields: [authorId], references: [id], onDelete: SetNull)
   content  String  @db.Text
   isPinned Boolean @default(false)
   isSystem Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([memberId])
+}
+
+enum NotificationType {
+  WELCOME
+  MAGIC_LINK
+  PAYMENT_RECEIPT
+  PAYMENT_FAILED
+  RENEWAL_REMINDER
+  PLAN_EXPIRING
+  KEY_DEACTIVATED
+  PASSWORD_RESET
+  WAIVER_REMINDER
+  ADMIN_NEW_SIGNUP
+  ADMIN_PAYMENT_FAILED
+  ADMIN_OVERDUE_DIGEST
+  ANNOUNCEMENT
+}
+
+enum NotificationStatus {
+  QUEUED
+  SENT
+  FAILED
 }
 
 model Notification {
-  id              String              @id @default(uuid())
+  id              String             @id @default(uuid())
   memberId        String
-  member          Member              @relation(fields: [memberId], references: [id])
+  member          Member             @relation(fields: [memberId], references: [id], onDelete: Cascade)
   type            NotificationType
-  channel         NotificationChannel @default(EMAIL)
   subject         String?
-  status          NotificationStatus  @default(QUEUED)
+  status          NotificationStatus @default(QUEUED)
   sentAt          DateTime?
   resendMessageId String?
   errorMessage    String?
 
   createdAt DateTime @default(now())
+
+  @@index([memberId])
 }
 
 model NotificationPreference {
   id               String           @id @default(uuid())
   memberId         String
-  member           Member           @relation(fields: [memberId], references: [id])
+  member           Member           @relation(fields: [memberId], references: [id], onDelete: Cascade)
   notificationType NotificationType
   enabled          Boolean          @default(true)
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([memberId, notificationType])
+}
+
+// ---------------------------------------------------------------------------
+// Equipment & certifications
+// ---------------------------------------------------------------------------
+
+enum EquipmentStatus {
+  OPERATIONAL
+  MAINTENANCE
+  OUT_OF_ORDER
+  RETIRED
 }
 
 model Equipment {
@@ -310,16 +333,17 @@ model Equipment {
 model EquipmentCertification {
   id             String    @id @default(uuid())
   memberId       String
-  member         Member    @relation("CertifiedMember", fields: [memberId], references: [id])
+  member         Member    @relation("CertifiedMember", fields: [memberId], references: [id], onDelete: Cascade)
   equipmentId    String
-  equipment      Equipment @relation(fields: [equipmentId], references: [id])
+  equipment      Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
   certifiedDate  DateTime
   certifiedById  String?
-  certifiedBy    Member?   @relation("Certifier", fields: [certifiedById], references: [id])
+  certifiedBy    Member?   @relation("Certifier", fields: [certifiedById], references: [id], onDelete: SetNull)
   expirationDate DateTime?
   notes          String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([memberId, equipmentId])
 }
@@ -327,9 +351,9 @@ model EquipmentCertification {
 model MaintenanceLog {
   id              String    @id @default(uuid())
   equipmentId     String
-  equipment       Equipment @relation(fields: [equipmentId], references: [id])
+  equipment       Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
   performedById   String?
-  performedBy     Member?   @relation(fields: [performedById], references: [id])
+  performedBy     Member?   @relation(fields: [performedById], references: [id], onDelete: SetNull)
   maintenanceDate DateTime
   description     String    @db.Text
   nextDueDate     DateTime?
@@ -339,13 +363,24 @@ model MaintenanceLog {
   updatedAt DateTime @updatedAt
 }
 
+// ---------------------------------------------------------------------------
+// Waivers with in-app digital signing
+// ---------------------------------------------------------------------------
+
+enum WaiverStatus {
+  PENDING
+  COMPLETED
+  EXPIRED
+}
+
 model WaiverTemplate {
-  id                 String  @id @default(uuid())
-  name               String
-  description        String?
-  isRequired         Boolean @default(false)
-  isActive           Boolean @default(true)
-  docusealTemplateId String?
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  content     String  @db.Text // full waiver text shown at signing
+  version     Int     @default(1)
+  isRequired  Boolean @default(false)
+  isActive    Boolean @default(true)
 
   memberWaivers MemberWaiver[]
 
@@ -354,22 +389,32 @@ model WaiverTemplate {
 }
 
 model MemberWaiver {
-  id                   String         @id @default(uuid())
-  memberId             String
-  member               Member         @relation(fields: [memberId], references: [id])
-  waiverId             String
-  waiver               WaiverTemplate @relation(fields: [waiverId], references: [id])
-  status               WaiverStatus   @default(PENDING)
-  completedDate        DateTime?
-  documentUrl          String?
-  docusealSubmissionId String?
+  id            String         @id @default(uuid())
+  memberId      String
+  member        Member         @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  waiverId      String
+  waiver        WaiverTemplate @relation(fields: [waiverId], references: [id], onDelete: Cascade)
+  status        WaiverStatus   @default(PENDING)
+  completedDate DateTime?
+
+  // Digital signature capture
+  signedName      String?
+  signatureData   String? @db.Text // data-URL PNG of the drawn signature
+  signedVersion   Int?
+  signedIpAddress String?
+  documentUrl     String? // externally uploaded/scanned document, if any
 
   expirationDate DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([memberId, waiverId])
 }
+
+// ---------------------------------------------------------------------------
+// System settings & guests
+// ---------------------------------------------------------------------------
 
 model SystemSetting {
   id          String   @id @default(uuid())
@@ -378,30 +423,10 @@ model SystemSetting {
   category    String
   label       String
   description String?
-  fieldType   String   @default("text")
+  fieldType   String   @default("text") // text | number | boolean | select | email | json
   options     Json?
   updatedAt   DateTime @updatedAt
   updatedBy   String?
-}
-
-model DashboardConfig {
-  id        String   @id @default(uuid())
-  memberId  String   @unique
-  member    Member   @relation(fields: [memberId], references: [id])
-  widgets   Json
-  updatedAt DateTime @updatedAt
-}
-
-model AccessLog {
-  id          String     @id @default(uuid())
-  memberId    String?
-  member      Member?    @relation(fields: [memberId], references: [id])
-  keyId       String?
-  key         Key?       @relation(fields: [keyId], references: [id])
-  accessPoint String?
-  accessType  AccessType
-  timestamp   DateTime   @default(now())
-  rawData     Json?
 }
 
 model Guest {
@@ -409,7 +434,7 @@ model Guest {
   name         String
   email        String?
   hostMemberId String?
-  host         Member?  @relation(fields: [hostMemberId], references: [id])
+  host         Member?  @relation(fields: [hostMemberId], references: [id], onDelete: SetNull)
   visitDate    DateTime
   purpose      String?
   waiverSigned Boolean  @default(false)

@@ -1,71 +1,98 @@
-import { Suspense } from "react";
-import { Badge } from "@/components/ui/badge";
-import { EquipmentListTable } from "@/components/admin/equipment-list-table";
-import { Pagination } from "@/components/admin/pagination";
-import { AddEquipmentDialog } from "@/components/admin/add-equipment-dialog";
-import { getEquipment } from "./actions";
+import Link from "next/link";
+import type { Prisma, EquipmentStatus } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+import { requirePermission, hasPermission } from "@/lib/permissions";
+import { enumLabel } from "@/lib/utils";
+import { PageHeader, EmptyState } from "@/components/ui/bits";
+import { Card } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/badge";
+import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
+import { AddEquipmentButton } from "./add-equipment-dialog";
+import { EquipmentFilters } from "./equipment-filters";
+
+export const metadata = { title: "Equipment" };
+export const dynamic = "force-dynamic";
 
 export default async function EquipmentPage({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams: Promise<{ q?: string; status?: string; category?: string }>;
 }) {
-  const params = await searchParams;
+  const user = await requirePermission("equipment.view");
+  const sp = await searchParams;
 
-  const search = typeof params.search === "string" ? params.search : undefined;
-  const status = typeof params.status === "string" ? params.status : undefined;
-  const category =
-    typeof params.category === "string" ? params.category : undefined;
-  const requiresCert =
-    typeof params.requiresCert === "string"
-      ? (params.requiresCert as "true" | "false")
-      : undefined;
-  const sortField = (
-    ["name", "status", "category", "location"].includes(
-      params.sortField as string
-    )
-      ? params.sortField
-      : "name"
-  ) as "name" | "status" | "category" | "location";
-  const sortDirection = params.sortDirection === "desc" ? "desc" : "asc";
-  const page = Math.max(1, parseInt(params.page as string) || 1);
-  const pageSize = [25, 50, 100].includes(parseInt(params.pageSize as string))
-    ? parseInt(params.pageSize as string)
-    : 25;
+  const where: Prisma.EquipmentWhereInput = {};
+  if (sp.q) where.name = { contains: sp.q, mode: "insensitive" };
+  if (sp.status) where.status = sp.status as EquipmentStatus;
+  if (sp.category) where.category = sp.category;
 
-  const { equipment, totalCount, categories } = await getEquipment({
-    search,
-    status,
-    category,
-    requiresCert,
-    sortField,
-    sortDirection,
-    page,
-    pageSize,
-  });
+  const [items, categories] = await Promise.all([
+    prisma.equipment.findMany({
+      where,
+      orderBy: { name: "asc" },
+      include: { _count: { select: { certifications: true } } },
+    }),
+    prisma.equipment.findMany({
+      where: { category: { not: null } },
+      distinct: ["category"],
+      select: { category: true },
+    }),
+  ]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight">Equipment</h1>
-          <Badge
-            variant="secondary"
-            className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-          >
-            {totalCount} total
-          </Badge>
-        </div>
-        <AddEquipmentDialog />
-      </div>
-
-      <Suspense fallback={null}>
-        <EquipmentListTable equipment={equipment} categories={categories} />
-      </Suspense>
-
-      <Suspense fallback={null}>
-        <Pagination totalCount={totalCount} page={page} pageSize={pageSize} />
-      </Suspense>
-    </div>
+    <>
+      <PageHeader
+        title="EQUIPMENT"
+        meta={`${items.length} item${items.length === 1 ? "" : "s"}`}
+        actions={hasPermission(user, "equipment.manage") ? <AddEquipmentButton /> : undefined}
+      />
+      <Card>
+        <EquipmentFilters
+          categories={categories.map((c) => c.category!).filter(Boolean)}
+        />
+        {items.length === 0 ? (
+          <EmptyState
+            title="No equipment yet"
+            hint="Add your machines to track status, maintenance, and member certifications."
+          />
+        ) : (
+          <Table>
+            <THead>
+              <TR>
+                <TH>Name</TH>
+                <TH>Category</TH>
+                <TH>Location</TH>
+                <TH>Status</TH>
+                <TH className="text-center">Cert required</TH>
+                <TH className="text-center">Certified members</TH>
+              </TR>
+            </THead>
+            <TBody>
+              {items.map((e) => (
+                <TR key={e.id}>
+                  <TD>
+                    <Link
+                      href={`/admin/equipment/${e.id}`}
+                      className="font-medium text-brand-blue hover:underline"
+                    >
+                      {e.name}
+                    </Link>
+                  </TD>
+                  <TD className="text-muted-foreground">{e.category ?? "—"}</TD>
+                  <TD className="text-muted-foreground">{e.location ?? "—"}</TD>
+                  <TD>
+                    <StatusBadge status={e.status} />
+                  </TD>
+                  <TD className="text-center">
+                    {e.requiresCertification ? enumLabel("YES") : "—"}
+                  </TD>
+                  <TD className="text-center tabular-nums">{e._count.certifications}</TD>
+                </TR>
+              ))}
+            </TBody>
+          </Table>
+        )}
+      </Card>
+    </>
   );
 }

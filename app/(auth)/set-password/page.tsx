@@ -1,23 +1,54 @@
-import { SetPasswordForm } from "@/components/auth/set-password-form";
+import Link from "next/link";
+import { prisma } from "@/lib/prisma";
+import { SetPasswordForm } from "./set-password-form";
 
-export const metadata = {
-  title: "Set Password — Cubit",
-};
+export const metadata = { title: "Set your password" };
 
 export default async function SetPasswordPage({
   searchParams,
 }: {
-  searchParams: Promise<{ memberId?: string }>;
+  searchParams: Promise<{ token?: string }>;
 }) {
-  const { memberId } = await searchParams;
+  const { token } = await searchParams;
 
-  if (!memberId) {
+  const member = token
+    ? await prisma.member.findFirst({
+        where: { magicLinkToken: token, magicLinkExpires: { gt: new Date() } },
+        select: { firstName: true },
+      })
+    : null;
+
+  if (!member || !token) {
     return (
-      <p className="text-center text-sm text-muted-foreground">
-        Invalid link. Please use the link from your email.
-      </p>
+      <div className="space-y-4 text-center">
+        <h1 className="font-display text-lg font-bold text-brand-red">
+          LINK EXPIRED
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          This invitation link is invalid or has expired. Ask a staff member to
+          send you a new one.
+        </p>
+        <Link
+          href="/login"
+          className="inline-block text-sm font-medium text-brand-blue hover:underline"
+        >
+          Back to sign in
+        </Link>
+      </div>
     );
   }
 
-  return <SetPasswordForm memberId={memberId} />;
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-display text-lg font-bold text-brand-blue">
+          WELCOME, {member.firstName.toUpperCase()}!
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Choose a password to finish setting up your account.
+        </p>
+      </div>
+      <SetPasswordForm token={token} />
+    </div>
+  );
 }

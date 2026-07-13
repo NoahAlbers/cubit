@@ -1,301 +1,241 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 const prisma = new PrismaClient();
 
-// ─── Permissions ────────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Permissions
+// ---------------------------------------------------------------------------
 
-const permissions = [
-  // Members
-  { key: "members.view", category: "members", name: "View members", description: "View member list and profiles" },
-  { key: "members.create", category: "members", name: "Create members", description: "Create new member records" },
-  { key: "members.edit", category: "members", name: "Edit members", description: "Edit member profiles and status" },
-  { key: "members.delete", category: "members", name: "Delete members", description: "Delete/archive member records" },
-  { key: "members.notes.view", category: "members", name: "View member notes", description: "View staff notes on members" },
-  { key: "members.notes.create", category: "members", name: "Create member notes", description: "Add staff notes to members" },
-  { key: "members.invite", category: "members", name: "Invite members", description: "Send magic link invitations" },
-
-  // Plans
-  { key: "plans.view", category: "plans", name: "View plans", description: "View plans" },
-  { key: "plans.manage", category: "plans", name: "Manage plans", description: "Create, edit, deactivate plans" },
-  { key: "plans.assign", category: "plans", name: "Assign plans", description: "Assign/modify member plan assignments" },
-
-  // Keys
-  { key: "keys.view", category: "keys", name: "View keys", description: "View key assignments" },
-  { key: "keys.manage", category: "keys", name: "Manage keys", description: "Add, remove, activate, deactivate keys" },
-
-  // Transactions
-  { key: "transactions.view", category: "transactions", name: "View transactions", description: "View transaction history" },
-  { key: "transactions.create", category: "transactions", name: "Create transactions", description: "Manually create transactions" },
-  { key: "transactions.edit", category: "transactions", name: "Edit transactions", description: "Edit existing transactions" },
-  { key: "transactions.delete", category: "transactions", name: "Delete transactions", description: "Delete transactions" },
-
-  // Equipment
-  { key: "equipment.view", category: "equipment", name: "View equipment", description: "View equipment inventory" },
-  { key: "equipment.manage", category: "equipment", name: "Manage equipment", description: "Add, edit, retire equipment" },
-  { key: "equipment.certify", category: "equipment", name: "Certify members", description: "Grant/revoke member certifications" },
-  { key: "equipment.maintenance", category: "equipment", name: "Log maintenance", description: "Log maintenance entries" },
-
-  // Waivers
-  { key: "waivers.view", category: "waivers", name: "View waivers", description: "View waiver status" },
-  { key: "waivers.manage", category: "waivers", name: "Manage waivers", description: "Create/edit waiver templates, mark complete" },
-
-  // Dashboard
-  { key: "dashboard.view", category: "dashboard", name: "View dashboard", description: "View admin dashboard" },
-  { key: "dashboard.configure", category: "dashboard", name: "Configure dashboard", description: "Customize dashboard widget layout" },
-
-  // Reports
-  { key: "reports.view", category: "reports", name: "View reports", description: "View reports" },
-  { key: "reports.export", category: "reports", name: "Export reports", description: "Export reports (CSV, PDF)" },
-
-  // Notifications
-  { key: "notifications.send", category: "notifications", name: "Send notifications", description: "Send bulk notifications/announcements" },
-  { key: "notifications.manage", category: "notifications", name: "Manage notifications", description: "Manage notification templates and settings" },
-
-  // Settings
-  { key: "settings.view", category: "settings", name: "View settings", description: "View system settings" },
-  { key: "settings.manage", category: "settings", name: "Manage settings", description: "Modify system settings" },
-
-  // Roles
-  { key: "roles.view", category: "roles", name: "View roles", description: "View roles and permissions" },
-  { key: "roles.manage", category: "roles", name: "Manage roles", description: "Create, edit, delete roles and assign permissions" },
-
-  // Bulk Actions
-  { key: "bulk_actions.execute", category: "bulk_actions", name: "Execute bulk actions", description: "Run bulk operations" },
-
-  // PayPal
-  { key: "paypal.view", category: "paypal", name: "View PayPal", description: "View PayPal sync status and unmatched transactions" },
-  { key: "paypal.manage", category: "paypal", name: "Manage PayPal", description: "Link unmatched transactions, configure PayPal settings" },
+const PERMISSIONS: { key: string; category: string; name: string }[] = [
+  { key: "members.view", category: "Members", name: "View members" },
+  { key: "members.create", category: "Members", name: "Create members" },
+  { key: "members.edit", category: "Members", name: "Edit members" },
+  { key: "members.delete", category: "Members", name: "Delete members" },
+  { key: "members.notes.view", category: "Members", name: "View staff notes" },
+  { key: "members.notes.create", category: "Members", name: "Add staff notes" },
+  { key: "members.invite", category: "Members", name: "Send invitations" },
+  { key: "plans.view", category: "Plans", name: "View plans" },
+  { key: "plans.manage", category: "Plans", name: "Manage plans" },
+  { key: "plans.assign", category: "Plans", name: "Assign member plans" },
+  { key: "keys.view", category: "Keys & Access", name: "View keys" },
+  { key: "keys.manage", category: "Keys & Access", name: "Manage keys" },
+  { key: "access.view", category: "Keys & Access", name: "View access logs" },
+  { key: "transactions.view", category: "Transactions", name: "View transactions" },
+  { key: "transactions.create", category: "Transactions", name: "Create transactions" },
+  { key: "transactions.edit", category: "Transactions", name: "Edit transactions" },
+  { key: "transactions.delete", category: "Transactions", name: "Delete transactions" },
+  { key: "equipment.view", category: "Equipment", name: "View equipment" },
+  { key: "equipment.manage", category: "Equipment", name: "Manage equipment" },
+  { key: "equipment.certify", category: "Equipment", name: "Grant certifications" },
+  { key: "equipment.maintenance", category: "Equipment", name: "Log maintenance" },
+  { key: "waivers.view", category: "Waivers", name: "View waivers" },
+  { key: "waivers.manage", category: "Waivers", name: "Manage waiver templates" },
+  { key: "dashboard.view", category: "Dashboard & Reports", name: "View dashboard" },
+  { key: "reports.view", category: "Dashboard & Reports", name: "View reports" },
+  { key: "reports.export", category: "Dashboard & Reports", name: "Export reports" },
+  { key: "notifications.send", category: "Notifications", name: "Send announcements" },
+  { key: "notifications.manage", category: "Notifications", name: "Manage notifications" },
+  { key: "settings.view", category: "Settings", name: "View settings" },
+  { key: "settings.manage", category: "Settings", name: "Manage settings" },
+  { key: "roles.view", category: "Roles", name: "View roles" },
+  { key: "roles.manage", category: "Roles", name: "Manage roles" },
+  { key: "bulk_actions.execute", category: "Bulk Actions", name: "Run bulk operations" },
 ];
 
-// ─── Plans ──────────────────────────────────────────────────────────────────
-
-const plans = [
-  { name: "Standard Membership", monthlyCost: 60.00, keysIncluded: 1, eligibleMembershipTypes: ["STANDARD", "SPONSORSHIP"] },
-  { name: "Student Membership (18-28)", monthlyCost: 30.00, keysIncluded: 1, eligibleMembershipTypes: ["STUDENT"] },
-  { name: "Standard + 1 Key", monthlyCost: 90.00, keysIncluded: 2, eligibleMembershipTypes: ["STANDARD"] },
-  { name: "Standard + 2 Keys", monthlyCost: 120.00, keysIncluded: 3, eligibleMembershipTypes: ["STANDARD"] },
-  { name: "Standard + 3 Keys", monthlyCost: 150.00, keysIncluded: 4, eligibleMembershipTypes: ["STANDARD"] },
-  { name: "Scholarship", monthlyCost: 0.00, keysIncluded: 1, eligibleMembershipTypes: ["SCHOLARSHIP"] },
-];
-
-// ─── System Settings ────────────────────────────────────────────────────────
-
-const systemSettings = [
-  // Organization
-  { key: "org.name", value: "Melbourne Makerspace", category: "organization", label: "Organization Name", fieldType: "text" },
-  { key: "org.email", value: "admin@melbournemakerspace.org", category: "organization", label: "Organization Email", fieldType: "email" },
-  { key: "org.website", value: "https://melbournemakerspace.org", category: "organization", label: "Website", fieldType: "text" },
-  { key: "org.address", value: "", category: "organization", label: "Address", fieldType: "text" },
-  { key: "org.phone", value: "", category: "organization", label: "Phone", fieldType: "text" },
-  { key: "org.logo_url", value: "", category: "organization", label: "Logo URL", fieldType: "text" },
-  { key: "org.timezone", value: "America/New_York", category: "organization", label: "Timezone", fieldType: "select", options: [{ label: "Eastern (America/New_York)", value: "America/New_York" }, { label: "Central (America/Chicago)", value: "America/Chicago" }, { label: "Mountain (America/Denver)", value: "America/Denver" }, { label: "Pacific (America/Los_Angeles)", value: "America/Los_Angeles" }] },
-
-  // Membership
-  { key: "membership.min_age", value: 18, category: "membership", label: "Minimum Age", fieldType: "number" },
-  { key: "membership.student_min_age", value: 18, category: "membership", label: "Student Min Age", fieldType: "number" },
-  { key: "membership.student_max_age", value: 28, category: "membership", label: "Student Max Age", fieldType: "number" },
-  { key: "membership.grace_period_days", value: 7, category: "membership", label: "Grace Period (days)", description: "Days after failed payment before status changes to PAST_DUE", fieldType: "number" },
-  { key: "membership.suspension_days", value: 30, category: "membership", label: "Suspension Days", description: "Days in PAST_DUE before auto-suspension", fieldType: "number" },
-  { key: "membership.auto_deactivate_keys_on_suspend", value: true, category: "membership", label: "Auto-deactivate Keys on Suspend", fieldType: "boolean" },
-  { key: "membership.auto_reactivate_keys_on_payment", value: true, category: "membership", label: "Auto-reactivate Keys on Payment", fieldType: "boolean" },
-  { key: "membership.allow_self_registration", value: false, category: "membership", label: "Allow Self-Registration", description: "Phase 2: enable public signup", fieldType: "boolean" },
-
-  // Notifications
-  { key: "notifications.renewal_reminder_days", value: [7, 3], category: "notifications", label: "Renewal Reminder Days", description: "Days before expiration to send reminders", fieldType: "json" },
-  { key: "notifications.admin_overdue_digest_day", value: "monday", category: "notifications", label: "Overdue Digest Day", fieldType: "select", options: [{ label: "Monday", value: "monday" }, { label: "Tuesday", value: "tuesday" }, { label: "Wednesday", value: "wednesday" }, { label: "Thursday", value: "thursday" }, { label: "Friday", value: "friday" }] },
-  { key: "notifications.admin_alert_emails", value: ["admin@melbournemakerspace.org"], category: "notifications", label: "Admin Alert Emails", fieldType: "json" },
-  { key: "notifications.from_name", value: "Melbourne Makerspace", category: "notifications", label: "From Name", fieldType: "text" },
-  { key: "notifications.enabled", value: true, category: "notifications", label: "Notifications Enabled", fieldType: "boolean" },
-
-  // PayPal
-  { key: "paypal.sync_enabled", value: false, category: "paypal", label: "PayPal Sync Enabled", fieldType: "boolean" },
-  { key: "paypal.sync_interval_hours", value: 6, category: "paypal", label: "Sync Interval (hours)", fieldType: "number" },
-  { key: "paypal.auto_match_by_email", value: true, category: "paypal", label: "Auto-match by Email", fieldType: "boolean" },
-
-  // Dashboard
-  { key: "dashboard.default_widgets", value: ["active_members", "revenue_summary", "overdue_accounts", "expiring_plans", "recent_activity", "growth_chart"], category: "dashboard", label: "Default Dashboard Widgets", fieldType: "json" },
-];
-
-// ─── Admin-excluded permissions for the Admin role ──────────────────────────
-
-const adminExcludedPermissions = new Set([
+// Admin gets everything except role/settings management and deletes
+const ADMIN_EXCLUDED = new Set([
   "roles.manage",
   "settings.manage",
-  "bulk_actions.execute",
-  "paypal.manage",
+  "members.delete",
+  "transactions.delete",
 ]);
 
-// ─── Main seed function ─────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// System settings
+// ---------------------------------------------------------------------------
+
+function defaultSettings(rfidToken: string) {
+  return [
+    // Organization
+    { key: "org.name", value: "Melbourne Makerspace", category: "Organization", label: "Organization name", fieldType: "text" },
+    { key: "org.email", value: "admin@melbournemakerspace.org", category: "Organization", label: "Contact email", fieldType: "email" },
+    { key: "org.website", value: "https://melbournemakerspace.org", category: "Organization", label: "Website", fieldType: "text" },
+    { key: "org.address", value: "", category: "Organization", label: "Street address", fieldType: "text" },
+    { key: "org.phone", value: "", category: "Organization", label: "Phone", fieldType: "text" },
+    { key: "org.timezone", value: "America/New_York", category: "Organization", label: "Timezone", fieldType: "text" },
+    // Membership lifecycle
+    { key: "membership.grace_period_days", value: 7, category: "Membership", label: "Grace period (days)", description: "Days after a missed payment before status becomes Past Due.", fieldType: "number" },
+    { key: "membership.suspension_days", value: 30, category: "Membership", label: "Suspension threshold (days)", description: "Days in Past Due before automatic suspension.", fieldType: "number" },
+    { key: "membership.auto_deactivate_keys_on_suspend", value: true, category: "Membership", label: "Auto-deactivate keys on suspension", fieldType: "boolean" },
+    { key: "membership.auto_reactivate_keys_on_payment", value: true, category: "Membership", label: "Auto-reactivate keys when active again", fieldType: "boolean" },
+    { key: "membership.hold_keys_active", value: true, category: "Membership", label: "Keys stay active on Hold", fieldType: "boolean" },
+    // Notifications
+    { key: "notifications.enabled", value: true, category: "Notifications", label: "Email notifications enabled", fieldType: "boolean" },
+    { key: "notifications.renewal_reminder_days", value: [7, 3], category: "Notifications", label: "Renewal reminder days", description: "Days before plan end date to send reminders.", fieldType: "json" },
+    { key: "notifications.admin_alert_emails", value: ["admin@melbournemakerspace.org"], category: "Notifications", label: "Admin alert emails", fieldType: "json" },
+    { key: "notifications.overdue_digest_day", value: "monday", category: "Notifications", label: "Overdue digest day", fieldType: "select", options: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] },
+    { key: "notifications.from_name", value: "Melbourne Makerspace", category: "Notifications", label: "From name", fieldType: "text" },
+    // RFID / access control
+    { key: "rfid.api_token", value: rfidToken, category: "RFID Access", label: "RFID API token", description: "Bearer token the RFIDLock reader uses to fetch the whitelist and post access events.", fieldType: "text" },
+    { key: "rfid.allowed_statuses", value: ["ACTIVE", "HOLD"], category: "RFID Access", label: "Statuses allowed entry", description: "Member statuses whose active keys appear on the door whitelist.", fieldType: "json" },
+    { key: "rfid.require_waivers", value: false, category: "RFID Access", label: "Require completed waivers for entry", description: "Exclude members missing a required waiver from the whitelist.", fieldType: "boolean" },
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// Default liability waiver
+// ---------------------------------------------------------------------------
+
+const LIABILITY_WAIVER = `RELEASE OF LIABILITY, WAIVER OF CLAIMS, AND ASSUMPTION OF RISK AGREEMENT
+
+In consideration of being permitted to enter and use the facilities, tools, and equipment of Melbourne Makerspace ("the Makerspace"), I agree as follows:
+
+1. ASSUMPTION OF RISK. I understand that the use of tools, machinery, and equipment — including but not limited to woodworking tools, metalworking tools, laser cutters, 3D printers, CNC machines, and electrical equipment — involves inherent risks of serious injury, including permanent disability and death. I voluntarily assume all risks associated with my presence at and use of the Makerspace.
+
+2. SAFETY RULES. I agree to follow all posted safety rules, complete required equipment certifications before operating restricted equipment, use appropriate personal protective equipment, and follow the directions of Makerspace staff and volunteers.
+
+3. RELEASE AND WAIVER. To the fullest extent permitted by law, I release, waive, and discharge Melbourne Makerspace, its directors, officers, volunteers, members, and agents from any and all liability, claims, demands, or causes of action arising out of or related to any loss, damage, or injury that may be sustained by me or my property while at the Makerspace.
+
+4. INDEMNIFICATION. I agree to indemnify and hold harmless the Makerspace from any loss, liability, damage, or cost that may arise from my presence at or use of the facilities.
+
+5. MEDICAL TREATMENT. I consent to receive medical treatment deemed necessary if I am injured while at the Makerspace, and I accept responsibility for the costs of such treatment.
+
+6. ACKNOWLEDGMENT. I have read this agreement, fully understand its terms, and understand that I am giving up substantial rights by signing it. I sign it freely and voluntarily.`;
+
+// ---------------------------------------------------------------------------
 
 async function main() {
-  console.log("Seeding database...");
+  console.log("Seeding Cubit database...");
 
-  // 1. Upsert all permissions
-  console.log("Seeding permissions...");
-  const permissionRecords = await Promise.all(
-    permissions.map((p) =>
-      prisma.permission.upsert({
-        where: { key: p.key },
-        update: { category: p.category, name: p.name, description: p.description },
-        create: p,
-      })
-    )
-  );
-  console.log(`  ${permissionRecords.length} permissions seeded.`);
+  // Permissions
+  for (const p of PERMISSIONS) {
+    await prisma.permission.upsert({
+      where: { key: p.key },
+      update: { category: p.category, name: p.name },
+      create: p,
+    });
+  }
+  console.log(`  ${PERMISSIONS.length} permissions`);
 
-  // 2. Upsert roles
-  console.log("Seeding roles...");
-
-  const superAdminRole = await prisma.role.upsert({
+  // Roles
+  const superAdmin = await prisma.role.upsert({
     where: { name: "Super Admin" },
-    update: { description: "Full system access", isSystem: true },
+    update: {},
     create: { name: "Super Admin", description: "Full system access", isSystem: true },
   });
-
-  const adminRole = await prisma.role.upsert({
+  const admin = await prisma.role.upsert({
     where: { name: "Admin" },
-    update: { description: "Administrative access", isSystem: true },
-    create: { name: "Admin", description: "Administrative access", isSystem: true },
+    update: {},
+    create: { name: "Admin", description: "Day-to-day management access", isSystem: true },
   });
-
   const memberRole = await prisma.role.upsert({
     where: { name: "Member" },
-    update: { description: "Standard member access", isSystem: true },
-    create: { name: "Member", description: "Standard member access", isSystem: true },
+    update: {},
+    create: { name: "Member", description: "Self-service portal access", isSystem: true },
   });
 
-  console.log(`  Roles seeded: ${superAdminRole.name}, ${adminRole.name}, ${memberRole.name}`);
-
-  // 3. Assign permissions to roles
-  console.log("Assigning permissions to roles...");
-
-  // Super Admin gets ALL permissions
-  for (const perm of permissionRecords) {
+  const allPerms = await prisma.permission.findMany();
+  for (const perm of allPerms) {
     await prisma.rolePermission.upsert({
-      where: { roleId_permissionId: { roleId: superAdminRole.id, permissionId: perm.id } },
+      where: { roleId_permissionId: { roleId: superAdmin.id, permissionId: perm.id } },
       update: {},
-      create: { roleId: superAdminRole.id, permissionId: perm.id },
+      create: { roleId: superAdmin.id, permissionId: perm.id },
     });
-  }
-
-  // Admin gets all permissions except excluded ones
-  const adminPermissions = permissionRecords.filter((p) => !adminExcludedPermissions.has(p.key));
-  for (const perm of adminPermissions) {
-    await prisma.rolePermission.upsert({
-      where: { roleId_permissionId: { roleId: adminRole.id, permissionId: perm.id } },
-      update: {},
-      create: { roleId: adminRole.id, permissionId: perm.id },
-    });
-  }
-
-  // Member role gets NO permissions (portal access only)
-
-  console.log(`  Super Admin: ${permissionRecords.length} permissions`);
-  console.log(`  Admin: ${adminPermissions.length} permissions`);
-  console.log(`  Member: 0 permissions`);
-
-  // 4. Seed plans (Plan has no unique on name, so use findFirst + create/update)
-  console.log("Seeding plans...");
-  for (const plan of plans) {
-    const existing = await prisma.plan.findFirst({ where: { name: plan.name } });
-    if (existing) {
-      await prisma.plan.update({
-        where: { id: existing.id },
-        data: {
-          monthlyCost: plan.monthlyCost,
-          keysIncluded: plan.keysIncluded,
-          eligibleMembershipTypes: plan.eligibleMembershipTypes,
-          isActive: true,
-        },
-      });
-    } else {
-      await prisma.plan.create({
-        data: {
-          name: plan.name,
-          monthlyCost: plan.monthlyCost,
-          keysIncluded: plan.keysIncluded,
-          eligibleMembershipTypes: plan.eligibleMembershipTypes,
-          isActive: true,
-        },
+    if (!ADMIN_EXCLUDED.has(perm.key)) {
+      await prisma.rolePermission.upsert({
+        where: { roleId_permissionId: { roleId: admin.id, permissionId: perm.id } },
+        update: {},
+        create: { roleId: admin.id, permissionId: perm.id },
       });
     }
   }
-  console.log(`  ${plans.length} plans seeded.`);
+  console.log("  roles: Super Admin, Admin, Member");
 
-  // 5. Upsert system settings
-  console.log("Seeding system settings...");
-  for (const setting of systemSettings) {
-    const data = {
-      value: setting.value as any,
-      category: setting.category,
-      label: setting.label,
-      fieldType: setting.fieldType,
-      ...("description" in setting && { description: (setting as any).description as string }),
-      ...("options" in setting && { options: (setting as any).options as any }),
-    };
+  // Plans
+  const plans: [string, number, number, ("STANDARD" | "STUDENT" | "SCHOLARSHIP" | "SPONSORSHIP")[]][] = [
+    ["Standard Membership", 60, 1, ["STANDARD", "SPONSORSHIP"]],
+    ["Student Membership (18-28)", 30, 1, ["STUDENT"]],
+    ["Standard + 1 Key", 90, 2, ["STANDARD"]],
+    ["Standard + 2 Keys", 120, 3, ["STANDARD"]],
+    ["Standard + 3 Keys", 150, 4, ["STANDARD"]],
+    ["Scholarship", 0, 1, ["SCHOLARSHIP"]],
+  ];
+  for (const [name, cost, keys, types] of plans) {
+    const existing = await prisma.plan.findFirst({ where: { name } });
+    if (!existing) {
+      await prisma.plan.create({
+        data: { name, monthlyCost: cost, keysIncluded: keys, eligibleMembershipTypes: types },
+      });
+    }
+  }
+  console.log(`  ${plans.length} plans`);
 
+  // System settings (only create; never clobber admin-edited values)
+  const rfidToken = crypto.randomBytes(24).toString("hex");
+  for (const s of defaultSettings(rfidToken)) {
     await prisma.systemSetting.upsert({
-      where: { key: setting.key },
-      update: data,
-      create: { key: setting.key, ...data },
+      where: { key: s.key },
+      update: { label: s.label, category: s.category, description: s.description ?? null, fieldType: s.fieldType, options: s.options ?? undefined },
+      create: {
+        key: s.key,
+        value: s.value as object,
+        category: s.category,
+        label: s.label,
+        description: s.description ?? null,
+        fieldType: s.fieldType,
+        options: s.options ?? undefined,
+      },
     });
   }
-  console.log(`  ${systemSettings.length} system settings seeded.`);
+  console.log("  system settings");
 
-  // 6. Create Super Admin account
-  console.log("Seeding super admin account...");
-  const adminEmail = process.env.ADMIN_EMAIL || "admin@melbournemakerspace.org";
+  // Default required waiver
+  const existingWaiver = await prisma.waiverTemplate.findFirst({
+    where: { name: "General Liability Waiver" },
+  });
+  if (!existingWaiver) {
+    await prisma.waiverTemplate.create({
+      data: {
+        name: "General Liability Waiver",
+        description: "Required release of liability and assumption of risk for all members.",
+        content: LIABILITY_WAIVER,
+        isRequired: true,
+      },
+    });
+  }
+  console.log("  default liability waiver");
+
+  // Super admin accounts
   const passwordHash = await bcrypt.hash("changeme123", 10);
+  const admins = [
+    { email: process.env.ADMIN_EMAIL || "admin@melbournemakerspace.org", firstName: "Makerspace", lastName: "Admin" },
+    { email: "albersnoah@gmail.com", firstName: "Noah", lastName: "Albers" },
+  ];
+  for (const a of admins) {
+    await prisma.member.upsert({
+      where: { email: a.email },
+      update: { roleId: superAdmin.id, status: "ACTIVE" },
+      create: {
+        ...a,
+        passwordHash,
+        roleId: superAdmin.id,
+        status: "ACTIVE",
+        joinDate: new Date(),
+      },
+    });
+    console.log(`  super admin: ${a.email}`);
+  }
 
-  await prisma.member.upsert({
-    where: { email: adminEmail },
-    update: {
-      firstName: "Super",
-      lastName: "Admin",
-      passwordHash,
-      roleId: superAdminRole.id,
-      status: "ACTIVE",
-    },
-    create: {
-      email: adminEmail,
-      firstName: "Super",
-      lastName: "Admin",
-      passwordHash,
-      roleId: superAdminRole.id,
-      status: "ACTIVE",
-      joinDate: new Date(),
-    },
-  });
-  console.log(`  Super admin account seeded: ${adminEmail}`);
+  // Ensure memberRole is referenced so linters don't complain
+  void memberRole;
 
-  const noahEmail = "albersnoah@gmail.com";
-  await prisma.member.upsert({
-    where: { email: noahEmail },
-    update: {
-      passwordHash,
-      roleId: superAdminRole.id,
-      status: "ACTIVE",
-    },
-    create: {
-      email: noahEmail,
-      firstName: "Noah",
-      lastName: "Albers",
-      passwordHash,
-      roleId: superAdminRole.id,
-      status: "ACTIVE",
-      joinDate: new Date(),
-    },
-  });
-  console.log(`  Super admin account seeded: ${noahEmail}`);
-
-  console.log("Seeding complete!");
+  console.log("Seed complete.");
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect();
-  })
+  .then(() => prisma.$disconnect())
   .catch(async (e) => {
     console.error("Seed failed:", e);
     await prisma.$disconnect();

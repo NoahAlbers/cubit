@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cubit
 
-## Getting Started
+Member management for [Melbourne Makerspace](https://melbournemakerspace.org) (Melbourne, FL). Replaces the legacy [Tonic](https://github.com/MelbourneMakerSpace/Tonic) system.
 
-First, run the development server:
+**What it does**
+
+- **Members** — profiles, statuses with a full lifecycle (Prospective → Active → Hold/Past Due/Suspended → Canceled/Alumni), plans, payment history, staff notes, emergency contacts
+- **Automation** — payments auto-reactivate overdue members and their keys; past-due members auto-suspend after a configurable grace window; renewal/waiver reminders and a weekly overdue digest go out via a daily cron
+- **RFID door access** — drop-in compatible with [RFIDLock](https://github.com/MelbourneMakerSpace/RFIDLock): serves the key whitelist in the legacy Seltzer JSON format and ingests scan events into an access log
+- **Digital waivers** — versioned waiver templates that members read and sign in the portal (typed name + drawn signature), with a compliance dashboard for staff
+- **Equipment** — inventory with status, member certifications, and maintenance logs
+- **Roles & permissions** — dynamic role builder with granular permissions (create "Front Desk", "Treasurer", etc.)
+- **Member portal** — mobile-first self-service: status, plan, payments, certifications, waivers, notification preferences
+- **Reports** — CSV exports for roster, transactions, overdue, equipment, and waiver compliance
+
+**Stack**: Next.js (App Router) · TypeScript · PostgreSQL · Prisma · NextAuth · Tailwind CSS · Resend · deployed on Vercel
+
+## Getting started
 
 ```bash
+npm install
+cp .env.example .env   # fill in DATABASE_URL, NEXTAUTH_SECRET at minimum
+npx prisma migrate deploy
+npx prisma db seed
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The seed creates the roles/permissions, default plans, system settings, a required liability waiver, and super-admin accounts (default password `changeme123` — change it immediately).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## RFIDLock integration
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+On the Raspberry Pi, point the whitelist updater at:
 
-## Learn More
+```
+GET https://<your-app>/api/rfid/whitelist?token=<API_TOKEN>
+```
 
-To learn more about Next.js, take a look at the following resources:
+Optionally report scans for the access log:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+POST https://<your-app>/api/rfid/access-log
+Authorization: Bearer <API_TOKEN>
+{"serial": "8045AB453449", "accessPoint": "front-door", "granted": true}
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The API token lives in **Settings → RFID access**, along with which member statuses are allowed entry and whether completed waivers are required for the whitelist.
 
-## Deploy on Vercel
+## Automation cron
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`vercel.json` schedules `GET /api/cron/daily` (noon UTC) with `CRON_SECRET` auth. It handles overdue suspensions, renewal reminders, waiver reminders, and the weekly overdue digest.

@@ -1,13 +1,24 @@
-import { getPermissions } from "../actions";
-import { RoleForm } from "@/components/admin/role-form";
+import { prisma } from "@/lib/prisma";
+import { requirePermission } from "@/lib/permissions";
+import { RoleForm } from "../role-form";
+
+export const dynamic = "force-dynamic";
 
 export default async function NewRolePage() {
-  const permissionGroups = await getPermissions();
+  await requirePermission("roles.manage");
+  const permissions = await prisma.permission.findMany({
+    orderBy: [{ category: "asc" }, { name: "asc" }],
+  });
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-lg font-semibold">Create Role</h2>
-      <RoleForm mode="create" permissionGroups={permissionGroups} />
-    </div>
+    <RoleForm
+      defaults={{ name: "", description: "", permissionKeys: [] }}
+      permissions={permissions.map((p) => ({
+        key: p.key,
+        category: p.category,
+        name: p.name,
+      }))}
+      canManage
+    />
   );
 }

@@ -9,85 +9,49 @@ export type AuthUser = {
   name?: string | null;
 };
 
-/**
- * Get the current authenticated user from the session.
- * Returns null if not authenticated.
- */
 export async function getCurrentUser(): Promise<AuthUser | null> {
   const session = await auth();
   if (!session?.user) return null;
   return {
     id: session.user.id,
     role: session.user.role,
-    permissions: session.user.permissions,
+    permissions: session.user.permissions ?? [],
     email: session.user.email,
     name: session.user.name,
   };
 }
 
+export function hasPermission(user: AuthUser, permission: string): boolean {
+  if (user.role === "Super Admin") return true;
+  return user.permissions.includes(permission);
+}
+
 /**
- * Require authentication and specific permission(s).
- * Throws/redirects if not authorized.
- * Use in server actions and server components.
+ * Require authentication + specific permission(s).
+ * Redirects to /login when unauthenticated; throws on missing permission.
+ * Use in server components, server actions, and route handlers.
  */
 export async function requirePermission(
   permission: string | string[]
 ): Promise<AuthUser> {
   const user = await getCurrentUser();
-  if (!user) {
-    redirect("/login");
-  }
-
-  // Super Admin always has all permissions
-  if (user.role === "Super Admin") {
-    return user;
-  }
+  if (!user) redirect("/login");
 
   const required = Array.isArray(permission) ? permission : [permission];
-  const hasAll = required.every((p) => user.permissions.includes(p));
-
-  if (!hasAll) {
-    throw new Error("Forbidden: insufficient permissions");
+  if (!required.every((p) => hasPermission(user, p))) {
+    throw new Error("You don't have permission to do that.");
   }
-
   return user;
 }
 
-/**
- * Require authentication only (any role).
- */
+/** Require any authenticated user. */
 export async function requireAuth(): Promise<AuthUser> {
   const user = await getCurrentUser();
-  if (!user) {
-    redirect("/login");
-  }
+  if (!user) redirect("/login");
   return user;
 }
 
-/**
- * Pure boolean check — does the user have the required permission?
- */
-export function hasPermission(
-  permissions: string[],
-  required: string
-): boolean {
-  return permissions.includes(required);
-}
-
-/**
- * Check if user is Super Admin.
- */
-export function isSuperAdmin(user: AuthUser): boolean {
-  return user.role === "Super Admin";
-}
-
-/**
- * Check if a resource belongs to the current user.
- * Used for member self-service routes.
- */
-export function isOwnResource(
-  userId: string,
-  resourceOwnerId: string
-): boolean {
-  return userId === resourceOwnerId;
+/** Landing route for a user based on their role. */
+export function homeFor(role: string) {
+  return role === "Member" ? "/member/dashboard" : "/admin/dashboard";
 }

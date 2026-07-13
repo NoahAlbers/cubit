@@ -1,145 +1,98 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requirePermission } from "@/lib/permissions";
-import {
-  equipmentSearchSchema,
-  createEquipmentSchema,
-  type EquipmentSearchInput,
-} from "@/lib/validations/equipment";
-import { revalidatePath } from "next/cache";
+import { equipmentSchema } from "@/lib/validations";
 
-export async function getEquipment(params: EquipmentSearchInput) {
-  await requirePermission("equipment.view");
+export type ActionState = { error?: string; ok?: boolean };
 
-  const parsed = equipmentSearchSchema.parse(params);
-  const {
-    search,
-    status,
-    category,
-    requiresCert,
-    sortField,
-    sortDirection,
-    page,
-    pageSize,
-  } = parsed;
-
-  const where: Record<string, unknown> = {};
-
-  // Search by name
-  if (search && search.trim()) {
-    const term = search.trim();
-    where.OR = [
-      { name: { contains: term, mode: "insensitive" } },
-      { serialNumber: { contains: term, mode: "insensitive" } },
-      { description: { contains: term, mode: "insensitive" } },
-    ];
-  }
-
-  // Status filter
-  if (status) {
-    where.status = status;
-  }
-
-  // Category filter
-  if (category) {
-    where.category = category;
-  }
-
-  // Requires certification filter
-  if (requiresCert === "true") {
-    where.requiresCertification = true;
-  } else if (requiresCert === "false") {
-    where.requiresCertification = false;
-  }
-
-  // Build orderBy
-  let orderBy: Record<string, string>[] = [];
-  if (sortField === "name") {
-    orderBy = [{ name: sortDirection }];
-  } else if (sortField === "status") {
-    orderBy = [{ status: sortDirection }];
-  } else if (sortField === "category") {
-    orderBy = [{ category: sortDirection }];
-  } else if (sortField === "location") {
-    orderBy = [{ location: sortDirection }];
-  }
-
-  const skip = (page - 1) * pageSize;
-
-  const [equipment, totalCount, categories] = await Promise.all([
-    prisma.equipment.findMany({
-      where,
-      orderBy,
-      skip,
-      take: pageSize,
-    }),
-    prisma.equipment.count({ where }),
-    prisma.equipment.findMany({
-      where: { category: { not: null } },
-      distinct: ["category"],
-      select: { category: true },
-      orderBy: { category: "asc" },
-    }),
-  ]);
-
-  // Serialize dates for client
-  const serializedEquipment = equipment.map((e: any) => ({
-    id: e.id,
-    name: e.name,
-    description: e.description,
-    location: e.location,
-    status: e.status,
-    requiresCertification: e.requiresCertification,
-    category: e.category,
-    serialNumber: e.serialNumber,
-  }));
-
-  const uniqueCategories = categories
-    .map((c: any) => c.category)
-    .filter((c: any): c is string => c !== null);
-
-  return { equipment: serializedEquipment, totalCount, categories: uniqueCategories };
+function fd(formData: FormData, key: string) {
+  const v = formData.get(key);
+  return typeof v === "string" ? v : "";
 }
 
-export type EquipmentListItem = Awaited<
-  ReturnType<typeof getEquipment>
->["equipment"][number];
+function parseEquipment(formData: FormData) {
+  return equipmentSchema.safeParse({
+    name: fd(formData, "name"),
+    description: fd(formData, "description"),
+    location: fd(formData, "location"),
+    category: fd(formData, "category"),
+    serialNumber: fd(formData, "serialNumber"),
+    status: fd(formData, "status") || "OPERATIONAL",
+    requiresCertification: fd(formData, "requiresCertification") === "on",
+  });
+}
 
-export async function createEquipment(data: unknown) {
+export async function createEquipment(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
   await requirePermission("equipment.manage");
+  const parsed = parseEquipment(formData);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
 
-  const result = createEquipmentSchema.safeParse(data);
-  if (!result.success) {
-    return { error: result.error.issues[0].message };
-  }
+  const eq = await prisma.equipment.create({
+    data: {
+      ...parsed.data,
+      description: parsed.data.description || null,
+      location: parsed.data.location || null,
+      category: parsed.data.category || null,
+      serialNumber: parsed.data.serialNumber || null,
+    },
+  });
+  revalidatePath("/admin/equipment");
+  redirect(`/admin/equipment/${eq.id}`);
+}
 
-  const {
-    name,
-    description,
-    location,
-    category,
-    serialNumber,
-    status,
-    requiresCertification,
-  } = result.data;
+export async function updateEquipment(
+  equipmentId: string,
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  await requirePermission("equipment.manage");
+  const parsed = parseEquipment(formData);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
 
-  try {
-    const equipment = await prisma.equipment.create({
-      data: {
-        name,
-        description: description || null,
-        location: location || null,
-        category: category || null,
-        serialNumber: serialNumber || null,
-        status: status as "OPERATIONAL" | "MAINTENANCE" | "OUT_OF_ORDER" | "RETIRED",
-        requiresCertification,
-      },
-    });
+  await prisma.equipment.update({
+    where: { id: equipmentId },
+    data: {
+      ...parsed.data,
+      description: parsed.data.description || null,
+      location: parsed.data.location || null,
+      category: parsed.data.category || null,
+      serialNumber: parsed.data.serialNumber || null,
+    },
+  });
+  revalidatePath(`/admin/equipment/${equipmentId}`);
+  revalidatePath("/admin/equipment");
+  return { ok: true };
+}
 
-    revalidatePath("/admin/equipment");
-    return { success: true, equipmentId: equipment.id };
-  } catch {
-    return { error: "Failed to create equipment" };
-  }
+export async function addMaintenanceLog(
+  equipmentId: string,
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requirePermission("equipment.maintenance");
+  const description = fd(formData, "description").trim();
+  const date = fd(formData, "maintenanceDate");
+  if (!description || !date) return { error: "Date and description are required." };
+
+  const cost = fd(formData, "cost");
+  const nextDue = fd(formData, "nextDueDate");
+
+  await prisma.maintenanceLog.create({
+    data: {
+      equipmentId,
+      performedById: user.id,
+      maintenanceDate: new Date(`${date}T12:00:00`),
+      description,
+      cost: cost ? parseFloat(cost) : null,
+      nextDueDate: nextDue ? new Date(`${nextDue}T12:00:00`) : null,
+    },
+  });
+  revalidatePath(`/admin/equipment/${equipmentId}`);
+  return { ok: true };
 }

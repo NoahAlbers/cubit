@@ -6,6 +6,14 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
+async function permissionsForRole(roleId: string): Promise<string[]> {
+  const rps = await prisma.rolePermission.findMany({
+    where: { roleId },
+    include: { permission: true },
+  });
+  return rps.map((rp) => rp.permission.key);
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -15,29 +23,20 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null;
-        }
+        if (!credentials?.email || !credentials?.password) return null;
 
         const member = await prisma.member.findUnique({
-          where: { email: credentials.email },
+          where: { email: credentials.email.toLowerCase().trim() },
           include: { role: true },
         });
+        if (!member?.passwordHash) return null;
 
-        if (!member || !member.passwordHash) {
-          return null;
-        }
-
-        const isValid = await bcrypt.compare(
+        const valid = await bcrypt.compare(
           credentials.password,
           member.passwordHash
         );
+        if (!valid) return null;
 
-        if (!isValid) {
-          return null;
-        }
-
-        // Update lastLoginAt
         await prisma.member.update({
           where: { id: member.id },
           data: { lastLoginAt: new Date() },
@@ -46,40 +45,31 @@ export const authOptions: NextAuthOptions = {
         return {
           id: member.id,
           email: member.email,
-          name: member.firstName,
+          name: `${member.firstName} ${member.lastName}`,
           role: member.role.name,
-          permissions: [],
+          permissions: await permissionsForRole(member.roleId),
         };
       },
     }),
   ],
-  session: {
-    strategy: "jwt",
-  },
-  pages: {
-    signIn: "/login",
-  },
+  session: { strategy: "jwt" },
+  pages: { signIn: "/login" },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
-        // Initial sign-in: fetch permissions from DB
-        const member = await prisma.member.findUnique({
-          where: { id: user.id },
-          include: { role: true },
-        });
-
-        let permissions: string[] = [];
-        if (member) {
-          const rps = await prisma.rolePermission.findMany({
-            where: { roleId: member.roleId },
-            include: { permission: true },
-          });
-          permissions = rps.map((rp) => rp.permission.key);
-        }
-
         token.id = user.id;
         token.role = user.role;
-        token.permissions = permissions;
+        token.permissions = user.permissions;
+      } else if (trigger === "update" && token.id) {
+        // Refresh role/permissions on session.update()
+        const member = await prisma.member.findUnique({
+          where: { id: token.id },
+          include: { role: true },
+        });
+        if (member) {
+          token.role = member.role.name;
+          token.permissions = await permissionsForRole(member.roleId);
+        }
       }
       return token;
     },

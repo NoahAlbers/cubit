@@ -1,92 +1,79 @@
-import { getRoles } from "./actions";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button-variants";
-import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
+import { prisma } from "@/lib/prisma";
+import { requirePermission, hasPermission } from "@/lib/permissions";
+import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
+import { buttonVariants } from "@/components/ui/variants";
+
+export const dynamic = "force-dynamic";
 
 export default async function RolesPage() {
-  const roles = await getRoles();
+  const user = await requirePermission("roles.view");
+
+  const roles = await prisma.role.findMany({
+    orderBy: [{ isSystem: "desc" }, { name: "asc" }],
+    include: {
+      _count: { select: { members: true, permissions: true } },
+    },
+  });
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">Roles</h2>
-        <Link
-          href="/admin/settings/roles/new"
-          className={cn(buttonVariants({ size: "sm" }))}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Create Role
-        </Link>
+    <Card>
+      <div className="flex items-center justify-between border-b px-4 py-3">
+        <p className="text-sm text-muted-foreground">
+          Create custom roles like &ldquo;Front Desk&rdquo; or
+          &ldquo;Treasurer&rdquo; with exactly the permissions they need.
+        </p>
+        {hasPermission(user, "roles.manage") && (
+          <Link
+            href="/admin/settings/roles/new"
+            className={cn(buttonVariants({ size: "sm" }))}
+          >
+            <Plus className="size-4" /> New role
+          </Link>
+        )}
       </div>
-
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead className="text-center">Members</TableHead>
-              <TableHead className="text-center">Permissions</TableHead>
-              <TableHead />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {roles.map((role) => (
-              <TableRow key={role.id}>
-                <TableCell className="font-medium">
-                  <div className="flex items-center gap-2">
-                    {role.name}
-                    {role.isSystem && (
-                      <Badge variant="secondary" className="text-xs">
-                        System
-                      </Badge>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {role.description || "\u2014"}
-                </TableCell>
-                <TableCell className="text-center">
-                  {role.memberCount}
-                </TableCell>
-                <TableCell className="text-center">
-                  {role.permissions.length}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Link
-                    href={`/admin/settings/roles/${role.id}`}
-                    className={cn(
-                      buttonVariants({ variant: "ghost", size: "sm" })
-                    )}
-                  >
-                    Edit
-                  </Link>
-                </TableCell>
-              </TableRow>
-            ))}
-            {roles.length === 0 && (
-              <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="text-center text-muted-foreground py-8"
+      <Table>
+        <THead>
+          <TR>
+            <TH>Role</TH>
+            <TH>Description</TH>
+            <TH className="text-center">Members</TH>
+            <TH className="text-center">Permissions</TH>
+            <TH />
+          </TR>
+        </THead>
+        <TBody>
+          {roles.map((r) => (
+            <TR key={r.id}>
+              <TD>
+                <span className="font-medium">{r.name}</span>
+                {r.isSystem && (
+                  <Badge className="ml-2" variant="outline">
+                    System
+                  </Badge>
+                )}
+              </TD>
+              <TD className="text-muted-foreground">{r.description ?? "—"}</TD>
+              <TD className="text-center tabular-nums">{r._count.members}</TD>
+              <TD className="text-center tabular-nums">
+                {r.name === "Super Admin" ? "All" : r._count.permissions}
+              </TD>
+              <TD className="text-right">
+                <Link
+                  href={`/admin/settings/roles/${r.id}`}
+                  className="text-sm font-medium text-brand-blue hover:underline"
                 >
-                  No roles found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+                  {hasPermission(user, "roles.manage") ? "Edit" : "View"}
+                </Link>
+              </TD>
+            </TR>
+          ))}
+        </TBody>
+      </Table>
+    </Card>
   );
 }

@@ -1,82 +1,141 @@
-import { Suspense } from "react";
-import { Badge } from "@/components/ui/badge";
-import { MemberFilters } from "@/components/admin/member-filters";
-import { MemberListTable } from "@/components/admin/member-list-table";
-import { Pagination } from "@/components/admin/pagination";
-import { AddMemberDialog } from "@/components/admin/add-member-dialog";
-import { getMembers, getRoles } from "./actions";
+import Link from "next/link";
+import type { Prisma, MemberStatus, MembershipType } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+import { requirePermission } from "@/lib/permissions";
+import { formatDate, enumLabel } from "@/lib/utils";
+import { PageHeader, EmptyState } from "@/components/ui/bits";
+import { Card } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/badge";
+import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
+import { Pagination } from "@/components/ui/pagination";
+import { MemberFilters } from "./member-filters";
+import { AddMemberButton } from "./add-member-dialog";
+
+export const metadata = { title: "Members" };
+export const dynamic = "force-dynamic";
+
+const SORTS: Record<string, Prisma.MemberOrderByWithRelationInput[]> = {
+  name: [{ lastName: "asc" }, { firstName: "asc" }],
+  joined: [{ joinDate: "desc" }],
+  status: [{ status: "asc" }, { lastName: "asc" }],
+  login: [{ lastLoginAt: "desc" }],
+};
 
 export default async function MembersPage({
   searchParams,
 }: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    type?: string;
+    page?: string;
+    pageSize?: string;
+    sort?: string;
+    inactive?: string;
+  }>;
 }) {
-  const params = await searchParams;
+  await requirePermission("members.view");
+  const sp = await searchParams;
 
-  const search = typeof params.search === "string" ? params.search : undefined;
-  const status = params.status
-    ? Array.isArray(params.status)
-      ? params.status
-      : [params.status]
-    : undefined;
-  const membershipType = params.membershipType
-    ? Array.isArray(params.membershipType)
-      ? params.membershipType
-      : [params.membershipType]
-    : undefined;
-  const showInactive = params.showInactive === "true";
-  const sortField = (
-    ["name", "joinDate", "status", "lastLoginAt"].includes(
-      params.sortField as string
-    )
-      ? params.sortField
-      : "name"
-  ) as "name" | "joinDate" | "status" | "lastLoginAt";
-  const sortDirection = params.sortDirection === "desc" ? "desc" : "asc";
-  const page = Math.max(1, parseInt(params.page as string) || 1);
-  const pageSize = [25, 50, 100].includes(parseInt(params.pageSize as string))
-    ? parseInt(params.pageSize as string)
+  const page = Math.max(1, parseInt(sp.page ?? "1") || 1);
+  const pageSize = [25, 50, 100].includes(parseInt(sp.pageSize ?? ""))
+    ? parseInt(sp.pageSize!)
     : 25;
+  const q = sp.q?.trim();
+  const showInactive = sp.inactive === "1";
 
-  const [{ members, totalCount, totalActive }, roles] = await Promise.all([
-    getMembers({
-      search,
-      status,
-      membershipType,
-      showInactive,
-      sortField,
-      sortDirection,
-      page,
-      pageSize,
+  const where: Prisma.MemberWhereInput = {};
+  if (q) {
+    where.OR = [
+      { firstName: { contains: q, mode: "insensitive" } },
+      { lastName: { contains: q, mode: "insensitive" } },
+      { email: { contains: q, mode: "insensitive" } },
+    ];
+  }
+  if (sp.status) {
+    where.status = { in: sp.status.split(",") as MemberStatus[] };
+  } else if (!showInactive) {
+    where.status = { notIn: ["CANCELED", "ALUMNI"] };
+  }
+  if (sp.type) {
+    where.membershipType = { in: sp.type.split(",") as MembershipType[] };
+  }
+
+  const [members, total, activeCount] = await Promise.all([
+    prisma.member.findMany({
+      where,
+      orderBy: SORTS[sp.sort ?? "name"] ?? SORTS.name,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: {
+        plans: { where: { endDate: null }, include: { plan: true } },
+        keys: { where: { status: "ACTIVE" } },
+      },
     }),
-    getRoles(),
+    prisma.member.count({ where }),
+    prisma.member.count({ where: { status: "ACTIVE" } }),
   ]);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold tracking-tight">Members</h1>
-          <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-            {totalActive} active
-          </Badge>
-        </div>
-        <AddMemberDialog roles={roles} />
-      </div>
+    <>
+      <PageHeader
+        title="MEMBERS"
+        meta={`${activeCount} active`}
+        actions={<AddMemberButton />}
+      />
 
-      <Suspense fallback={null}>
+      <Card>
         <MemberFilters />
-      </Suspense>
-
-      <div className="rounded-lg border">
-        <Suspense fallback={null}>
-          <MemberListTable members={members} />
-        </Suspense>
-      </div>
-
-      <Suspense fallback={null}>
-        <Pagination totalCount={totalCount} page={page} pageSize={pageSize} />
-      </Suspense>
-    </div>
+        {members.length === 0 ? (
+          <EmptyState
+            title="No members match"
+            hint="Try changing the search or filters."
+          />
+        ) : (
+          <Table>
+            <THead>
+              <TR>
+                <TH>Name</TH>
+                <TH>Email</TH>
+                <TH>Status</TH>
+                <TH>Type</TH>
+                <TH>Plan</TH>
+                <TH className="text-center">Keys</TH>
+                <TH>Joined</TH>
+              </TR>
+            </THead>
+            <TBody>
+              {members.map((m) => (
+                <TR key={m.id}>
+                  <TD>
+                    <Link
+                      href={`/admin/members/${m.id}`}
+                      className="font-medium text-brand-blue hover:underline"
+                    >
+                      {m.lastName}, {m.firstName}
+                    </Link>
+                  </TD>
+                  <TD className="text-muted-foreground">{m.email}</TD>
+                  <TD>
+                    <StatusBadge status={m.status} />
+                  </TD>
+                  <TD className="text-muted-foreground">
+                    {enumLabel(m.membershipType)}
+                  </TD>
+                  <TD className="text-muted-foreground">
+                    {m.plans[0]?.plan.name ?? "—"}
+                  </TD>
+                  <TD className="text-center tabular-nums">{m.keys.length}</TD>
+                  <TD className="text-muted-foreground">{formatDate(m.joinDate)}</TD>
+                </TR>
+              ))}
+            </TBody>
+          </Table>
+        )}
+        <div className="border-t">
+          <Pagination page={page} pageSize={pageSize} total={total} />
+        </div>
+      </Card>
+    </>
   );
 }

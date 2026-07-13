@@ -1,161 +1,169 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requirePermission } from "@/lib/permissions";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
+import { requirePermission, hasPermission } from "@/lib/permissions";
+import { formatDate, formatMoney } from "@/lib/utils";
+import { StatusBadge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/table";
+import { EquipmentForm, MaintenanceForm } from "./equipment-forms";
 
-import { EquipmentForm } from "@/components/admin/equipment-detail/equipment-form";
-import { CertifiedMembers } from "@/components/admin/equipment-detail/certified-members";
-import { MaintenanceLog } from "@/components/admin/equipment-detail/maintenance-log";
-
-const STATUS_COLORS: Record<string, string> = {
-  OPERATIONAL:
-    "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-  MAINTENANCE:
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-  OUT_OF_ORDER:
-    "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-  RETIRED:
-    "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
-};
-
-function toDateString(date: Date | null): string | null {
-  if (!date) return null;
-  return date.toISOString().split("T")[0];
-}
+export const dynamic = "force-dynamic";
 
 export default async function EquipmentDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requirePermission("equipment.view");
+  const user = await requirePermission("equipment.view");
   const { id } = await params;
 
-  const [equipment, allMembers] = await Promise.all([
-    prisma.equipment.findUnique({
-      where: { id },
-      include: {
-        certifications: {
-          include: {
-            member: { select: { id: true, firstName: true, lastName: true } },
-            certifiedBy: {
-              select: { firstName: true, lastName: true },
-            },
-          },
-          orderBy: { certifiedDate: "desc" },
+  const eq = await prisma.equipment.findUnique({
+    where: { id },
+    include: {
+      certifications: {
+        include: {
+          member: { select: { id: true, firstName: true, lastName: true } },
+          certifiedBy: { select: { firstName: true, lastName: true } },
         },
-        maintenanceLogs: {
-          include: {
-            performedBy: {
-              select: { firstName: true, lastName: true },
-            },
-          },
-          orderBy: { maintenanceDate: "desc" },
-        },
+        orderBy: { certifiedDate: "desc" },
       },
-    }),
-    prisma.member.findMany({
-      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-      select: { id: true, firstName: true, lastName: true },
-    }),
-  ]);
-
-  if (!equipment) {
-    notFound();
-  }
-
-  // Serialize for client components
-  const equipmentData = {
-    name: equipment.name,
-    description: equipment.description,
-    location: equipment.location,
-    category: equipment.category,
-    serialNumber: equipment.serialNumber,
-    status: equipment.status,
-    requiresCertification: equipment.requiresCertification,
-    purchaseDate: toDateString(equipment.purchaseDate),
-    warrantyExpiration: toDateString(equipment.warrantyExpiration),
-  };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const serializedCertifications = equipment.certifications.map((c: any) => ({
-    id: c.id,
-    certifiedDate: c.certifiedDate.toISOString(),
-    expirationDate: c.expirationDate?.toISOString() ?? null,
-    notes: c.notes,
-    member: {
-      id: c.member.id,
-      firstName: c.member.firstName,
-      lastName: c.member.lastName,
+      maintenanceLogs: {
+        include: { performedBy: { select: { firstName: true, lastName: true } } },
+        orderBy: { maintenanceDate: "desc" },
+      },
     },
-    certifiedBy: c.certifiedBy
-      ? {
-          firstName: c.certifiedBy.firstName,
-          lastName: c.certifiedBy.lastName,
-        }
-      : null,
-  }));
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const serializedLogs = equipment.maintenanceLogs.map((l: any) => ({
-    id: l.id,
-    maintenanceDate: l.maintenanceDate.toISOString(),
-    description: l.description,
-    cost: l.cost?.toString() ?? null,
-    nextDueDate: l.nextDueDate?.toISOString() ?? null,
-    performedBy: l.performedBy
-      ? {
-          firstName: l.performedBy.firstName,
-          lastName: l.performedBy.lastName,
-        }
-      : null,
-  }));
+  });
+  if (!eq) notFound();
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/admin/equipment">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="size-4" data-icon="inline-start" />
-            Back
-          </Button>
-        </Link>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight">
-              {equipment.name}
-            </h1>
-            <Badge
-              variant="secondary"
-              className={STATUS_COLORS[equipment.status] ?? ""}
-            >
-              {equipment.status.replace(/_/g, " ")}
-            </Badge>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            {equipment.category ?? "No category"}
-            {equipment.location && <> &middot; {equipment.location}</>}
-            {equipment.serialNumber && (
-              <> &middot; S/N: {equipment.serialNumber}</>
-            )}
-          </p>
-        </div>
+    <>
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <h1 className="font-display text-xl font-bold text-brand-blue">
+          {eq.name.toUpperCase()}
+        </h1>
+        <StatusBadge status={eq.status} />
       </div>
 
-      {/* Card Sections */}
-      <div className="space-y-4">
-        <EquipmentForm equipmentId={id} equipment={equipmentData} />
-        <CertifiedMembers
-          equipmentId={id}
-          certifications={serializedCertifications}
-          members={allMembers}
-        />
-        <MaintenanceLog equipmentId={id} logs={serializedLogs} />
+      <div className="grid gap-4 xl:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <EquipmentForm
+              equipmentId={eq.id}
+              defaults={{
+                name: eq.name,
+                description: eq.description ?? "",
+                location: eq.location ?? "",
+                category: eq.category ?? "",
+                serialNumber: eq.serialNumber ?? "",
+                status: eq.status,
+                requiresCertification: eq.requiresCertification,
+              }}
+              canEdit={hasPermission(user, "equipment.manage")}
+            />
+          </CardContent>
+        </Card>
+
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                Certified members{" "}
+                <span className="ml-1 font-normal text-muted-foreground">
+                  {eq.certifications.length}
+                </span>
+              </CardTitle>
+            </CardHeader>
+            {eq.certifications.length === 0 ? (
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  No certifications yet. Grant them from a member&apos;s profile.
+                </p>
+              </CardContent>
+            ) : (
+              <Table>
+                <THead>
+                  <TR>
+                    <TH>Member</TH>
+                    <TH>Date</TH>
+                    <TH>Certified by</TH>
+                  </TR>
+                </THead>
+                <TBody>
+                  {eq.certifications.map((c) => (
+                    <TR key={c.id}>
+                      <TD>
+                        <Link
+                          href={`/admin/members/${c.member.id}`}
+                          className="font-medium text-brand-blue hover:underline"
+                        >
+                          {c.member.lastName}, {c.member.firstName}
+                        </Link>
+                      </TD>
+                      <TD className="text-muted-foreground">{formatDate(c.certifiedDate)}</TD>
+                      <TD className="text-muted-foreground">
+                        {c.certifiedBy
+                          ? `${c.certifiedBy.firstName} ${c.certifiedBy.lastName}`
+                          : "—"}
+                      </TD>
+                    </TR>
+                  ))}
+                </TBody>
+              </Table>
+            )}
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Maintenance log</CardTitle>
+            </CardHeader>
+            {hasPermission(user, "equipment.maintenance") && (
+              <CardContent className="border-b">
+                <MaintenanceForm equipmentId={eq.id} />
+              </CardContent>
+            )}
+            {eq.maintenanceLogs.length === 0 ? (
+              <CardContent>
+                <p className="text-sm text-muted-foreground">No maintenance recorded.</p>
+              </CardContent>
+            ) : (
+              <Table>
+                <THead>
+                  <TR>
+                    <TH>Date</TH>
+                    <TH>Work</TH>
+                    <TH>By</TH>
+                    <TH>Cost</TH>
+                    <TH>Next due</TH>
+                  </TR>
+                </THead>
+                <TBody>
+                  {eq.maintenanceLogs.map((m) => (
+                    <TR key={m.id}>
+                      <TD className="text-muted-foreground">{formatDate(m.maintenanceDate)}</TD>
+                      <TD>{m.description}</TD>
+                      <TD className="text-muted-foreground">
+                        {m.performedBy
+                          ? `${m.performedBy.firstName} ${m.performedBy.lastName}`
+                          : "—"}
+                      </TD>
+                      <TD className="text-muted-foreground">
+                        {m.cost ? formatMoney(m.cost.toString()) : "—"}
+                      </TD>
+                      <TD className="text-muted-foreground">
+                        {m.nextDueDate ? formatDate(m.nextDueDate) : "—"}
+                      </TD>
+                    </TR>
+                  ))}
+                </TBody>
+              </Table>
+            )}
+          </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

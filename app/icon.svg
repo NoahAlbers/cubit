@@ -1,0 +1,18 @@
+<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <mask id="gear-hole">
+    <rect width="100" height="100" fill="white"/>
+    <circle cx="50" cy="50" r="21" fill="black"/>
+  </mask>
+  <g mask="url(#gear-hole)">
+    <circle cx="50" cy="50" r="36" fill="#094FA4"/>
+    <rect x="42.5" y="2" width="15" height="18" rx="5" fill="#094FA4" transform="rotate(22.5 50 50)"/>
+    <rect x="42.5" y="2" width="15" height="18" rx="5" fill="#094FA4" transform="rotate(67.5 50 50)"/>
+    <rect x="42.5" y="2" width="15" height="18" rx="5" fill="#094FA4" transform="rotate(112.5 50 50)"/>
+    <rect x="42.5" y="2" width="15" height="18" rx="5" fill="#094FA4" transform="rotate(157.5 50 50)"/>
+    <rect x="42.5" y="2" width="15" height="18" rx="5" fill="#094FA4" transform="rotate(202.5 50 50)"/>
+    <rect x="42.5" y="2" width="15" height="18" rx="5" fill="#094FA4" transform="rotate(247.5 50 50)"/>
+    <rect x="42.5" y="2" width="15" height="18" rx="5" fill="#094FA4" transform="rotate(292.5 50 50)"/>
+    <rect x="42.5" y="2" width="15" height="18" rx="5" fill="#094FA4" transform="rotate(337.5 50 50)"/>
+  </g>
+  <path d="M2 79 C 26 78, 52 68, 68 52 C 80 40, 88 26, 92 10 C 94 18, 93 30, 87 42 C 78 60, 60 74, 38 80 C 26 83, 12 83, 2 79 Z" fill="#C5122F"/>
+</svg>
