@@ -146,6 +146,72 @@ export function WaiverReminderEmail({
   );
 }
 
+export function PaymentReceiptEmail({
+  firstName,
+  amount,
+  date,
+  confirmation,
+}: {
+  firstName: string;
+  amount: string;
+  date: string;
+  confirmation: string;
+}) {
+  return (
+    <BrandEmail preview={`Payment received: ${amount}`} heading={`Thanks, ${firstName}!`}>
+      <EmailText>
+        We received your payment of <strong>{amount}</strong> on {date}.
+      </EmailText>
+      <EmailText>PayPal confirmation: {confirmation}</EmailText>
+      <EmailText>
+        Your payment history is always available in the member portal. Happy
+        making!
+      </EmailText>
+    </BrandEmail>
+  );
+}
+
+export function PaymentFailedEmail({
+  firstName,
+  graceDays,
+}: {
+  firstName: string;
+  graceDays: number;
+}) {
+  return (
+    <BrandEmail preview="Your payment didn't go through" heading={`Hi ${firstName},`}>
+      <DangerText>Your latest PayPal payment didn&apos;t go through.</DangerText>
+      <EmailText>
+        No stress — your access continues for a {graceDays}-day grace period.
+        Please update your payment method in PayPal or re-subscribe from
+        melbournemakerspace.org so your membership isn&apos;t interrupted.
+      </EmailText>
+      <EmailText>
+        Questions or need help? Reply to this email or talk to any staff
+        member.
+      </EmailText>
+    </BrandEmail>
+  );
+}
+
+export function AdminPaymentAlertEmail({
+  title,
+  detail,
+}: {
+  title: string;
+  detail: string;
+}) {
+  return (
+    <BrandEmail
+      preview={title}
+      heading={title}
+      footerNote="Automated alert from Cubit."
+    >
+      <EmailText>{detail}</EmailText>
+    </BrandEmail>
+  );
+}
+
 export function OverdueDigestEmail({
   rows,
 }: {

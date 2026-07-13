@@ -84,6 +84,7 @@ model Member {
   dateOfBirth           DateTime?
   joinDate              DateTime?
   lastLoginAt           DateTime?
+  lastPaymentFailedAt   DateTime? // set by PayPal failure events; drives the grace-period automation
   magicLinkToken        String?        @unique
   magicLinkExpires      DateTime?
   resetToken            String?        @unique
@@ -103,6 +104,7 @@ model Member {
   maintenanceLogs         MaintenanceLog[]
   accessLogs              AccessLog[]
   hostedGuests            Guest[]
+  paypalTransactions      PayPalTransaction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -410,6 +412,41 @@ model MemberWaiver {
   updatedAt DateTime @updatedAt
 
   @@unique([memberId, waiverId])
+}
+
+// ---------------------------------------------------------------------------
+// PayPal sync
+// ---------------------------------------------------------------------------
+
+enum PayPalTxnStatus {
+  UNMATCHED
+  MATCHED
+  DISMISSED
+}
+
+/// Every PayPal payment Cubit hears about (webhook or reporting sync).
+/// Matched ones link to the Transaction created on the member; unmatched
+/// ones sit in the admin review queue.
+model PayPalTransaction {
+  id                  String          @id @default(uuid())
+  paypalTransactionId String          @unique
+  payerEmail          String?
+  payerName           String?
+  amount              Decimal         @db.Decimal(10, 2)
+  currency            String          @default("USD")
+  transactionDate     DateTime
+  subscriptionId      String?
+  status              PayPalTxnStatus @default(UNMATCHED)
+  matchedMemberId     String?
+  matchedMember       Member?         @relation(fields: [matchedMemberId], references: [id], onDelete: SetNull)
+  dismissReason       String?
+  source              String // "webhook" | "sync" | "manual"
+  rawData             Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
 }
 
 // ---------------------------------------------------------------------------

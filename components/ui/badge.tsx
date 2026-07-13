@@ -41,6 +41,10 @@ const STATUS_COLORS: Record<string, BadgeVariantProps["variant"]> = {
   ENTRY: "green",
   EXIT: "blue",
   DENIED: "red",
+  // paypal
+  UNMATCHED: "yellow",
+  MATCHED: "green",
+  DISMISSED: "default",
 };
 
 export function StatusBadge({

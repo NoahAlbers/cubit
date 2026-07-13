@@ -42,6 +42,8 @@ const PERMISSIONS: { key: string; category: string; name: string }[] = [
   { key: "roles.view", category: "Roles", name: "View roles" },
   { key: "roles.manage", category: "Roles", name: "Manage roles" },
   { key: "bulk_actions.execute", category: "Bulk Actions", name: "Run bulk operations" },
+  { key: "paypal.view", category: "PayPal", name: "View PayPal sync" },
+  { key: "paypal.manage", category: "PayPal", name: "Manage PayPal transactions" },
 ];
 
 // Admin gets everything except role/settings management and deletes
@@ -77,6 +79,10 @@ function defaultSettings(rfidToken: string) {
     { key: "notifications.admin_alert_emails", value: ["admin@melbournemakerspace.org"], category: "Notifications", label: "Admin alert emails", fieldType: "json" },
     { key: "notifications.overdue_digest_day", value: "monday", category: "Notifications", label: "Overdue digest day", fieldType: "select", options: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] },
     { key: "notifications.from_name", value: "Melbourne Makerspace", category: "Notifications", label: "From name", fieldType: "text" },
+    // PayPal
+    { key: "paypal.sync_enabled", value: false, category: "PayPal", label: "Scheduled sync enabled", description: "Pull recent transactions from PayPal's Transaction Search API every 6 hours (webhooks work either way).", fieldType: "boolean" },
+    { key: "paypal.auto_match_by_email", value: true, category: "PayPal", label: "Auto-match payments by email", description: "Match payer email against members' PayPal email, then account email.", fieldType: "boolean" },
+    { key: "paypal.last_sync", value: "", category: "PayPal", label: "Last sync (automatic)", description: "Managed by the sync job.", fieldType: "text" },
     // RFID / access control
     { key: "rfid.api_token", value: rfidToken, category: "RFID Access", label: "RFID API token", description: "Bearer token the RFIDLock reader uses to fetch the whitelist and post access events.", fieldType: "text" },
     { key: "rfid.allowed_statuses", value: ["ACTIVE", "HOLD"], category: "RFID Access", label: "Statuses allowed entry", description: "Member statuses whose active keys appear on the door whitelist.", fieldType: "json" },

@@ -14,6 +14,7 @@ export default async function AdminLayout({
   if (hasPermission(user, "equipment.view")) visible.push("equipment");
   if (hasPermission(user, "waivers.view")) visible.push("waivers");
   if (hasPermission(user, "access.view")) visible.push("access");
+  if (hasPermission(user, "paypal.view")) visible.push("paypal");
   if (hasPermission(user, "members.invite")) visible.push("invitations");
   if (hasPermission(user, "reports.view")) visible.push("reports");
   if (hasPermission(user, "roles.view") || hasPermission(user, "settings.view"))

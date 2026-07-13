@@ -12,6 +12,7 @@ import {
   FileSignature,
   DoorOpen,
   Mail,
+  Wallet,
   BarChart3,
   Settings,
   LogOut,
@@ -26,6 +27,7 @@ export type NavKey =
   | "equipment"
   | "waivers"
   | "access"
+  | "paypal"
   | "invitations"
   | "reports"
   | "settings";
@@ -36,6 +38,7 @@ const NAV: { key: NavKey; label: string; href: string; icon: React.ElementType }
   { key: "equipment", label: "Equipment", href: "/admin/equipment", icon: Wrench },
   { key: "waivers", label: "Waivers", href: "/admin/waivers", icon: FileSignature },
   { key: "access", label: "Door Access", href: "/admin/access", icon: DoorOpen },
+  { key: "paypal", label: "PayPal", href: "/admin/paypal", icon: Wallet },
   { key: "invitations", label: "Invitations", href: "/admin/invitations", icon: Mail },
   { key: "reports", label: "Reports", href: "/admin/reports", icon: BarChart3 },
   { key: "settings", label: "Settings", href: "/admin/settings", icon: Settings },

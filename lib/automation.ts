@@ -109,6 +109,12 @@ export async function transitionMemberStatus(opts: {
 export async function handlePaymentReceived(memberId: string) {
   const member = await prisma.member.findUnique({ where: { id: memberId } });
   if (!member) return;
+  if (member.lastPaymentFailedAt) {
+    await prisma.member.update({
+      where: { id: memberId },
+      data: { lastPaymentFailedAt: null },
+    });
+  }
   if (member.status === "PAST_DUE" || member.status === "SUSPENDED") {
     await transitionMemberStatus({
       memberId,
@@ -124,11 +130,32 @@ export async function handlePaymentReceived(memberId: string) {
 
 export async function runDailyAutomation() {
   const results = {
+    markedPastDue: 0,
     suspended: 0,
     renewalReminders: 0,
     waiverReminders: 0,
     digestSent: false,
   };
+
+  // 0. Failed payment + expired grace period → PAST_DUE
+  const graceDays = await getSetting<number>("membership.grace_period_days", 7);
+  const graceExpired = await prisma.member.findMany({
+    where: {
+      status: { in: ["ACTIVE", "HOLD"] },
+      lastPaymentFailedAt: { lte: addDays(new Date(), -graceDays) },
+    },
+  });
+  for (const m of graceExpired) {
+    await transitionMemberStatus({
+      memberId: m.id,
+      to: "PAST_DUE",
+      reason: `Payment failed ${differenceInDays(
+        new Date(),
+        m.lastPaymentFailedAt!
+      )} days ago; grace period (${graceDays} days) expired`,
+    });
+    results.markedPastDue++;
+  }
 
   // 1. PAST_DUE beyond threshold → SUSPENDED
   const suspensionDays = await getSetting<number>(

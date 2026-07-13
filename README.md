@@ -45,6 +45,16 @@ Authorization: Bearer <API_TOKEN>
 
 The API token lives in **Settings → RFID access**, along with which member statuses are allowed entry and whether completed waivers are required for the whitelist.
 
+## PayPal sync
+
+Cubit listens to the makerspace's existing PayPal recurring billing — it never charges anyone. Setup:
+
+1. Create a REST app at developer.paypal.com (Live), enable **Transaction Search**, and set `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_MODE=live`.
+2. Register a webhook for `https://<your-app>/api/paypal/webhook` with events `PAYMENT.SALE.COMPLETED`, `PAYMENT.SALE.DENIED`, `BILLING.SUBSCRIPTION.ACTIVATED`, `BILLING.SUBSCRIPTION.CANCELLED`, `BILLING.SUBSCRIPTION.SUSPENDED`, and set `PAYPAL_WEBHOOK_ID` to the webhook's id (signatures are verified on every delivery).
+3. Optionally enable the 6-hourly reporting sync in **Settings → System → PayPal** as a webhook safety net.
+
+Payments auto-match by subscription id, then the member's PayPal email, then account email. Matches create a `Transaction`, email a receipt, and reactivate past-due members. Non-matches land on the **PayPal** admin page to link to a member, create a member, or dismiss. Failed payments start the grace-period clock (member emailed, admins alerted); the daily cron moves them to Past Due when it expires.
+
 ## Automation cron
 
 `vercel.json` schedules `GET /api/cron/daily` (noon UTC) with `CRON_SECRET` auth. It handles overdue suspensions, renewal reminders, waiver reminders, and the weekly overdue digest.
