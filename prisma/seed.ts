@@ -269,6 +269,26 @@ async function main() {
   });
   console.log(`  Super admin account seeded: ${adminEmail}`);
 
+  const noahEmail = "albersnoah@gmail.com";
+  await prisma.member.upsert({
+    where: { email: noahEmail },
+    update: {
+      passwordHash,
+      roleId: superAdminRole.id,
+      status: "ACTIVE",
+    },
+    create: {
+      email: noahEmail,
+      firstName: "Noah",
+      lastName: "Albers",
+      passwordHash,
+      roleId: superAdminRole.id,
+      status: "ACTIVE",
+      joinDate: new Date(),
+    },
+  });
+  console.log(`  Super admin account seeded: ${noahEmail}`);
+
   console.log("Seeding complete!");
 }
 
