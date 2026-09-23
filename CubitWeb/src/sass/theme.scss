@@ -1,0 +1,7 @@
+@use '@angular/material' as mat;
+@include mat.all-legacy-component-typographies(mat.define-legacy-typography-config($font-family: 'Segoe UI, Arial, sans-serif'));
+@include mat.legacy-core();
+$blue: map-merge(mat.$blue-palette, (500: #094fa3, 700: #094fa3));
+$red: map-merge(mat.$red-palette, (500: #ed1c24));
+$theme: mat.define-light-theme((color: (primary: mat.define-palette($blue), accent: mat.define-palette($red), warn: mat.define-palette($red))));
+@include mat.all-legacy-component-themes($theme);

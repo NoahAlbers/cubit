@@ -1,0 +1,20 @@
+# The newer build stage can read the deployed pnpm v9 lockfile.
+FROM node:22-bullseye AS dependencies
+WORKDIR /app
+RUN npm install --global pnpm@9.15.9
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+# Preserve production's Node version for the first compatibility baseline.
+# This old runtime is for isolated local reproduction only.
+FROM node:17.6.0-bullseye
+WORKDIR /app
+COPY --from=dependencies /app/node_modules ./node_modules
+COPY package.json nodemon.json tsconfig.json ./
+COPY @types ./@types
+COPY src ./src
+COPY tests ./tests
+COPY tonic ./tonic
+RUN npm run typecheck && npm run test:local
+EXPOSE 5001
+CMD ["npm", "run", "dev"]

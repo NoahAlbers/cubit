@@ -1,0 +1,76 @@
+<section class="page directory-page">
+  <div class="page-heading">
+    <h1>{{overdue ? 'Overdue memberships' : 'Members'}}</h1>
+    <a *ngIf="!overdue" class="button primary" routerLink="/member/New" [queryParams]="navigation.memberQuery">＋ Add member</a>
+    <a *ngIf="overdue" class="button secondary" routerLink="/memberlist">View all members <app-arrow name="arrow-right"></app-arrow></a>
+  </div>
+  <div class="stats compact-stats" *ngIf="data">
+    <ng-container *ngIf="!overdue">
+      <div class="stat"><span>ACTIVE MEMBERS</span><strong>{{data.summary.active}}</strong></div>
+      <a class="stat stat-link" routerLink="/overdue"><span>PAST DUE MEMBERS</span><strong>{{data.summary.overdue}}</strong></a>
+      <div class="stat"><span>UNIQUE CHECK-INS · LAST 30 DAYS</span><strong>{{data.summary.uniqueCheckins30Days}}</strong></div>
+    </ng-container>
+    <ng-container *ngIf="overdue">
+      <div class="stat"><span>PAST DUE MEMBERS</span><strong>{{data.total}}</strong></div>
+      <button class="stat stat-link" (click)="filters.access='enabled';filtersOpen=true;apply()"><span>WITH ACCESS ENABLED</span><strong>{{data.summary.filteredAccessAllowed}}</strong></button>
+      <div class="stat"><span>LONGEST PAST DUE</span><strong>{{data.summary.oldestDays}} days</strong></div>
+    </ng-container>
+  </div>
+  <section class="panel directory-panel" aria-label="Member directory">
+    <div class="search-row">
+      <label class="search-box"><span aria-hidden="true">⌕</span><input aria-label="Search members" type="search" [(ngModel)]="filters.q" (ngModelChange)="apply()" placeholder="Search members…"></label>
+      <label class="field-select"><span class="sr-only">Search field</span><select [(ngModel)]="filters.field" (ngModelChange)="apply()"><option value="all">All contact fields</option><option value="firstName">First name</option><option value="lastName">Last name</option><option value="email">Email</option><option value="paypalEmail">PayPal email</option><option value="phone">Phone number</option></select></label>
+      <button class="secondary" (click)="filtersOpen=!filtersOpen" [attr.aria-expanded]="filtersOpen" aria-controls="directory-filters">Filters{{activeFilters?' ('+activeFilters+')':''}}</button><button class="quiet" *ngIf="activeFilters||filters.q" (click)="reset()">Clear filters</button>
+      <label *ngIf="overdue" class="inline-check"><input type="checkbox" [(ngModel)]="filters.includeEnded" (ngModelChange)="toggleEnded()">Include ended memberships</label>
+    </div>
+    <div class="filter-row" id="directory-filters" [hidden]="!filtersOpen">
+      <label>Status<select [(ngModel)]="filters.status" (ngModelChange)="apply()"><option value="">All statuses</option><option>Active</option><option>Inactive</option><option>Canceled</option></select></label>
+      <label>Plan<select [(ngModel)]="filters.plan" (ngModelChange)="apply()"><option value="">All plans</option><option *ngFor="let plan of plans" [value]="plan.id">{{plan.name}}{{plan.available ? '' : ' (legacy)'}}</option></select></label>
+      <label *ngIf="!overdue">Last key use<select [(ngModel)]="filters.activity" (ngModelChange)="apply()"><option value="">Any time</option><option value="30">Within 30 days</option><option value="90">Within 90 days</option><option value="stale">Over 90 days ago</option><option value="never">Never used</option></select></label>
+      <label *ngIf="overdue">Access<select [(ngModel)]="filters.access" (ngModelChange)="apply()"><option value="">Any access status</option><option value="enabled">Enabled</option><option value="disabled">Disabled / no key</option></select></label>
+      <label *ngIf="overdue">Behind by<select [(ngModel)]="filters.minDays" (ngModelChange)="apply()"><option value="">Any duration</option><option value="30">30+ days</option><option value="60">60+ days</option><option value="90">90+ days</option></select></label>
+      <label *ngIf="overdue">Sort by<select [(ngModel)]="filters.sort" (ngModelChange)="sortChanged()"><option value="name">Member name</option><option value="contact">Contact email</option><option value="access">Access</option><option value="plan">Plan</option><option value="amount">Amount past due</option><option value="oldest">Days past due</option><option value="recent">Last key use</option></select></label>
+      <button class="quiet reset" (click)="reset()">Reset</button>
+    </div>
+    <p class="result-bar" role="status" *ngIf="loading">Loading members…</p>
+    <ng-container *ngTemplateOutlet="pageControls; context: {position:'top'}"></ng-container>
+    <div class="error" *ngIf="error" role="alert">{{error}} <button class="quiet" (click)="apply()">Retry</button></div>
+    <div class="table-scroll directory-desktop" [attr.aria-busy]="loading">
+      <table *ngIf="data && !error" [class.overdue-table]="overdue">
+        <thead><tr>
+          <th [attr.aria-sort]="ariaSort('name')"><button class="column-sort" (click)="sortBy('name')" title="Sort by last name, then first name">Member <app-arrow [name]="sortIcon('name')"></app-arrow></button></th>
+          <th [attr.aria-sort]="ariaSort('contact')"><button class="column-sort" (click)="sortBy('contact')" title="Sort by contact email">Contact <app-arrow [name]="sortIcon('contact')"></app-arrow></button></th>
+          <th [attr.aria-sort]="ariaSort(overdue?'access':'status','plan')"><div class="split-sort"><button class="column-sort" (click)="sortBy(overdue?'access':'status')">{{overdue?'Access':'Status'}} <app-arrow [name]="sortIcon(overdue?'access':'status')"></app-arrow></button><span aria-hidden="true">&</span><button class="column-sort" (click)="sortBy('plan')">Plan <app-arrow [name]="sortIcon('plan')"></app-arrow></button></div></th>
+          <th [attr.aria-sort]="ariaSort(overdue?'oldest':'recent')"><button class="column-sort" (click)="sortBy(overdue?'oldest':'recent')">{{overdue?'Behind by':'Last key use'}} <app-arrow [name]="sortIcon(overdue?'oldest':'recent')"></app-arrow></button></th>
+          <th class="number" [attr.aria-sort]="ariaSort(overdue?'amount':'balance')"><button class="column-sort" (click)="sortBy(overdue?'amount':'balance')">{{overdue?'Past due':'Balance'}} <app-arrow [name]="sortIcon(overdue?'amount':'balance')"></app-arrow></button></th>
+          <th *ngIf="overdue"><span class="sr-only">Member actions</span></th>
+        </tr></thead>
+        <tbody><tr *ngFor="let m of data.rows" class="member-row" (click)="openMember($event,m)">
+          <td><div class="member-cell"><svg class="avatar member-identicon" width="36" height="36" [appMemberIcon]="m.id" aria-hidden="true" focusable="false"></svg><div><a class="member-name" [routerLink]="['/member',m.id]" [queryParams]="navigation.memberQuery">{{m.firstName}} {{m.lastName}}</a><small>{{m.phone || 'No phone on file'}}</small><small class="compact-email">{{m.email}}</small></div></div></td>
+          <td><a [href]="'mailto:' + m.email">{{m.email}}</a><small *ngIf="m.paypalEmail&&m.paypalEmail!==m.email">PayPal: {{m.paypalEmail}}</small></td>
+          <td><span class="badge" *ngIf="!overdue" [class.active]="m.status==='Active'" [class.canceled]="m.status==='Canceled'">{{m.status}}</span><span class="badge" *ngIf="overdue" [class.active]="m.accessAllowed">{{m.accessAllowed ? 'Access enabled' : (m.status === 'Canceled' ? 'Membership ended' : 'Access disabled')}}</span><small>{{m.planName}}</small></td>
+          <td *ngIf="!overdue">{{m.lastKeyUsage ? (m.lastKeyUsage | date:'MMM d, y') : 'Never used'}}</td>
+          <td *ngIf="overdue"><b>{{m.daysPastDue}} days</b><small>Since {{m.oldestUnpaidDate | date:'MMM d, y':'UTC'}}</small></td>
+          <td class="number"><b [class.debt]="m.pastDue > 0">{{(overdue ? m.pastDue : m.balance) | currency}}</b><small *ngIf="m.finalBillingDate">Ended {{m.finalBillingDate | date:'MMM d, y':'UTC'}}</small><small *ngIf="m.balance < 0">Credit</small></td>
+          <td *ngIf="overdue"><div class="row-actions"><a [href]="'mailto:' + m.email" [attr.aria-label]="'Email ' + m.firstName + ' ' + m.lastName">Email</a><a [routerLink]="['/member',m.id]" [queryParams]="navigation.memberQuery" fragment="access-keys" [attr.aria-label]="'Manage access for ' + m.firstName + ' ' + m.lastName">Manage access</a></div></td>
+        </tr></tbody>
+      </table>
+    </div>
+    <div class="directory-mobile" *ngIf="data&&!error"><div class="filter-row" [hidden]="!filtersOpen"><label>Sort members<select [(ngModel)]="filters.sort" (ngModelChange)="sortChanged()"><option value="name">Name</option><option value="contact">Contact</option><option value="status">Status</option><option value="plan">Plan</option><option value="recent">Last key use</option><option value="balance">Balance</option><option *ngIf="overdue" value="oldest">Days past due</option><option *ngIf="overdue" value="amount">Past due amount</option></select></label><button class="secondary" (click)="filters.order=filters.order==='asc'?'desc':'asc';apply()">{{filters.order==='asc'?'Ascending':'Descending'}} <app-arrow [name]="filters.order==='asc'?'sort-ascending':'sort-descending'"></app-arrow></button></div>
+    <article class="member-summary" *ngFor="let m of data.rows"><div class="section-heading"><div class="member-cell"><svg class="avatar member-identicon" width="36" height="36" [appMemberIcon]="m.id" aria-hidden="true" focusable="false"></svg><a class="member-name" [routerLink]="['/member',m.id]" [queryParams]="navigation.memberQuery">{{m.firstName}} {{m.lastName}}</a></div><span class="badge" [class.active]="m.status==='Active'">{{m.status}}</span></div><p><b>{{m.accessAllowed?'Entry allowed':'Entry blocked'}}</b> · {{m.accessAllowed?(m.pastDue?'Within grace period':'Current'):m.statusReason||(!m.enabledKeys?'No enabled key':'Review membership')}}</p><div class="section-heading"><span>{{m.planName}}</span><b>{{overdue?'Past due':'Balance'}}: {{(overdue?m.pastDue:m.balance)|currency}}</b></div><small>{{overdue?m.daysPastDue+' days behind':'Last key use: '+(m.lastKeyUsage?(m.lastKeyUsage|date:'MMM d, y'):'Never')}}</small><details><summary>Contact details</summary><a [href]="'mailto:'+m.email">{{m.email}}</a><p>{{m.phone||'No phone on file'}}</p><p *ngIf="m.paypalEmail&&m.paypalEmail!==m.email">PayPal: {{m.paypalEmail}}</p></details><a *ngIf="overdue" [routerLink]="['/member',m.id]" [queryParams]="navigation.memberQuery" fragment="access-keys">Manage access <app-arrow name="arrow-right"></app-arrow></a></article></div>
+    <div class="empty" *ngIf="data && !data.total && !loading && !error"><h2>No members match these filters.</h2><button class="secondary" (click)="reset()">Clear filters</button></div>
+    <ng-container *ngTemplateOutlet="pageControls; context: {position:'bottom'}"></ng-container>
+  </section>
+</section>
+<ng-template #pageControls let-position="position">
+  <div class="directory-pagination" [class.top-pagination]="position==='top'" *ngIf="data">
+    <div class="page-settings"><span aria-live="polite">{{firstRow}}–{{lastRow}} of {{data.total}} members · Page {{data.page}} of {{data.pages}}</span><label>Members per page<select [attr.aria-label]="'Members per page ('+position+')'" [(ngModel)]="filters.pageSize" (ngModelChange)="apply()" [disabled]="loading"><option *ngFor="let size of pageSizes" [ngValue]="size">{{size}}</option></select></label></div>
+    <nav class="page-buttons" [attr.aria-label]="'Member pages ('+position+')'">
+      <button class="secondary" aria-label="First page" title="First page" [disabled]="loading || data.page===1" (click)="goToPage(1)"><app-arrow name="first-page"></app-arrow> First</button>
+      <button class="secondary" aria-label="Previous page" title="Previous page" [disabled]="loading || data.page===1" (click)="goToPage(data.page-1)"><app-arrow name="chevron-left"></app-arrow> Prev</button>
+      <button *ngFor="let p of pageNumbers" class="page-number" [class.primary]="p===data.page" [class.secondary]="p!==data.page" [attr.aria-current]="p===data.page?'page':null" [attr.aria-label]="'Page '+p" [disabled]="loading || p===data.page" (click)="goToPage(p)">{{p}}</button>
+      <button class="secondary" aria-label="Next page" title="Next page" [disabled]="loading || data.page===data.pages" (click)="goToPage(data.page+1)">Next <app-arrow name="chevron-right"></app-arrow></button>
+      <button class="secondary" aria-label="Last page" title="Last page" [disabled]="loading || data.page===data.pages" (click)="goToPage(data.pages)">Last <app-arrow name="last-page"></app-arrow></button>
+    </nav>
+  </div>
+</ng-template>

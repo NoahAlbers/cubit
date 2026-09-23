@@ -1,0 +1,33 @@
+const assert=require('assert/strict')
+require('ts-node/register')
+const {filterDirectory}=require('../src/billing/directory')
+const row=(id,lastName,extra={})=>({id,firstName:'Test',lastName,email:id+'@example.test',status:'Active',planName:'Standard',planId:'standard',balance:0,pastDue:0,daysPastDue:0,lastKeyUsage:null,...extra})
+const rows=[row('c','Baker',{firstName:'Amy',email:'',status:'Inactive',planName:'Student',balance:120,pastDue:20,lastKeyUsage:'2026-09-20'}),
+ row('b','able',{firstName:'Zoe',email:'Z@example.test',status:'Canceled',planName:'Household',balance:-30,pastDue:0,lastKeyUsage:'2026-01-10'}),
+ row('a','Able',{firstName:'Amy',email:'a@example.test',balance:50,pastDue:80}),row('d','Zed',{balance:0,pastDue:40})]
+const ids=(sort,order,extra={})=>filterDirectory(rows,{sort,order,...extra}).rows.map(r=>r.id)
+assert.deepEqual(ids('name','asc'),['a','b','c','d'])
+assert.deepEqual(ids('name','desc'),['d','c','b','a'])
+assert.deepEqual(ids('contact','asc'),['a','d','b','c'])
+assert.deepEqual(ids('contact','desc'),['b','d','a','c'],'Missing emails last in either direction')
+assert.deepEqual(ids('status','asc'),['a','d','b','c'])
+assert.deepEqual(ids('status','desc'),['c','b','a','d'])
+assert.deepEqual(ids('plan','asc'),['b','a','d','c'])
+assert.deepEqual(ids('plan','desc'),['c','a','d','b'])
+assert.deepEqual(ids('recent','desc'),['c','b','a','d'])
+assert.deepEqual(ids('recent','asc'),['b','c','a','d'],'Never-used keys last in either direction')
+assert.deepEqual(ids('balance','asc'),['b','d','a','c'])
+assert.deepEqual(ids('balance','desc'),['c','a','d','b'],'Balance sorts balance, not amount past due')
+assert.deepEqual(ids('amount','desc'),['a','d','c','b'])
+const many=Array.from({length:97},(_,i)=>row(String(i).padStart(3,'0'),'Same',{balance:i%7}))
+for(const pageSize of [10,20,50,100])for(const order of ['asc','desc']){
+ const whole=filterDirectory(many,{sort:'balance',order,pageSize:100}).rows.map(r=>r.id),pages=Math.ceil(many.length/pageSize)
+ const combined=Array.from({length:pages},(_,i)=>filterDirectory(many,{sort:'balance',order,pageSize,page:i+1}).rows).flat().map(r=>r.id)
+ assert.deepEqual(combined,whole,'Sort happens before pagination, with stable ties')
+ assert.equal(new Set(combined).size,97)
+ assert.equal(filterDirectory(many,{pageSize,page:999}).page,pages)
+}
+const empty=filterDirectory(rows,{q:'No such member',page:12,pageSize:50});assert.equal(empty.page,1);assert.equal(empty.pages,1);assert.equal(empty.total,0)
+assert.equal(filterDirectory(rows,{page:-10,pageSize:500}).pageSize,100)
+assert.deepEqual(rows.map(r=>r.id),['c','b','a','d'],'Does not mutate input ordering')
+console.log('PASS: all header sorts and directions, credits vs arrears, missing values, deterministic pagination, page sizes, bounds and empty results.')

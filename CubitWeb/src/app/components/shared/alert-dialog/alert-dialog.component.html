@@ -1,0 +1,1 @@
+<div class="cubit-dialog"><h2 mat-dialog-title>{{header}}</h2><p>{{message}}</p><div class="actions"><button class="secondary" (click)="cancel()" *ngIf="OkCancel">Cancel</button><button class="primary" (click)="OkCancel?ok():close()">{{OkCancel?'Confirm':'Close'}}</button></div></div>

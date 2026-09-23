@@ -1,0 +1,14 @@
+*
+!package.json
+!pnpm-lock.yaml
+!nodemon.json
+!tsconfig.json
+!@types/
+!@types/**
+!src/
+!src/**
+!tests/
+!tests/**
+!tonic/
+!tonic/**
+!Dockerfile.dev

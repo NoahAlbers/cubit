@@ -1,0 +1,36 @@
+@use 'sass:map';
+@import '../../../sass/theme.scss';
+
+$green500: map-get(
+  $map: $tonic-app-primary,
+  $key: 500,
+);
+$red500: map-get(
+  $map: $tonic-app-warn,
+  $key: 500,
+);
+
+.green-check {
+  margin-left: 20%;
+  color: $green500;
+}
+.red-lock {
+  margin-left: 20%;
+  color: $red500;
+}
+.mailto,
+.green-trend {
+  color: $green500;
+}
+.red-trend {
+  color: $red500;
+}
+
+.clickable-name {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+.clickable-name:hover {
+  color: $green500;
+}

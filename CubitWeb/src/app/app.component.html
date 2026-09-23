@@ -1,0 +1,28 @@
+<a class="skip-link" href="#main" (click)="skip($event)">Skip to content</a>
+<div class="workspace" [class.signed-out]="!isAuthenticated">
+  <aside class="sidebar" [class.menu-open]="menuOpen" *ngIf="isAuthenticated">
+    <a class="brand" [routerLink]="portalView ? '/portal' : '/memberlist'" aria-label="Cubit home"><img class="cubit-wordmark" src="assets/cubit-logo.png" alt="Cubit CRM Software"></a>
+    <button class="secondary mobile-menu" (click)="menuOpen=!menuOpen" [attr.aria-expanded]="menuOpen" aria-controls="main-navigation">{{sectionName}} · {{menuOpen?'Close menu':'Menu'}}</button><div class="nav-label">{{portalView ? 'MY MEMBERSHIP' : 'WORKSPACE'}}</div>
+    <nav id="main-navigation" aria-label="Main navigation" *ngIf="!portalView">
+      <a [routerLink]="navigation.target('/memberlist')" [queryParams]="navigation.query('/memberlist')" routerLinkActive="selected" ariaCurrentWhenActive="page" [class.selected]="router.url.startsWith('/member/')" [attr.aria-current]="router.url.startsWith('/member/')?'page':null"><img class="nav-icon" src="assets/icons/members.svg" alt=""> Members</a>
+      <a [routerLink]="navigation.target('/overdue')" [queryParams]="navigation.query('/overdue')" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/overdue.svg" alt=""> Overdue</a>
+      <a [routerLink]="navigation.target('/accessLog')" [queryParams]="navigation.query('/accessLog')" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/access.svg" alt=""> Access log</a>
+      <a [routerLink]="navigation.target('/automation')" [queryParams]="navigation.query('/automation')" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/settings.svg" alt=""> Billing & automation</a>
+      <a [routerLink]="navigation.target('/reports')" [queryParams]="navigation.query('/reports')" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/reports.svg" alt=""> Reports</a>
+      <a [routerLink]="navigation.target('/waivers')" [queryParams]="navigation.query('/waivers')" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/waiver.svg" alt=""> Waivers</a>
+      <a routerLink="/portal"><img class="nav-icon" src="assets/icons/members.svg" alt=""> My portal</a>
+    </nav>
+    <nav id="main-navigation" aria-label="Member navigation" *ngIf="portalView">
+      <a routerLink="/portal" routerLinkActive="selected" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{exact:true}"><img class="nav-icon" src="assets/icons/members.svg" alt=""> Overview</a>
+      <a routerLink="/portal/billing" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/reports.svg" alt=""> Billing history</a>
+      <a routerLink="/portal/waivers" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/waiver.svg" alt=""> My waivers</a>
+      <a routerLink="/portal/profile" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/settings.svg" alt=""> My details</a>
+      <a *ngIf="auth.isAdmin" [routerLink]="navigation.target('/memberlist')" [queryParams]="navigation.query('/memberlist')"><app-arrow name="arrow-left"></app-arrow> Staff workspace</a>
+    </nav>
+    <div class="sidebar-bottom"><span class="environment-label"><span class="demo-dot"></span>{{workspaceLabel}}</span></div>
+  </aside>
+  <div class="workspace-body">
+    <header class="topbar" *ngIf="isAuthenticated"><span>Melbourne Makerspace <span class="muted">/ {{sectionName}}</span></span><div class="account-controls"><div class="account-identity"><span>{{auth.accountLabel}}</span><small>{{auth.isAdmin?'Staff administrator':'Member'}}</small></div><button class="secondary" (click)="logout()">Sign out</button></div></header>
+    <main id="main" tabindex="-1"><router-outlet></router-outlet></main>
+  </div>
+</div>

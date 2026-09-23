@@ -1,0 +1,34 @@
+<div [class.mat-elevation-z2]="!LowElevation" fxLayout="column" class="card">
+  <div style="height: 5px" class="bgdark"></div>
+  <div class="bgprimary headerspan">
+    <ng-content select=".headerText"></ng-content>
+    <div fxFlex fxLayoutAlign="flex-end">
+      <div fxlayout="row" fxLayoutGap="10px" class="cardButtonContainer">
+        <div class="cardButtons">
+          <button
+            *ngIf="addClick.observers.length > 0"
+            mat-mini-fab
+            (click)="add($event)"
+          >
+            <mat-icon aria-label="Add">add</mat-icon>
+          </button>
+          <ng-content
+            fxlayout="row"
+            fxLayoutGap="10px"
+            select=".extraButtons"
+          ></ng-content>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div fxFlex="100" class="bggray" fxLayout="row">
+    <div fxFlex="75" fxLayoutAlign="start center" class="headerdiv">
+      <div class="subHeaderText" fxLayoutAlign="start center">
+        <ng-content select=".subHeaderText"></ng-content>
+      </div>
+    </div>
+  </div>
+  <div fxFlex="100" style="min-height: 150px" class="bglightgray cardcontent">
+    <ng-content select=".content"></ng-content>
+  </div>
+</div>

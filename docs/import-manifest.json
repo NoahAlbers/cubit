@@ -1,0 +1,280 @@
+{
+  "archive_sha256": "b0412656accf671cc02ee1d696d7eaad9ff1db6df8c33de0abd74f5dc950fab6",
+  "files": [
+    {
+      "path": ".dockerignore",
+      "original_sha256": null,
+      "local_sha256": "ccf1ceddfe2bbc92b330382af138badb6dcdcc8910f50578a7652b7126a4072e"
+    },
+    {
+      "path": ".env.example",
+      "original_sha256": null,
+      "local_sha256": "83f1ee203c2d53ed1f95bfb8f65841a51acb2b45399b11598852ce94dd3b58f3"
+    },
+    {
+      "path": "@types/express/index.d.ts",
+      "original_sha256": "5d5def1066ad64406b400d637dcbae0398cfd7836213cff447546733a581be01",
+      "local_sha256": "5d5def1066ad64406b400d637dcbae0398cfd7836213cff447546733a581be01"
+    },
+    {
+      "path": "Dockerfile.dev",
+      "original_sha256": null,
+      "local_sha256": "95efc1afb53cb417d6a06596a679b1d53b104e4128aeab8a496be66a2c4229b9"
+    },
+    {
+      "path": "nodemon.json",
+      "original_sha256": "380ea6a7c459e2bbc476de8830078bbd21e902b2183aa346afaa17a095725d0b",
+      "local_sha256": "380ea6a7c459e2bbc476de8830078bbd21e902b2183aa346afaa17a095725d0b"
+    },
+    {
+      "path": "package.json",
+      "original_sha256": "220a39746cf73f2c9263b0308f70b9d5637f0241ec36d3f1135f17dd7424c5ff",
+      "local_sha256": "5c548c6f50a52e30724b867aa83d2ade205ea0dc1d64ac6fdab49d6c864aac71"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "original_sha256": "c13f20e0af2587f4ced8016b3812d33c03c12c84eeaf552b5a5602c8050f6419",
+      "local_sha256": "c13f20e0af2587f4ced8016b3812d33c03c12c84eeaf552b5a5602c8050f6419"
+    },
+    {
+      "path": "src/api/common/check-auth.ts",
+      "original_sha256": "1fc9cdc37f1245d0361726b7e24565c9ac87b6e21b963de7af79187f2a453cc9",
+      "local_sha256": "1fc9cdc37f1245d0361726b7e24565c9ac87b6e21b963de7af79187f2a453cc9"
+    },
+    {
+      "path": "src/api/common/gmail.ts",
+      "original_sha256": "f8a0b5896f59c081d0f321839aef8cb9ad4b34e3183249311cb1ecc2501e532e",
+      "local_sha256": "6781deb2dca1fa897e3a0a0b35ad7996250e4ea81bf31370f575e1eb3066260f"
+    },
+    {
+      "path": "src/api/common/jwtHelper.ts",
+      "original_sha256": "0f2675a2c1a0da049821956f0710db97852b4eec795a1dbfa472ffd40a55a023",
+      "local_sha256": "0f2675a2c1a0da049821956f0710db97852b4eec795a1dbfa472ffd40a55a023"
+    },
+    {
+      "path": "src/api/common/mailjet.ts",
+      "original_sha256": "e547935bdf3eaf4cd26f38349922cde375300109cb1352678a71d2d15861108e",
+      "local_sha256": "858b56d145d11ca0ab08c8cf49126c2946b5d1ad3fa0c9a638ff02bccb6f8ecb"
+    },
+    {
+      "path": "src/api/configuration.ts",
+      "original_sha256": "445fb43d889690ab45f08b61aeb5acf3c13f6039a9e94271019029515b533f07",
+      "local_sha256": "474e75b25e6eb2ef6574ae088961b2045da40d5502104d652bd6c91f0d06b855"
+    },
+    {
+      "path": "src/api/models/paypal.ts",
+      "original_sha256": "90b72de295442a68a27ef0ba9538a1ca828cf294d144fe197d2fc50633f123cb",
+      "local_sha256": "90b72de295442a68a27ef0ba9538a1ca828cf294d144fe197d2fc50633f123cb"
+    },
+    {
+      "path": "src/api/models/paypalWebhook.ts",
+      "original_sha256": "331bc90367d71ff3770614fbc915ac424d63e4ce5c85ba208674f23c106432b1",
+      "local_sha256": "331bc90367d71ff3770614fbc915ac424d63e4ce5c85ba208674f23c106432b1"
+    },
+    {
+      "path": "src/api/routes/accessLog.ts",
+      "original_sha256": "e2873e9f07ea6599bbb35b53a31b7988d14b97a1a3fc8c05ec72d28b212f88d0",
+      "local_sha256": "e2873e9f07ea6599bbb35b53a31b7988d14b97a1a3fc8c05ec72d28b212f88d0"
+    },
+    {
+      "path": "src/api/routes/ACON.ts",
+      "original_sha256": "217b8db1095acdb4e4565455479776c9d2460b8b79269cbd420fd17664b5abc6",
+      "local_sha256": "217b8db1095acdb4e4565455479776c9d2460b8b79269cbd420fd17664b5abc6"
+    },
+    {
+      "path": "src/api/routes/equipment.ts",
+      "original_sha256": "9451422363ea051b2fab618c1f8d43f2737252bb0bfd72836b2fa586779481fe",
+      "local_sha256": "9451422363ea051b2fab618c1f8d43f2737252bb0bfd72836b2fa586779481fe"
+    },
+    {
+      "path": "src/api/routes/login.ts",
+      "original_sha256": "e804f548ee4996f0f4dca7e38a5145cfc833714b750e3aa3ee72dc57890d00b6",
+      "local_sha256": "e804f548ee4996f0f4dca7e38a5145cfc833714b750e3aa3ee72dc57890d00b6"
+    },
+    {
+      "path": "src/api/routes/member.ts",
+      "original_sha256": "25cf410df85f27dcbe8843b9972f5b299a4874a205c2f9200cd9821aff5004c1",
+      "local_sha256": "25cf410df85f27dcbe8843b9972f5b299a4874a205c2f9200cd9821aff5004c1"
+    },
+    {
+      "path": "src/api/routes/memberKey.ts",
+      "original_sha256": "5c06d7f590bff47cd35e8c2c8cc9fee7fd4bbe6f4d7277c021a77f8ebff82aea",
+      "local_sha256": "5c06d7f590bff47cd35e8c2c8cc9fee7fd4bbe6f4d7277c021a77f8ebff82aea"
+    },
+    {
+      "path": "src/api/routes/paypal.ts",
+      "original_sha256": "cc10bdb5cfd916e81edec1ae37ea55bbbc0b8b1bd010e1903fbf861dd67eada6",
+      "local_sha256": "e76ffaeb060e3c1a9a8edf30ae11a5d4e56e79240277f3e67ad3e1733ebfaeb8"
+    },
+    {
+      "path": "src/api/routes/plan.ts",
+      "original_sha256": "0eacc6a07eefc7823aa6c32d7b4bb21419541b37d8975b6e2155b42c39a6d138",
+      "local_sha256": "0eacc6a07eefc7823aa6c32d7b4bb21419541b37d8975b6e2155b42c39a6d138"
+    },
+    {
+      "path": "src/api/routes/task.ts",
+      "original_sha256": "219ffeddb073b05ef86b92b4511662579496c001a2937c230dcca237633ce484",
+      "local_sha256": "219ffeddb073b05ef86b92b4511662579496c001a2937c230dcca237633ce484"
+    },
+    {
+      "path": "src/api/routes/transaction.ts",
+      "original_sha256": "f8aca3f00f25309c9e56655e2d98f90d7ffe548fbd0b4b430a59ee6c0bee6e83",
+      "local_sha256": "f8aca3f00f25309c9e56655e2d98f90d7ffe548fbd0b4b430a59ee6c0bee6e83"
+    },
+    {
+      "path": "src/app.ts",
+      "original_sha256": "abfebc3b37f0f5e511af496e46a3cfdd5959622231ea93a90e4cd2d56074c9bd",
+      "local_sha256": "0e5b779e9ba520118b1404c6ab31a01f0a3b69930f4a54088ae7ba7aef60ebb8"
+    },
+    {
+      "path": "src/dev/config.ts",
+      "original_sha256": null,
+      "local_sha256": "3afba71bc29a08b03b93369275fd7e9d406a9628802cc77d24bcd756572e9173"
+    },
+    {
+      "path": "src/dev/seed.ts",
+      "original_sha256": null,
+      "local_sha256": "3cb14a878596389c7ebaab4f145551144073d73f499219b23346727ed34043f4"
+    },
+    {
+      "path": "src/dev/windows-naming.ts",
+      "original_sha256": null,
+      "local_sha256": "5a54ab39de93f22e2aa9ac665beace16d5efda01c04ad029eb321e0c606b3408"
+    },
+    {
+      "path": "src/entity/accessLog.ts",
+      "original_sha256": "add6ab776ff4bf6af1ff4ee7de90161a756fa1f65ebd3d50d33fe4507ef24943",
+      "local_sha256": "add6ab776ff4bf6af1ff4ee7de90161a756fa1f65ebd3d50d33fe4507ef24943"
+    },
+    {
+      "path": "src/entity/equipment.ts",
+      "original_sha256": "e01c62d4289e13b51ca4523e6828bf256b29326bdc475566f7b737005800555a",
+      "local_sha256": "e01c62d4289e13b51ca4523e6828bf256b29326bdc475566f7b737005800555a"
+    },
+    {
+      "path": "src/entity/equipmentReport.ts",
+      "original_sha256": "2160c4136549ff08bea8cfcefcbb155b293b5e75b0b81e799b3c74497c654ee2",
+      "local_sha256": "2160c4136549ff08bea8cfcefcbb155b293b5e75b0b81e799b3c74497c654ee2"
+    },
+    {
+      "path": "src/entity/maintenanceRecord.ts",
+      "original_sha256": "204533572b9c0ca35f5a78a4491ed581bad8755946b7838d477bfd8d58638fdb",
+      "local_sha256": "204533572b9c0ca35f5a78a4491ed581bad8755946b7838d477bfd8d58638fdb"
+    },
+    {
+      "path": "src/entity/member.ts",
+      "original_sha256": "8fc5289412dc2328744632b7519dd4d0a253ddaddccf9294f8b79b16b1ce0fcd",
+      "local_sha256": "8fc5289412dc2328744632b7519dd4d0a253ddaddccf9294f8b79b16b1ce0fcd"
+    },
+    {
+      "path": "src/entity/memberKey.ts",
+      "original_sha256": "ed275835090fe34f031a0df95c11fad767cda3257d35eb0e6eda86b0c602f5ef",
+      "local_sha256": "ed275835090fe34f031a0df95c11fad767cda3257d35eb0e6eda86b0c602f5ef"
+    },
+    {
+      "path": "src/entity/memberPlan.ts",
+      "original_sha256": "450bb8334f0e1964f89e79c9a28858648b114622b95afae60e457f9ca723873b",
+      "local_sha256": "450bb8334f0e1964f89e79c9a28858648b114622b95afae60e457f9ca723873b"
+    },
+    {
+      "path": "src/entity/memberStatus.ts",
+      "original_sha256": "4f01f41b40049f5da8742f7505bf8b8f50de16ce113bc690d8961b18a7a5b6a6",
+      "local_sha256": "4f01f41b40049f5da8742f7505bf8b8f50de16ce113bc690d8961b18a7a5b6a6"
+    },
+    {
+      "path": "src/entity/PaypalTransaction.ts",
+      "original_sha256": "fe46c9b0d919d7475eb2e2ad0dbddec0fc30c5b55fa48f029f7ac9e057f6424c",
+      "local_sha256": "fe46c9b0d919d7475eb2e2ad0dbddec0fc30c5b55fa48f029f7ac9e057f6424c"
+    },
+    {
+      "path": "src/entity/plan.ts",
+      "original_sha256": "3f3edb1198b93267a1f6318d1088c8a5c70c8a6e299dee2e3a28db581773711b",
+      "local_sha256": "3f3edb1198b93267a1f6318d1088c8a5c70c8a6e299dee2e3a28db581773711b"
+    },
+    {
+      "path": "src/entity/task.ts",
+      "original_sha256": "7650a19032c5b65e64ba9601ec9e92f1dabaf788f3d28e641a0730120c9a3104",
+      "local_sha256": "7650a19032c5b65e64ba9601ec9e92f1dabaf788f3d28e641a0730120c9a3104"
+    },
+    {
+      "path": "src/entity/transaction.ts",
+      "original_sha256": "451aa75dd3d41904d9214a7adca4d907b1d6708f10cc76d2a0d06f0d52e968dd",
+      "local_sha256": "451aa75dd3d41904d9214a7adca4d907b1d6708f10cc76d2a0d06f0d52e968dd"
+    },
+    {
+      "path": "src/migration/1613364755120-InitialDatabase.ts",
+      "original_sha256": "377d8e50179aa7d80a1c3fb2ca78e537e6421779f6fd073a2c6021af8a0d4831",
+      "local_sha256": "377d8e50179aa7d80a1c3fb2ca78e537e6421779f6fd073a2c6021af8a0d4831"
+    },
+    {
+      "path": "src/migration/1613522508793-changetouuid.ts",
+      "original_sha256": "5d2f05321a0b65dc7b070a461bf5fec7c990f93f537bb70cb465e8d691c943ef",
+      "local_sha256": "5d2f05321a0b65dc7b070a461bf5fec7c990f93f537bb70cb465e8d691c943ef"
+    },
+    {
+      "path": "tests/local-safety.cjs",
+      "original_sha256": null,
+      "local_sha256": "1f388b28f2c8c0fe64d49b3b335312a132c4e8edfff7692cd661dc3e6456127c"
+    },
+    {
+      "path": "tests/native-smoke.cjs",
+      "original_sha256": null,
+      "local_sha256": "80af2252cb64bd9cf7c0c68b4c5f9f7c320dcffd7277a9fc1b5f983d0cea2f3b"
+    },
+    {
+      "path": "tonic/3rdpartylicenses.txt",
+      "original_sha256": "2eee7cb3effddb97eca4f2c9b2b41e374222bece2dd3e0d0e2913160dde4e68f",
+      "local_sha256": "2eee7cb3effddb97eca4f2c9b2b41e374222bece2dd3e0d0e2913160dde4e68f"
+    },
+    {
+      "path": "tonic/assets/fry.jpg",
+      "original_sha256": "75f97ee505c10ab4e4f3167995bef39ecb152a33ccb2227a30d17bb6e6f5c4ec",
+      "local_sha256": "75f97ee505c10ab4e4f3167995bef39ecb152a33ccb2227a30d17bb6e6f5c4ec"
+    },
+    {
+      "path": "tonic/assets/GoogleLogIn.png",
+      "original_sha256": "dd0f9aec029e53d3af24b2dcdf19cbfbcab46b1f1a6711c6162bd3b192ffcb42",
+      "local_sha256": "dd0f9aec029e53d3af24b2dcdf19cbfbcab46b1f1a6711c6162bd3b192ffcb42"
+    },
+    {
+      "path": "tonic/assets/Logo.jpg",
+      "original_sha256": "68d6c2172bbcae22751e08cf38a7576f6a01d25e356c11efa20756147bd0be26",
+      "local_sha256": "68d6c2172bbcae22751e08cf38a7576f6a01d25e356c11efa20756147bd0be26"
+    },
+    {
+      "path": "tonic/favicon.ico",
+      "original_sha256": "d17958d95b3ee1ccf94427bc8a990d52fdfa7b61d46dceaec7e850c36c721dd4",
+      "local_sha256": "d17958d95b3ee1ccf94427bc8a990d52fdfa7b61d46dceaec7e850c36c721dd4"
+    },
+    {
+      "path": "tonic/index.html",
+      "original_sha256": "25d6ef89469d5ad7f720cd6d617ad466b11d46ed3d94523245ac1bddf0315d9b",
+      "local_sha256": "9b7e0afbfb226bb99eeaf7911bec8895277bdfb78a086c68d129d4c72dd91ba0"
+    },
+    {
+      "path": "tonic/main.d3a537b2fc256171.js",
+      "original_sha256": "dcc3758f46ece6a1afaf4641c9c2a99faab366abd5c6621c4af5611d02b94711",
+      "local_sha256": "ad71ae3049c0073e07f40d7bbc32a7b7a7467ee9d017451b69f4b1f743503a50"
+    },
+    {
+      "path": "tonic/polyfills.27ddc409344cb321.js",
+      "original_sha256": "48c01d18c1e420fd2434060817227bcc0350773f72f1716fdecbb0ba3ca7d185",
+      "local_sha256": "48c01d18c1e420fd2434060817227bcc0350773f72f1716fdecbb0ba3ca7d185"
+    },
+    {
+      "path": "tonic/runtime.9869437029f28b27.js",
+      "original_sha256": "d4816f3a94a4a5d70ed1984ae51b9985fee5580fdf0f66dee38b1ada1657ad27",
+      "local_sha256": "d4816f3a94a4a5d70ed1984ae51b9985fee5580fdf0f66dee38b1ada1657ad27"
+    },
+    {
+      "path": "tonic/styles.7721ee59da4a6f42.css",
+      "original_sha256": "1608c65711d45328b0399023605070bd6e05143d94c76aa7d66428b9be511a74",
+      "local_sha256": "1608c65711d45328b0399023605070bd6e05143d94c76aa7d66428b9be511a74"
+    },
+    {
+      "path": "tsconfig.json",
+      "original_sha256": "34f5d37d431de55544dbd96a79f9981a4ed928a7eb250c742d35c4c1603104b8",
+      "local_sha256": "34f5d37d431de55544dbd96a79f9981a4ed928a7eb250c742d35c4c1603104b8"
+    }
+  ]
+}
