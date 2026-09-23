@@ -9,6 +9,6 @@ export class AccessLogService {
 
   getAccessLog(params:any): Observable<{rows:any[];total:number;page:number;pages:number}> {
     return this.http.get<{rows:any[];total:number;page:number;pages:number}>(
-      environment.TonicAPIURL + 'accessLog/events', {params});
+      environment.apiUrl + 'accessLog/events', {params});
   }
 }

@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const { execFileSync } = require('child_process')
-const mysql = require('../TonicServices/node_modules/mysql2/promise')
+const mysql = require('../CubitServices/node_modules/mysql2/promise')
 async function main() {
   const root = path.resolve(__dirname, '..')
   const settings = JSON.parse(fs.readFileSync(path.join(root, '.private/native/settings.json'), 'utf8').replace(/^\uFEFF/, ''))

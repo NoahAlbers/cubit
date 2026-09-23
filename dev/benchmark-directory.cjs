@@ -1,12 +1,12 @@
 // Local-only timing/query-count comparison. Prints no member records or SQL.
 const fs=require('fs'),path=require('path'),assert=require('assert/strict'),crypto=require('crypto')
-const root=path.resolve(__dirname,'..');process.chdir(path.join(root,'TonicServices'))
-require('../TonicServices/node_modules/ts-node/register')
-const {localConfig}=require('../TonicServices/src/dev/config')
+const root=path.resolve(__dirname,'..');process.chdir(path.join(root,'CubitServices'))
+require('../CubitServices/node_modules/ts-node/register')
+const {localConfig}=require('../CubitServices/src/dev/config')
 assert.equal(localConfig.dataMode,'imported');assert.equal(localConfig.host,'127.0.0.1')
-const {AppDataSource:db}=require('../TonicServices/src/app')
-const {directoryRows}=require('../TonicServices/src/billing/directory')
-const {day}=require('../TonicServices/src/billing/ledger')
+const {AppDataSource:db}=require('../CubitServices/src/app')
+const {directoryRows}=require('../CubitServices/src/billing/directory')
+const {day}=require('../CubitServices/src/billing/ledger')
 const file=path.join(root,'.private/imports/directory-performance-before.json')
 async function main(){
  await db.initialize()

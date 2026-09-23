@@ -1,7 +1,7 @@
 // Read-oriented integration checks for the real-data LOCAL review copy.
 // Never posts payments, changes contact details, signs waivers or contacts providers.
 const fs=require('fs'),path=require('path'),zlib=require('zlib'),assert=require('assert/strict'),http=require('http')
-const mysql=require('../TonicServices/node_modules/mysql2/promise')
+const mysql=require('../CubitServices/node_modules/mysql2/promise')
 const root=path.resolve(__dirname,'..'),dir=path.join(root,'.private/imports')
 const source=JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(dir,'tonic-current-data.json.gz'))))
 const credentials=JSON.parse(fs.readFileSync(path.join(dir,'local-access.json')))

@@ -9,6 +9,6 @@
 !src/**
 !tests/
 !tests/**
-!tonic/
-!tonic/**
+!public/
+!public/**
 !Dockerfile.dev

@@ -32,7 +32,7 @@ async function main() {
     }
     await new Promise(resolve => setTimeout(resolve, 500))
   }
-  assert.ok(health, 'Local Tonic never became ready')
+  assert.ok(health, 'Local Cubit never became ready')
   assert.equal(health.status, 200)
   assert.equal(health.json().mode, 'local-development')
   assert.equal(health.json().databaseReady, true)

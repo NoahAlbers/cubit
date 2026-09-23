@@ -1,10 +1,10 @@
 // Read-only verification against the local imported access history. No member details are printed.
 const fs=require('fs'),path=require('path'),http=require('http'),assert=require('assert/strict')
-const root=path.resolve(__dirname,'..');process.chdir(path.join(root,'TonicServices'))
-require('../TonicServices/node_modules/ts-node/register')
-const {localConfig}=require('../TonicServices/src/dev/config')
-const {accessLogOptions}=require('../TonicServices/src/billing/access-log-options')
-const {AppDataSource:db}=require('../TonicServices/src/app')
+const root=path.resolve(__dirname,'..');process.chdir(path.join(root,'CubitServices'))
+require('../CubitServices/node_modules/ts-node/register')
+const {localConfig}=require('../CubitServices/src/dev/config')
+const {accessLogOptions}=require('../CubitServices/src/billing/access-log-options')
+const {AppDataSource:db}=require('../CubitServices/src/app')
 assert.equal(localConfig.host,'127.0.0.1');assert.equal(localConfig.dataMode,'imported')
 const credentials=JSON.parse(fs.readFileSync(path.join(root,'.private/imports/local-access.json')))
 function request(route,token,body){return new Promise((resolve,reject)=>{

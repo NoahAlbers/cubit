@@ -48,7 +48,7 @@ app.get('/health', (req, res) => {
     mode: localConfig.runtimeMode === 'hosted-review' ? 'hosted-review' : 'local-development',
     dataMode: localConfig.dataMode, databaseReady: AppDataSource.isInitialized,
     workspaceLabel: localConfig.runtimeMode === 'hosted-review' ? 'Hosted review · copied member data' :
-      localConfig.dataMode === 'imported' ? 'Local testing · imported Tonic data' : 'Local demo workspace',
+      localConfig.dataMode === 'imported' ? 'Local testing · imported membership data' : 'Local demo workspace',
   })
 })
 
@@ -63,7 +63,7 @@ if (localConfig.runtimeMode === 'hosted-review') {
 // Browser navigation serves the Angular shell; JSON calls keep the legacy API URLs.
 app.get(['/', '/memberlist', '/overdue', '/member/:memberId', '/accessLog', '/reports', '/automation', '/waivers', '/portal', '/portal/:section', '/app-login'], (req, res, next) => {
   if ((req.headers.accept || '').includes('text/html')) {
-    return res.sendFile(path.resolve('tonic/index.html'))
+    return res.sendFile(path.resolve('public/index.html'))
   }
   next()
 })
@@ -118,7 +118,7 @@ app.use('/paypal', paypalRoutes)
 const ACONRoutes = require('./api/routes/ACON')
 app.use('/ACON', ACONRoutes)
 
-app.use(express.static('tonic'))
+app.use(express.static('public'))
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error('Request failed:', err.message)

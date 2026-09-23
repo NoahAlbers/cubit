@@ -62,7 +62,7 @@ async function main() {
   const env = { ...process.env }
   const pathKey = Object.keys(env).find(key => key.toLowerCase() === 'path') || 'PATH'
   env[pathKey] = `${path.dirname(node22)};${env[pathKey] || ''}`
-  const cwd = path.join(root, 'TonicServices')
+  const cwd = path.join(root, 'CubitServices')
   await run(node22, [pnpm, 'install', '--frozen-lockfile', '--force', '--store-dir', path.join(root, '.private/pnpm-native-store')], { cwd, env })
   await run(node17, ['node_modules/typescript/bin/tsc', '--noEmit'], { cwd })
   await run(node17, ['tests/local-safety.cjs'], { cwd })

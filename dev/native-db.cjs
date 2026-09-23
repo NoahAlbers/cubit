@@ -1,7 +1,7 @@
 // Used by the PowerShell scripts. Credentials never appear in command arguments.
 const fs = require('fs')
 const path = require('path')
-const mysql = require('../TonicServices/node_modules/mysql2/promise')
+const mysql = require('../CubitServices/node_modules/mysql2/promise')
 const settingsPath = path.resolve(__dirname, '../.private/native/settings.json')
 const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8').replace(/^\uFEFF/, ''))
 const normalize = value => path.resolve(value).replace(/\\/g, '/').replace(/\/$/, '').toLowerCase()

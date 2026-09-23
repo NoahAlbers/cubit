@@ -12,24 +12,24 @@ export class KeyService {
 
   getMemberActivity(memberId: string): Observable<{lastEntry: string | null; keys: Key[]}> {
     return this.http.get<{lastEntry: string | null; keys: Key[]}>(
-      environment.TonicAPIURL + `key/memberActivity/${memberId}`
+      environment.apiUrl + `key/memberActivity/${memberId}`
     );
   }
 
   getMemberKeyList(memberId): Observable<Key[]> {
     return this.http.get<Key[]>(
-      environment.TonicAPIURL + `key/memberKeys/${memberId}`
+      environment.apiUrl + `key/memberKeys/${memberId}`
     );
   }
 
   saveKey(key: Key): Promise<any> {
     console.log('saving key to web service', key);
-    return this.http.post(environment.TonicAPIURL + 'key', key).toPromise();
+    return this.http.post(environment.apiUrl + 'key', key).toPromise();
   }
 
   deleteKey(key: Key): Promise<any> {
     return this.http
-      .delete(environment.TonicAPIURL + `key/${key.id}`)
+      .delete(environment.apiUrl + `key/${key.id}`)
       .toPromise();
   }
 }

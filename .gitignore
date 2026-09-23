@@ -13,7 +13,7 @@ dist/
 *.tar
 *.tar.gz
 output/
-TonicServices/tonic/
+CubitServices/public/
 *.zip
 *.bak
 *.pem

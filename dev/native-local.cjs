@@ -6,7 +6,7 @@ const crypto = require('crypto')
 const { spawn, execFileSync } = require('child_process')
 const root = path.resolve(__dirname, '..')
 const state = path.join(root, '.private/native')
-const appDirectory = path.join(root, 'TonicServices')
+const appDirectory = path.join(root, 'CubitServices')
 const nodeExe = path.join(root, '.private/tools/node17/node.exe')
 const mysqlBase = path.join(root, '.private/tools/mysql/mysql-8.0.19-winx64')
 const mysqlExe = path.join(mysqlBase, 'bin/mysqld.exe')
@@ -137,14 +137,14 @@ async function start() {
   }
   for (let attempt = 0; attempt < 45; attempt++) {
     if (await health()) {
-      console.log('Tonic is running at http://localhost:5001')
+      console.log('Cubit is running at http://localhost:5001')
       console.log(database==='TonicLocalDev'?'Demo login: admin@example.test / LocalDemoOnly!2026':'Imported-data review. Local test login details: .private/imports/local-access.txt')
       console.log('Stop it with dev\\stop-local.cmd')
       return
     }
     await sleep(500)
   }
-  throw new Error('Tonic did not become ready. Inspect .private/native/app.stderr.log and app.stdout.log.')
+  throw new Error('Cubit did not become ready. Inspect .private/native/app.stderr.log and app.stdout.log.')
 }
 
 async function stop() {
@@ -163,7 +163,7 @@ async function stop() {
       throw new Error('Recorded MySQL process is not responding; inspect its log before stopping it.')
     } else fs.unlinkSync(mysqlPidFile)
   }
-  console.log('Local Tonic stopped. Database files have been preserved.')
+  console.log('Local Cubit stopped. Database files have been preserved.')
 }
 
 const command = process.argv[2]

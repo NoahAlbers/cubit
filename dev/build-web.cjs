@@ -9,5 +9,5 @@ if (!fs.existsSync(path.join(web, 'node_modules/@angular/cli/bin/ng.js'))) {
 execFileSync(process.execPath, [path.join(web, 'node_modules/@angular/cli/bin/ng.js'), 'build', '--configuration', 'production'], {
   cwd: web, stdio: 'inherit', env: { ...process.env, NG_CLI_ANALYTICS: 'false' },
 })
-fs.cpSync(path.join(web, 'dist'), path.join(root, 'TonicServices/tonic'), { recursive: true })
+fs.cpSync(path.join(web, 'dist'), path.join(root, 'CubitServices/public'), { recursive: true })
 console.log('Cubit built. Refresh http://localhost:5001 to see the updated interface.')

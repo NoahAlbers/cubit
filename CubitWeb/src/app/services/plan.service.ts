@@ -10,6 +10,6 @@ export class PlanService {
   constructor(private http: HttpClient) {}
 
   getPlanList(): Observable<Plan[]> {
-    return this.http.get<Plan[]>(environment.TonicAPIURL + `plan?available=true`);
+    return this.http.get<Plan[]>(environment.apiUrl + `plan?available=true`);
   }
 }

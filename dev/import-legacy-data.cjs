@@ -1,9 +1,9 @@
 // Stage an immutable export in a NEW local review schema. Never replaces the demo
 // database, connects to production, or activates the review application itself.
 const fs=require('fs'),path=require('path'),zlib=require('zlib'),crypto=require('crypto'),assert=require('assert/strict')
-const root=path.resolve(__dirname,'..'),app=path.join(root,'TonicServices')
-const mysql=require('../TonicServices/node_modules/mysql2/promise')
-const bcrypt=require('../TonicServices/node_modules/bcrypt')
+const root=path.resolve(__dirname,'..'),app=path.join(root,'CubitServices')
+const mysql=require('../CubitServices/node_modules/mysql2/promise')
+const bcrypt=require('../CubitServices/node_modules/bcrypt')
 const settings=JSON.parse(fs.readFileSync(path.join(root,'.private/native/settings.json'),'utf8').replace(/^\uFEFF/,''))
 const schema='toniclocalreview',folder=path.join(root,'.private/imports')
 const sourceFile=path.join(folder,'tonic-current-data.json.gz')
@@ -36,11 +36,11 @@ async function main(){
     }else await conn.query('CREATE DATABASE '+q(schema)+' CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci')
     process.chdir(app)
     Object.assign(process.env,{LOCAL_DEVELOPMENT:'true',DATABASE_URI:'127.0.0.1',DATABASE_PORT:'3307',DATABASE_NAME:'TonicLocalReview',DATABASE_USERNAME:'tonic_local',DATABASE_PASSWORD:settings.appPassword,JWT_SECRET:settings.jwtSecret,TZ:'UTC'})
-    require('../TonicServices/node_modules/ts-node/register')
-    db=require('../TonicServices/src/app').AppDataSource
+    require('../CubitServices/node_modules/ts-node/register')
+    db=require('../CubitServices/src/app').AppDataSource
     await db.initialize();await db.synchronize()
-    const {billingLedger}=require('../TonicServices/src/billing/ledger')
-    const {postedLedger,accessDecision}=require('../TonicServices/src/billing/posted-ledger')
+    const {billingLedger}=require('../CubitServices/src/billing/ledger')
+    const {postedLedger,accessDecision}=require('../CubitServices/src/billing/posted-ledger')
     const stamp=source.source.snapshotUtc,asOf=stamp.slice(0,10)
     const emailCounts=new Map()
     for(const m of t.member){const email=(m.email||'').trim().toLowerCase();emailCounts.set(email,(emailCounts.get(email)||0)+1)}

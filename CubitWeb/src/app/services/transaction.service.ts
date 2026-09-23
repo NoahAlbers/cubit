@@ -12,25 +12,25 @@ export class TransactionService {
 
   getMemberTransactionList(memberId): Observable<Transaction[]> {
     return this.http.get<Transaction[]>(
-      environment.TonicAPIURL + `Transaction/memberTransactions/${memberId}`
+      environment.apiUrl + `Transaction/memberTransactions/${memberId}`
     );
   }
 
   getTransaction(id): Observable<Transaction> {
     return this.http.get<Transaction>(
-      environment.TonicAPIURL + `Transaction/${id}`
+      environment.apiUrl + `Transaction/${id}`
     );
   }
 
   saveTransaction(transaction: Transaction): Promise<any> {
     return this.http
-      .post(environment.TonicAPIURL + 'Transaction', transaction)
+      .post(environment.apiUrl + 'Transaction', transaction)
       .toPromise();
   }
 
   deleteTransaction(transaction: Transaction): Promise<any> {
     return this.http
-      .delete(environment.TonicAPIURL + `Transaction/${transaction.id}`)
+      .delete(environment.apiUrl + `Transaction/${transaction.id}`)
       .toPromise();
   }
 }

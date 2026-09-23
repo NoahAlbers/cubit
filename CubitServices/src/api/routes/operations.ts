@@ -76,8 +76,8 @@ router.get('/automation', route(async(req:any,res:any)=>{
   res.json({settings,migration:settings.migrationSummary?JSON.parse(settings.migrationSummary):null,runs:runs.map(r=>{
     const s=JSON.parse(r.summary);return {...r,summary:{date:s.date,members:s.members,newCharges:s.newCharges,accessChanges:s.accessChanges,error:s.error}}
   }),events,audit,
-    mode:localConfig.dataMode==='imported'?'Local testing with imported Tonic data. No live integrations.':'Local development: payment events are simulations.',
-    schedule:localConfig.dataMode==='imported'?'Automatic processing is paused for the imported-data review. Billing dates use UTC, matching Tonic.':'Daily after 9:00 AM in this PC’s timezone, while Cubit is running. Missed runs catch up at the next start.',
+    mode:localConfig.dataMode==='imported'?'Reviewing imported membership data. No live integrations.':'Local development: payment events are simulations.',
+    schedule:localConfig.dataMode==='imported'?'Automatic processing is paused for the imported-data review. Billing dates use UTC to preserve the imported dates.':'Daily after 9:00 AM in this PC’s timezone, while Cubit is running. Missed runs catch up at the next start.',
     imported:localConfig.dataMode==='imported'})
 }))
 router.post('/automation/settings',route(async(req:any,res:any)=>{

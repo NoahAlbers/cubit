@@ -29,11 +29,11 @@ runuser -u ubuntu -- bash -c '
   export CI=true NG_CLI_ANALYTICS=false
   # Copy rather than hardlink dependencies: sealing release ownership must not
   # change ownership/permissions of the shared pnpm build cache.
-  pnpm --dir TonicServices install --frozen-lockfile --package-import-method=copy
+  pnpm --dir CubitServices install --frozen-lockfile --package-import-method=copy
   pnpm --dir CubitWeb install --frozen-lockfile --package-import-method=copy
   node dev/build-web.cjs
-  pnpm --dir TonicServices build
-  cd TonicServices
+  pnpm --dir CubitServices build
+  cd CubitServices
   node tests/local-safety.cjs
   node tests/hosted-safety.cjs
   node tests/billing.cjs
@@ -46,22 +46,32 @@ chmod -R a+rX "$release"
 install -d -m 700 /var/backups/cubit
 umask 077
 mysqldump --single-transaction --no-tablespaces --set-gtid-purged=OFF cubit_review | gzip > "/var/backups/cubit/before-${revision}-$(date -u +%Y%m%dT%H%M%SZ).sql.gz"
-ln -sfn "$release" /opt/cubit/current.next
-mv -Tf /opt/cubit/current.next /opt/cubit/current
-systemctl restart cubit-review
-for attempt in $(seq 1 30); do
-  if curl -fsS http://127.0.0.1:5001/health | grep -q '"mode":"hosted-review"'; then
-    echo "Activated $revision"
-    exit 0
-  fi
-  sleep 1
-done
-echo 'Health check failed; restoring previous code release.' >&2
+# Keep the service and code together when a release changes its working directory.
+unit_path=/etc/systemd/system/cubit-review.service
+unit_backup=$(mktemp /run/cubit-review-service.XXXXXX)
+trap 'rm -f "$unit_backup"' EXIT
+cp -p "$unit_path" "$unit_backup"
+if install -m 644 "$release/deploy/cubit-review.service" "$unit_path" &&
+   ln -sfn "$release" /opt/cubit/current.next &&
+   mv -Tf /opt/cubit/current.next /opt/cubit/current &&
+   systemctl daemon-reload && systemctl restart cubit-review; then
+  for attempt in $(seq 1 30); do
+    if curl -fsS http://127.0.0.1:5001/health | grep -q '"mode":"hosted-review"'; then
+      echo "Activated $revision"
+      exit 0
+    fi
+    sleep 1
+  done
+fi
+echo 'Activation failed; restoring previous code and service definition.' >&2
+install -m 644 "$unit_backup" "$unit_path"
 if [[ -n "$previous" && -d "$previous" ]]; then
   ln -sfn "$previous" /opt/cubit/current.next
   mv -Tf /opt/cubit/current.next /opt/cubit/current
+  systemctl daemon-reload
   systemctl restart cubit-review
 else
+  systemctl daemon-reload
   systemctl stop cubit-review
 fi
 exit 1

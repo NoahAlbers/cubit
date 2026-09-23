@@ -1,13 +1,13 @@
 // Local-only checks. Synthetic key/log records are always rolled back.
 const fs=require('fs'),path=require('path'),http=require('http'),assert=require('assert/strict'),crypto=require('crypto')
-const root=path.resolve(__dirname,'..');process.chdir(path.join(root,'TonicServices'))
-require('../TonicServices/node_modules/ts-node/register')
-const {localConfig}=require('../TonicServices/src/dev/config')
+const root=path.resolve(__dirname,'..');process.chdir(path.join(root,'CubitServices'))
+require('../CubitServices/node_modules/ts-node/register')
+const {localConfig}=require('../CubitServices/src/dev/config')
 assert.equal(localConfig.host,'127.0.0.1');assert.equal(localConfig.dataMode,'imported')
-const {AppDataSource:db}=require('../TonicServices/src/app')
-const {memberActivity}=require('../TonicServices/src/billing/member-activity')
-const {AccessLog}=require('../TonicServices/src/entity/accessLog')
-const {MemberKey}=require('../TonicServices/src/entity/memberKey')
+const {AppDataSource:db}=require('../CubitServices/src/app')
+const {memberActivity}=require('../CubitServices/src/billing/member-activity')
+const {AccessLog}=require('../CubitServices/src/entity/accessLog')
+const {MemberKey}=require('../CubitServices/src/entity/memberKey')
 const credentials=JSON.parse(fs.readFileSync(path.join(root,'.private/imports/local-access.json')))
 function request(route,token,body){return new Promise((resolve,reject)=>{
  const data=body?JSON.stringify(body):undefined

@@ -14,7 +14,7 @@ COPY package.json nodemon.json tsconfig.json ./
 COPY @types ./@types
 COPY src ./src
 COPY tests ./tests
-COPY tonic ./tonic
+COPY public ./public
 RUN npm run typecheck && npm run test:local
 EXPOSE 5001
 CMD ["npm", "run", "dev"]

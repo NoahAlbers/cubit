@@ -1,9 +1,9 @@
 // Read-only analysis of the preserved export. Does not connect to any database.
 const fs = require('fs'), path = require('path'), zlib = require('zlib')
 const root = path.resolve(__dirname, '..')
-process.chdir(path.join(root, 'TonicServices'))
-require('../TonicServices/node_modules/ts-node/register')
-const { billingLedger } = require('../TonicServices/src/billing/ledger')
+process.chdir(path.join(root, 'CubitServices'))
+require('../CubitServices/node_modules/ts-node/register')
+const { billingLedger } = require('../CubitServices/src/billing/ledger')
 const source = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(root, '.private/imports/tonic-current-data.json.gz'))))
 const t = source.tables, asOf = source.source.snapshotUtc.slice(0, 10)
 const plans = new Map(t.plan.map(p => [p.id, p]))

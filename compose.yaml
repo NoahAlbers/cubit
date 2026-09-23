@@ -1,4 +1,4 @@
-name: tonic-local
+name: cubit-local
 
 services:
   mysql:
@@ -21,7 +21,7 @@ services:
 
   app:
     build:
-      context: ./TonicServices
+      context: ./CubitServices
       dockerfile: Dockerfile.dev
     environment:
       LOCAL_DEVELOPMENT: "true"
@@ -36,8 +36,8 @@ services:
       mysql:
         condition: service_healthy
     volumes:
-      - ./TonicServices/src:/app/src
-      - ./TonicServices/tonic:/app/tonic:ro
+      - ./CubitServices/src:/app/src
+      - ./CubitServices/public:/app/public:ro
     networks:
       - isolated
     healthcheck:

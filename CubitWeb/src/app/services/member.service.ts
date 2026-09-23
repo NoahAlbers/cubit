@@ -11,40 +11,40 @@ export class MemberService {
   constructor(private http: HttpClient) {}
 
   getMemberList(): Observable<Member[]> {
-    return this.http.get<Member[]>(environment.TonicAPIURL + `member`);
+    return this.http.get<Member[]>(environment.apiUrl + `member`);
   }
 
   getMemberPlans(memberKey): Observable<MemberPlan[]> {
     return this.http.get<MemberPlan[]>(
-      environment.TonicAPIURL + 'member/plans/' + memberKey
+      environment.apiUrl + 'member/plans/' + memberKey
     );
   }
 
   isMemberActive(memberKey): Observable<boolean> {
     return this.http.get<boolean>(
-      environment.TonicAPIURL + 'member/isActive/' + memberKey
+      environment.apiUrl + 'member/isActive/' + memberKey
     );
   }
 
   getPlan(Id): Observable<MemberPlan> {
-    return this.http.get<MemberPlan>(environment.TonicAPIURL + 'plan/' + Id);
+    return this.http.get<MemberPlan>(environment.apiUrl + 'plan/' + Id);
   }
 
   savePlan(plan: MemberPlan): Promise<any> {
     //console.log('saving plan', plan);
     return this.http
-      .post(environment.TonicAPIURL + 'plan/memberplan', plan)
+      .post(environment.apiUrl + 'plan/memberplan', plan)
       .toPromise();
   }
 
   getMember(id): Observable<Member> {
     //console.log('getting: ', `Members/${id}`);
-    return this.http.get<Member>(environment.TonicAPIURL + `member/` + id);
+    return this.http.get<Member>(environment.apiUrl + `member/` + id);
   }
 
   getMemberBalance(id): Observable<number> {
     return this.http.get<number>(
-      environment.TonicAPIURL + `member/balance/` + id
+      environment.apiUrl + `member/balance/` + id
     );
   }
 
@@ -52,9 +52,9 @@ export class MemberService {
 
 
     if (member.id == 'New') {
-      return this.http.post<Member>(environment.TonicAPIURL + 'member', member);
+      return this.http.post<Member>(environment.apiUrl + 'member', member);
     } else {
-      return this.http.put<Member>(environment.TonicAPIURL + 'member', member);
+      return this.http.put<Member>(environment.apiUrl + 'member', member);
     }
   }
 

@@ -15,9 +15,9 @@ jobs:
         with:
           node-version: 22
       - run: npm install --global pnpm@9.15.9
-      - run: pnpm --dir TonicServices install --frozen-lockfile
+      - run: pnpm --dir CubitServices install --frozen-lockfile
       - run: pnpm --dir CubitWeb install --frozen-lockfile
       - run: node dev/build-web.cjs
-      - run: pnpm --dir TonicServices build
+      - run: pnpm --dir CubitServices build
       - run: node tests/local-safety.cjs && node tests/hosted-safety.cjs && node tests/billing.cjs && node tests/activity-patterns.cjs && node tests/review-controls.cjs
-        working-directory: TonicServices
+        working-directory: CubitServices

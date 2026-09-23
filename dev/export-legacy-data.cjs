@@ -1,4 +1,4 @@
-// Run with TonicServices as the working directory. Does not load the application,
+// Run in the legacy server application working directory. Does not load the application,
 // synchronize schemas, refresh balances, or call PayPal/door/email integrations.
 const fs = require('fs')
 const path = require('path')

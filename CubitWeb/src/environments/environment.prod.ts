@@ -1,1 +1,1 @@
-export const environment = { production: true, TonicAPIURL: '/' };
+export const environment = { production: true, apiUrl: '/' };
