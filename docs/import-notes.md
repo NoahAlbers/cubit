@@ -28,7 +28,7 @@ No production data was present or affected.
 
 ## Captured source
 
-- Server: `198.199.65.211`, container `Tonic`.
+- Server: `TONIC_HOST`, container `Tonic`.
 - Volume: `Tonic`, mounted at `/Tonic`.
 - Working directory: `/Tonic/TonicServices`.
 - Startup: `/bin/bash -c "npm run dev"`.

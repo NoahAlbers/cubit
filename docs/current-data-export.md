@@ -17,9 +17,9 @@ succeed. A failed/partial export must not be imported.
 ## 1. Windows PowerShell
 
 ```powershell
-Set-Location 'C:\Users\nalbers\Desktop\Makerspace\Tonic'
-scp .\dev\export-tonic-data.cjs root@198.199.65.211:/root/cubit-export-data.cjs
-ssh root@198.199.65.211
+Set-Location 'C:\path\to\cubit'
+scp .\dev\export-tonic-data.cjs root@TONIC_HOST:/root/cubit-export-data.cjs
+ssh root@TONIC_HOST
 ```
 
 ## 2. In the server's SSH terminal
@@ -42,7 +42,7 @@ Run from the workspace root:
 
 ```powershell
 New-Item -ItemType Directory -Force -Path '.private\imports' | Out-Null
-scp root@198.199.65.211:/root/cubit-current-data.json.gz .\.private\imports\tonic-current-data.json.gz
+scp root@TONIC_HOST:/root/cubit-current-data.json.gz .\.private\imports\tonic-current-data.json.gz
 Get-FileHash '.private\imports\tonic-current-data.json.gz' -Algorithm SHA256
 ```
 
