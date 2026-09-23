@@ -20,8 +20,12 @@ export class ListNavigationService {
         this.positions.set(router.url,window.scrollY);
         if(this.positions.size>100)this.positions.delete(this.positions.keys().next().value);
       }
-      if(event instanceof NavigationEnd && this.isList(event.urlAfterRedirects))
-        this.last.set(this.path(event.urlAfterRedirects),event.urlAfterRedirects);
+      if(event instanceof NavigationEnd && this.isList(event.urlAfterRedirects)) {
+        const path=this.path(event.urlAfterRedirects);
+        // A member's audit view must not replace the sidebar's global audit filters.
+        if(path!=='/audit'||!router.parseUrl(event.urlAfterRedirects).queryParams.memberId)
+          this.last.set(path,event.urlAfterRedirects);
+      }
     });
   }
   async preservingScroll(navigate:()=>Promise<boolean>){

@@ -75,6 +75,7 @@ export class MemberComponent implements OnInit, OnDestroy {
   revertContact(){this.form.reset(this.originalContact||this.emptyContact());this.saveError='';}
   async closeCutoff(){if(this.cutoffOriginal!==JSON.stringify([this.cutoffDate,this.cutoffReason])&&!await this.drafts.confirmDiscard())return;this.cutoffPlan=null;}
   get returnUrl() { return this.navigation.returnUrl(this.activatedRoute.snapshot.queryParams.returnTo); }
+  get auditQuery(){const previous=this.router.parseUrl(this.returnUrl);return this.returnUrl.split(/[?#]/)[0]==='/audit'&&previous.queryParams.memberId===this.memberId?previous.queryParams:{memberId:this.memberId,memberReturnTo:this.returnUrl};}
   get returnTarget() { return this.returnUrl.split(/[?#]/)[0]; }
   get returnQuery() { return this.router.parseUrl(this.returnUrl).queryParams; }
   get returnLabel() { return this.navigation.label(this.returnUrl); }
