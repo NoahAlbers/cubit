@@ -2,7 +2,7 @@
   <div class="member-sticky">
     <div class="profile-title-row">
       <div class="profile-identity"><svg *ngIf="memberId!=='New'" class="member-identicon profile-identicon" width="42" height="42" [appMemberIcon]="memberId" aria-hidden="true" focusable="false"></svg><div class="profile-name-line"><h1>{{headerText || 'Member'}}</h1><span *ngIf="memberId!=='New'" class="badge last-entry-badge" [attr.title]="lastEntry ? 'Last successful entry: ' + (lastEntry|date:'MMM d, y, h:mm a') : null">{{lastEntryLabel}}</span></div></div>
-      <div class="profile-heading-actions"><a *ngIf="memberId!=='New'" class="button secondary" routerLink="/audit" [queryParams]="auditQuery" [attr.aria-label]="'Audit log for '+headerText">Audit log</a><span class="draft-indicator" *ngIf="hasUnsavedChanges()">Unsaved changes</span><a class="button secondary profile-back" [routerLink]="returnTarget" [queryParams]="returnQuery"><app-arrow name="arrow-left"></app-arrow> {{returnLabel}}</a></div>
+      <span class="draft-indicator" *ngIf="hasUnsavedChanges()">Unsaved changes</span>
     </div>
     <div class="profile-meta" *ngIf="memberId!=='New'">
       <span class="badge">{{memberStatus}}</span>
@@ -11,7 +11,7 @@
     </div>
     <div *ngIf="billing" class="eligibility"><strong>{{entryAllowed?'Entry allowed':'Entry blocked'}} — {{entryReason}}</strong></div>
     <div class="profile-toolbar" *ngIf="memberId!=='New'">
-      <div class="actions profile-quick-actions"><button class="primary" (click)="addEditTransaction('New')">Record payment</button><button class="secondary" (click)="jump('access-keys')">Manage access</button><button class="secondary" (click)="addEditPlan('New')">{{openPlan?'Change plan':'Add plan'}}</button></div>
+      <div class="actions profile-quick-actions"><button class="primary" (click)="addEditTransaction('New')">Record payment</button><button class="secondary" (click)="jump('access-keys')">Manage access</button><button class="secondary" (click)="addEditPlan('New')">{{openPlan?'Change plan':'Add plan'}}</button><a class="button secondary" routerLink="/audit" [queryParams]="auditQuery" [attr.aria-label]="'Audit log for '+headerText">Audit log</a></div>
       <nav class="section-nav" aria-label="Member sections"><button class="secondary" (click)="jump('member-overview')">Overview</button><button class="secondary" (click)="jump('membership-billing')">Membership & billing</button><button class="secondary" (click)="jump('access-keys')">Access & waivers</button><button class="secondary" (click)="jump('staff-history')">Notes & history</button></nav>
     </div>
   </div>

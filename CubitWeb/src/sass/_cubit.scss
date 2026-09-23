@@ -237,3 +237,29 @@ select:not([multiple]):not([size]){appearance:none;-webkit-appearance:none;paddi
 }
 
 .audit-details{background:#f4f7fb;white-space:normal!important}.audit-details td{white-space:pre-wrap;overflow-wrap:anywhere;max-width:420px}.audit-details pre{white-space:pre-wrap;overflow-wrap:anywhere}.staff-settings-page>section{max-width:900px}.staff-settings-page input[type=number]{max-width:160px}.audit-page .filter-row select{max-width:250px}.account-controls{flex-wrap:wrap}.audit-page .filter-row{align-items:end}
+
+/* One persistent page header, with aligned navigation and account controls. */
+.topbar{position:sticky;top:0;z-index:20;min-height:68px;background:#fff;box-shadow:0 2px 6px #17324d05;gap:20px}
+.page-location{display:flex;align-items:center;gap:16px;min-width:0}
+.page-title{font-size:22px;font-weight:650;line-height:1.25;color:var(--ink);letter-spacing:-.4px}
+.topbar .header-back{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;padding:7px 11px;font-size:12px;line-height:20px;flex-shrink:0}
+.topbar .account-controls{flex-wrap:nowrap;gap:12px;margin-left:auto}
+.topbar .notification-button{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;min-width:40px;padding:0;background:var(--blue);border:1px solid var(--blue);border-radius:7px;flex-shrink:0}
+.notification-button img{display:block;width:26px;height:26px}
+.topbar .notification-button:hover,.topbar .notification-button.current{background:#063c80;border-color:#063c80}
+.topbar .sign-out-button{height:40px;line-height:20px;white-space:nowrap}
+.member-page .member-sticky{position:static}
+.member-sticky .profile-toolbar .button{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:7px 11px;font-size:12px;line-height:18px;box-sizing:border-box}
+.member-page [id],.member-page #access-keys{scroll-margin-top:90px}
+@media(max-width:1100px){.page-location{gap:10px}.topbar .account-identity{max-width:210px}.page-title{font-size:20px}}
+@media(max-width:800px){
+  .sidebar{position:relative;top:auto}
+  .topbar{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;padding:12px 16px}
+  .topbar .account-controls{width:100%;justify-content:flex-end;gap:10px}
+  .topbar .account-identity{max-width:none;margin-right:auto;text-align:left}
+  .topbar .header-back{min-height:40px}
+  .page-title{font-size:21px}
+  .member-sticky .profile-quick-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .member-sticky .profile-toolbar .button{min-height:40px;padding:7px 10px}
+  .member-page [id],.member-page #access-keys{scroll-margin-top:150px}
+}

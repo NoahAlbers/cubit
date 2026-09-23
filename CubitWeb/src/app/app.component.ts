@@ -24,7 +24,10 @@ export class AppComponent implements OnInit {
   workspaceLabel = '';
   menuOpen=false;
   constructor(public auth: AuthService, public router: Router, private http: HttpClient, public navigation:ListNavigationService) {router.events.subscribe(e=>{if(e instanceof NavigationEnd)this.menuOpen=false;});}
-  get sectionName(){const p=this.router.url.split(/[?#]/)[0];return ({'/memberlist':'Members','/overdue':'Overdue memberships','/accessLog':'Access log','/reports':'Reports','/automation':'Billing & automation','/audit':'Audit log','/staff/settings':'My notification settings','/payments':'Payment matching','/plans':'Billing & automation / Plans','/waivers':'Waivers','/portal':'My membership','/portal/profile':'My details','/portal/billing':'Billing history','/portal/waivers':'My waivers'})[p]||(p.startsWith('/member/')?'Member profile':'Cubit');}
+  get sectionName(){const p=this.router.url.split(/[?#]/)[0];return ({'/memberlist':'Members','/overdue':'Overdue Memberships','/accessLog':'Access Log','/reports':'Reports','/automation':'Billing & Automation','/audit':'Audit Log','/staff/settings':'Notification Settings','/payments':'Payment Matching','/plans':'Plan Catalog','/waivers':'Waivers','/portal':'My Membership','/portal/profile':'My Details','/portal/billing':'Billing History','/portal/waivers':'My Waivers'})[p]||(p.startsWith('/member/')?'Member Profile':'Cubit');}
+  get memberReturnUrl(){return this.router.url.startsWith('/member/')?this.navigation.returnUrl(this.router.parseUrl(this.router.url).queryParams.returnTo):null;}
+  get headerBackTarget(){return this.memberReturnUrl?this.router.parseUrl(this.memberReturnUrl):null;}
+  get headerBackLabel(){return this.memberReturnUrl?this.navigation.label(this.memberReturnUrl):'';}
   get billingSection(){return ['/automation','/plans'].includes(this.router.url.split(/[?#]/)[0]);}
   skip(event:Event){event.preventDefault();document.getElementById('main')?.focus();}
   get portalView() { return !this.auth.isAdmin || this.router.url.startsWith('/portal'); }
