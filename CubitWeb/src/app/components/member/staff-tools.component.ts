@@ -14,7 +14,7 @@ import { forkJoin } from 'rxjs';
 
     <label>Reason for change<input [(ngModel)]="opsReason" maxlength="500"></label>
     <button class="secondary" (click)="saveOps()" [disabled]="busy || !opsReason.trim()">Save access</button>
-    <div class="actions"><a class="button secondary" routerLink="/audit" [queryParams]="{memberId:memberId,actor:'all'}">View account audit log</a></div>
+    <div class="actions"><a class="button secondary" routerLink="/audit" [queryParams]="{memberId:memberId,actor:'all',memberReturnTo:returnTo}">View account audit log</a></div>
   </section>
 </div><p class="error" role="alert" *ngIf="error">{{error}}</p><p class="success-message" role="status" *ngIf="message">{{message}}</p>
 `})
@@ -22,7 +22,7 @@ export class StaffToolsComponent implements OnChanges {
   private originalHold=false;
   hasUnsavedChanges(){return !!this.note.trim()||!!this.opsReason||!!(this.ops&&this.ops.accessHold!==this.originalHold);}
   discardDraft(){this.note='';this.opsReason='';if(this.ops)this.ops.accessHold=this.originalHold;}
-  @Input() memberId=''; @Output() changed=new EventEmitter<void>(); @Output() ready=new EventEmitter<void>();
+  @Input() memberId=''; @Input() returnTo='/memberlist'; @Output() changed=new EventEmitter<void>(); @Output() ready=new EventEmitter<void>();
   notes:any[]=[]; ops:any; note=''; opsReason=''; busy=false; error=''; message='';
   constructor(private http:HttpClient){}
   ngOnChanges(){if(this.memberId && this.memberId!=='New')this.load();}

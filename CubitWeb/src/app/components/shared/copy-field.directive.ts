@@ -9,6 +9,9 @@ export class CopyFieldDirective implements OnInit,OnDestroy {
   constructor(private el:ElementRef<HTMLElement>,private renderer:Renderer2,private snack:MatSnackBar){}
   ngOnInit(){
     const r=this.renderer;this.button=r.createElement('button');
+    const input=this.el.nativeElement.querySelector('input');
+    // Keep the input's accessible name separate from the adjacent copy action.
+    if(input&&!input.hasAttribute('aria-label')&&!input.hasAttribute('aria-labelledby'))r.setAttribute(input,'aria-label',this.el.nativeElement.textContent.trim());
     r.setAttribute(this.button,'type','button');r.setAttribute(this.button,'aria-label','Copy '+this.copyLabel);r.setAttribute(this.button,'title','Copy '+this.copyLabel);
     r.addClass(this.button,'copy-field-button');r.addClass(this.el.nativeElement,'copyable-field');
     const icon=r.createElement('img');r.setAttribute(icon,'src','assets/icons/copy.svg');r.setAttribute(icon,'alt','');r.appendChild(this.button,icon);r.appendChild(this.el.nativeElement,this.button);
