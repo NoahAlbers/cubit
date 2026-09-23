@@ -29,7 +29,17 @@ Cubit brings member records, billing, access history, reports, and member self-s
 - Payments cover the oldest charges first. The grace period is configurable and can be switched off. Payment can restore eligibility once the oldest remaining unpaid charge falls within the grace window.
 - Staff access blocks and individually disabled keys remain under staff control; payment processing does not remove a manual block.
 - The overdue view helps staff review members who are behind, contact them manually, and decide how to handle membership and access.
-- Processing offers a preview, an explicit apply action, and run history. An offline payment-event simulation supports matching and duplicate-processing checks without contacting a provider.
+- Processing offers a preview, an explicit apply action, and run history.
+
+### Payment matching and plan catalog
+
+- **Payment matching** holds offline payment, refund, and cancellation events for staff review. Payer email and subscription references suggest existing members, including conflicting matches; suggestions never create or select an account automatically.
+- Search by name, contact email, or PayPal email, then explicitly confirm the match. Unknown payers can become new members only after staff enters their details and confirms creation. The new member and payment are saved together; failures roll both back. No plan, key, or login password is assigned automatically.
+- Duplicate event IDs and capture references are checked, including concurrent processing. Refunds must match their original payment and cannot exceed it. Cancellation review still requires a staff-selected final billing date.
+- **Plans** lets staff create, rename, reprice, retire, and restore catalog entries. New assignments use the current catalog price; existing and already-scheduled memberships retain their assigned rate and name. Posted charges are unchanged. Retiring a plan removes it from new assignments without ending existing memberships.
+- Catalog changes record their author, time, and previous/new values. Stale edits are rejected so one staff member cannot silently overwrite another.
+
+This is an offline foundation, with an explicit test-event form. It is not a PayPal importer or verified webhook receiver; live imports remain disabled.
 
 Access eligibility and ending billing are separate decisions: suspending access does not end an open plan. Imported historical balances still need staff review before they can be relied on for a live transition.
 
@@ -182,7 +192,7 @@ After committing and pushing an approved update, the configured operator runs:
 
 The helper fetches GitHub using the operator PC's credentials, sends a source-only Git bundle over SSH, and invokes the VPS updater. GitHub credentials remain on the PC. A push alone does not deploy. Review the configured target before using this environment-specific helper.
 
-The updater builds a new release, runs checks, backs up the database, activates the code and matching service definition, and checks `/health`. Failure restores the previous release and service definition. It does not import data, run migrations, or change account credentials. Old development notes are preserved privately rather than published as current instructions.
+The updater builds a new release, runs checks, backs up both installed workspace databases, applies the additive billing-tools column migration, activates the code and matching service definitions, and checks `/health`. Failure restores the previous release and service definitions; added columns remain compatible with the prior release. It does not import data or change account credentials. App database users retain their restricted permissions; the deployment operator runs migrations. Old development notes are preserved privately rather than published as current instructions.
 
 ## Planned development
 
@@ -192,13 +202,13 @@ These are next steps, not claims of production-ready functionality. Existing fou
 
 Provide invite-only officer and staff accounts with password recovery and appropriate permissions, separate from membership records. Staff access should not depend on holding an active membership or sharing a member login.
 
-### Match payments before creating members
+### Verified payment imports
 
-Route PayPal payments from unrecognized addresses into a staff matching queue. Staff will link the payment to an existing member or explicitly create a member, instead of an importer silently creating duplicate accounts. Extend the current offline matching foundation before enabling live imports.
+Connect verified PayPal events to the existing offline matching queue after provider authentication, currency handling, reconciliation, and recovery have been reviewed. Live imports must retain explicit matching for unknown payers and duplicate-payment protection.
 
-### An editable plan catalog
+### Future membership price transitions
 
-Let staff create, update, and retire plans through the interface while preserving historical rates and posted charges. Assigning available plans already works; complete catalog administration is still to come.
+Catalog administration is available. A future workflow may help staff schedule an existing member's transition to a new plan or rate, with an explicit effective date and change history. Editing a catalog price will never perform that transition implicitly.
 
 ### Complete staff change history
 

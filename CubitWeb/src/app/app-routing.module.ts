@@ -12,6 +12,8 @@ import { AutomationComponent } from './components/automation/automation.componen
 import { AuthService } from './services/security/auth.service';
 import { PortalComponent } from './components/portal/portal.component';
 import { WaiversComponent } from './components/waivers/waivers.component';
+import { PaymentMatchingComponent } from './components/payment-matching/payment-matching.component';
+import { PlanCatalogComponent } from './components/plan-catalog/plan-catalog.component';
 
 const routes: Routes = [
   { path: '', component: LoginComponent },
@@ -20,6 +22,8 @@ const routes: Routes = [
   { path: 'overdue', component: DirectoryComponent, canActivate: [AuthService], data: { overdue: true } },
   { path: 'reports', component: ReportsComponent, canActivate: [AuthService] },
   { path: 'automation', component: AutomationComponent, canActivate: [AuthService] },
+  { path: 'payments', component: PaymentMatchingComponent, canActivate: [AuthService], canDeactivate:[DraftGuard] },
+  { path: 'plans', component: PlanCatalogComponent, canActivate: [AuthService], canDeactivate:[DraftGuard] },
   { path: 'waivers', component: WaiversComponent, canActivate: [AuthService], canDeactivate:[DraftGuard] },
   { path: 'portal', component: PortalComponent, canActivate: [AuthService], canDeactivate:[DraftGuard], data: { portal: true,section:'overview' } },
   ...['billing','waivers','profile'].map(section=>({path:'portal/'+section,component:PortalComponent,canActivate:[AuthService],canDeactivate:[DraftGuard],data:{portal:true,section}})),

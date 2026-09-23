@@ -8,6 +8,7 @@ import { Guid } from 'guid-typescript'
 import { MemberPlan } from '../../entity/memberPlan'
 import { localConfig } from '../../dev/config'
 import { demoEmail, demoMemberId } from '../../demo/identity'
+import { lockIdentities, rejectDuplicateContact } from '../../billing/member-identity'
 
 const router = express.Router()
 const memberClass = new Member()
@@ -49,8 +50,13 @@ router.put('/', async (req, res, next) => {
     delete postedMemberData.password //typeorm does not update if it's missing.
   }
 
-  AppDataSource.manager
-    .save(Member, postedMemberData)
+  AppDataSource.transaction(async manager=>{
+    await lockIdentities(manager)
+    const before=await manager.findOneByOrFail(Member,{id:postedMemberData.id})
+    if(typeof postedMemberData.email==='string'&&postedMemberData.email.trim().toLowerCase()!==before.email.trim().toLowerCase())
+      await rejectDuplicateContact(manager,postedMemberData.email,postedMemberData.id)
+    return manager.save(Member,postedMemberData)
+  })
     .then((member: Member) => {
       //remove the password field from the payload
       //say everything is happy with a 200 status
@@ -61,7 +67,7 @@ router.put('/', async (req, res, next) => {
     })
     .catch((err) => {
       //oh nos! we have an error
-      return res.status(500).json({ error: err })
+      return res.status(err.status || 500).json({ message: err.status ? err.message : 'Could not save the member.' })
     })
 })
 
@@ -90,8 +96,11 @@ router.post('/', async (req, res, next) => {
 
   member.role = ROLES.MEMBER
 
-  AppDataSource.manager
-    .insert(Member, member)
+  AppDataSource.transaction(async manager=>{
+    await lockIdentities(manager)
+    await rejectDuplicateContact(manager,member.email)
+    return manager.insert(Member,member)
+  })
     .then((result) => {
       //remove the password field from the payload
       //say everything is happy with a 200 status
@@ -102,7 +111,7 @@ router.post('/', async (req, res, next) => {
     })
     .catch((err) => {
       //oh nos! we have an error
-      return res.status(500).json({ error: err })
+      return res.status(err.status || 500).json({ message: err.status ? err.message : 'Could not save the member.' })
     })
 })
 

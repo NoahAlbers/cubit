@@ -46,6 +46,11 @@ router.post('/memberplan', async (req, res, next) => {
       !await AppDataSource.manager.findOneBy(Plan, { id: postedMemberPlan.planId, available: true }))
     return res.status(400).json({ message: 'Choose an existing member and an available plan.' })
   const saved = await AppDataSource.transaction(async manager => {
+  // Catalog edits/retirement and assignment serialize on the same plan row.
+  const catalog=await manager.findOne(Plan,{where:{id:postedMemberPlan.planId,available:true},lock:{mode:'pessimistic_write'}})
+  if(!catalog)throw Object.assign(new Error('This plan is no longer available. Choose another plan.'),{status:409})
+  if(req.body.catalogRevision!==undefined && req.body.catalogRevision!==catalog.revision)
+    throw Object.assign(new Error('This catalog plan changed. Reopen Add a plan and review its current price.'),{status:409})
   const member = await lockMember(manager, postedMemberPlan.memberId)
   const existing = await manager.find(MemberPlan, { where: { memberId: postedMemberPlan.memberId } })
   const start = day(postedMemberPlan.startDate)
@@ -58,7 +63,6 @@ router.post('/memberplan', async (req, res, next) => {
     postedMemberPlan.paypalSubscriptionPlanId = ''
   }
 
-  const catalog = await manager.findOneByOrFail(Plan, { id: postedMemberPlan.planId, available: true })
   const memberPlan = await manager.save(MemberPlan, manager.create(MemberPlan, { ...postedMemberPlan,
     startDate: new Date(`${start}T12:00:00`), billingRate: Number(catalog.monthlyCost), billingName: catalog.name }))
   await postCharges(manager, member.id)

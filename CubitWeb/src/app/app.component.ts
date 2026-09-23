@@ -24,7 +24,7 @@ export class AppComponent implements OnInit {
   workspaceLabel = '';
   menuOpen=false;
   constructor(public auth: AuthService, public router: Router, private http: HttpClient, public navigation:ListNavigationService) {router.events.subscribe(e=>{if(e instanceof NavigationEnd)this.menuOpen=false;});}
-  get sectionName(){const p=this.router.url.split(/[?#]/)[0];return ({'/memberlist':'Members','/overdue':'Overdue memberships','/accessLog':'Access log','/reports':'Reports','/automation':'Billing & automation','/waivers':'Waivers','/portal':'My membership','/portal/profile':'My details','/portal/billing':'Billing history','/portal/waivers':'My waivers'})[p]||(p.startsWith('/member/')?'Member profile':'Cubit');}
+  get sectionName(){const p=this.router.url.split(/[?#]/)[0];return ({'/memberlist':'Members','/overdue':'Overdue memberships','/accessLog':'Access log','/reports':'Reports','/automation':'Billing & automation','/payments':'Payment matching','/plans':'Plans','/waivers':'Waivers','/portal':'My membership','/portal/profile':'My details','/portal/billing':'Billing history','/portal/waivers':'My waivers'})[p]||(p.startsWith('/member/')?'Member profile':'Cubit');}
   skip(event:Event){event.preventDefault();document.getElementById('main')?.focus();}
   get portalView() { return !this.auth.isAdmin || this.router.url.startsWith('/portal'); }
 

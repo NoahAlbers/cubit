@@ -8,9 +8,23 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci-root-only
+          MYSQL_DATABASE: cubit_demo
+          MYSQL_USER: cubit_demo
+          MYSQL_PASSWORD: ci-demo-only
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pci-root-only"
+          --health-interval=10s --health-timeout=5s --health-retries=12
     steps:
       - uses: actions/checkout@v4
       - run: bash -n deploy/update-review.sh
+      - run: bash -n deploy/migrate-billing-tools.sh
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -21,3 +35,16 @@ jobs:
       - run: pnpm --dir CubitServices build
       - run: node tests/local-safety.cjs && node tests/hosted-safety.cjs && node tests/hosted-demo.cjs && node tests/billing.cjs && node tests/activity-patterns.cjs && node tests/review-controls.cjs
         working-directory: CubitServices
+      - run: node tests/billing-tools-db.cjs
+        working-directory: CubitServices
+        env:
+          CUBIT_TEST_EMPTY_DATABASE: 'yes'
+          CUBIT_MODE: hosted-demo
+          LOCAL_DEVELOPMENT: 'false'
+          HOST: 127.0.0.1
+          PORT: '5002'
+          DATABASE_URI: 127.0.0.1
+          DATABASE_NAME: cubit_demo
+          DATABASE_USERNAME: cubit_demo
+          DATABASE_PASSWORD: ci-demo-only
+          JWT_SECRET: ci-disposable-demo-signing-key-not-a-runtime-secret-2026

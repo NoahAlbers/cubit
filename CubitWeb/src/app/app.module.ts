@@ -24,6 +24,8 @@ import { AutomationComponent } from './components/automation/automation.componen
 import { PortalComponent } from './components/portal/portal.component';
 import { WaiversComponent } from './components/waivers/waivers.component';
 import { MemberWaiversComponent } from './components/member/member-waivers.component';
+import { PaymentMatchingComponent } from './components/payment-matching/payment-matching.component';
+import { PlanCatalogComponent } from './components/plan-catalog/plan-catalog.component';
 
 import { AppComponent } from './app.component';
 import { LoginComponent } from './components/admin/login/login.component';
@@ -52,6 +54,7 @@ import { AccessLogService } from './services/access-log.service';
     declarations: [
         DraftDialogComponent, DraftExitDirective, FieldFeedbackDirective, MemberIconDirective, ArrowComponent, InfoComponent, WaiverLockComponent,
         DirectoryComponent,
+        PaymentMatchingComponent, PlanCatalogComponent,
         StaffToolsComponent, EditChargeComponent, ReportsComponent, AutomationComponent, PortalComponent, WaiversComponent, MemberWaiversComponent,
         AppComponent,
         LoginComponent,

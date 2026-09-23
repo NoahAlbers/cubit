@@ -102,7 +102,7 @@ router.post('/automation/run',route(async(req:any,res:any)=>{
 }))
 router.post('/automation/events/simulate',route(async(req:any,res:any)=>res.status(201).json(await receiveSimulation(req.body,req.member.email))))
 router.post('/automation/events/:id/process',route(async(req:any,res:any)=>{
-  try { res.json(await processEvent(req.params.id,req.body.memberId,req.member.email)) }
+  try { res.json(await processEvent(req.params.id,req.body.memberId,req.member.email,req.body.createMember)) }
   catch(err:any){
     await AppDataSource.manager.createQueryBuilder().update(PaymentEvent).set({status:'Needs review',detail:err.message,attempts:()=> 'attempts + 1'}).where('id = :id AND status != :done',{id:req.params.id,done:'Processed'}).execute()
     throw err

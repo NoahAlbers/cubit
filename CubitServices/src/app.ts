@@ -66,7 +66,7 @@ if (localConfig.runtimeMode !== 'local') {
 }
 
 // Browser navigation serves the Angular shell; JSON calls keep the legacy API URLs.
-app.get(['/', '/memberlist', '/overdue', '/member/:memberId', '/accessLog', '/reports', '/automation', '/waivers', '/portal', '/portal/:section', '/app-login'], (req, res, next) => {
+app.get(['/', '/memberlist', '/overdue', '/member/:memberId', '/accessLog', '/reports', '/automation', '/payments', '/plans', '/waivers', '/portal', '/portal/:section', '/app-login'], (req, res, next) => {
   if ((req.headers.accept || '').includes('text/html')) {
     return res.sendFile(path.resolve('public/index.html'))
   }
@@ -92,6 +92,7 @@ app.use('/api/portal', require('./api/routes/portal'))
 app.use('/api/waivers', require('./api/routes/waivers'))
 app.use('/api/cubit', require('./api/routes/cubit'))
 app.use('/api/cubit', require('./api/routes/operations'))
+app.use('/api/cubit', require('./api/routes/billing-tools'))
 app.use(['/member', '/plan', '/transaction', '/key', '/accessLog', '/task', '/ACON'], staffOnly)
 //this is where to look for the route file
 const memberRoutes = require('./api/routes/member')
@@ -136,6 +137,7 @@ app.use('*', (req, res, next) => {
 
 export async function startLocalApp() {
   await AppDataSource.initialize()
+  await (await import('./dev/upgrade-billing-tools')).upgradeBillingTools(AppDataSource,localConfig.runtimeMode==='local')
   if (localConfig.runtimeMode === 'hosted-demo') {
     const rows=await AppDataSource.query("SELECT complete FROM cubit_demo_manifest WHERE id='synthetic-v1'")
     if(rows.length!==1||!rows[0].complete)throw Error('Synthetic demo has not been initialized.')

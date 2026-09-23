@@ -2,7 +2,7 @@ import { Injectable, NgZone } from '@angular/core';
 import { Router, NavigationStart, NavigationEnd, Scroll, UrlTree } from '@angular/router';
 import { take } from 'rxjs/operators';
 
-const lists = ['/memberlist','/overdue','/accessLog','/reports','/waivers','/automation'];
+const lists = ['/memberlist','/overdue','/accessLog','/reports','/waivers','/automation','/payments','/plans'];
 @Injectable({providedIn:'root'})
 export class ListNavigationService {
   private last = new Map<string,string>();
@@ -40,7 +40,7 @@ export class ListNavigationService {
     }
     return this.last.get('/memberlist')||'/memberlist';
   }
-  label(url:string) { return ({'/memberlist':'Members','/overdue':'Overdue memberships','/accessLog':'Access log','/reports':'Reports','/waivers':'Waivers','/automation':'Billing & automation'})[this.path(url)]||'Members'; }
+  label(url:string) { return ({'/memberlist':'Members','/overdue':'Overdue memberships','/accessLog':'Access log','/reports':'Reports','/waivers':'Waivers','/automation':'Billing & automation','/payments':'Payment matching','/plans':'Plans'})[this.path(url)]||'Members'; }
   restoreScroll(position?:number) {
     const url=this.router.url, y=position===undefined?this.positions.get(url):position;
     if(y===undefined)return;

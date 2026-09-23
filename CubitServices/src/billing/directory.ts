@@ -57,7 +57,7 @@ export async function directoryRows() {
       checkedIn30Days: Number(log?.checkedIn30Days || 0) === 1,
       balance: ledger.balance, pastDue: ledger.pastDue, daysPastDue: ledger.daysPastDue,
       oldestUnpaidDate: ledger.oldestUnpaidDate, unallocatedDebit: ledger.unallocatedDebit,
-      planName: latest?.plan.name || 'No plan', planId: latest?.planId || '',
+      planName: latest?.billingName || latest?.plan.name || 'No plan', planId: latest?.planId || '',
       finalBillingDate: latest?.finalBillingDate || (latest?.endDate ? day(latest.endDate) : null),
       lastKeyUsage: log?.lastKeyUsage || null, lastAttempt: log?.lastAttempt || null,
     })

@@ -15,4 +15,7 @@ export class Plan {
 
   @Column({ default: true })
   available: boolean;
+
+  @Column({ default: 1 })
+  revision: number;
 }

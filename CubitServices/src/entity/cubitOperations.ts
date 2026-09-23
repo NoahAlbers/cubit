@@ -67,6 +67,8 @@ export class AutomationRun {
 @Entity()
 export class PaymentEvent {
   @PrimaryColumn() id: string
+  @Column({ default: '' }) payerEmail: string
+  @Column({ default: '' }) payerName: string
   @Column() kind: string
   @Column() resourceId: string
   @Column({ default: '' }) subscriptionId: string

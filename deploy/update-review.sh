@@ -59,6 +59,7 @@ if [[ -f "$demo_unit" ]]; then
   cp -p "$demo_unit" "$demo_backup"
   mysqldump --single-transaction --no-tablespaces --set-gtid-purged=OFF cubit_demo | gzip > "/var/backups/cubit/demo-before-${revision}-$(date -u +%Y%m%dT%H%M%SZ).sql.gz"
 fi
+bash "$release/deploy/migrate-billing-tools.sh"
 activate() {
   install -m 644 "$release/deploy/cubit-review.service" "$unit_path" || return
   if [[ -n "$demo_backup" ]]; then install -m 644 "$release/deploy/cubit-demo.service" "$demo_unit" || return; fi

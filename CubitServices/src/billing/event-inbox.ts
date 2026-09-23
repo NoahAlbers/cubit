@@ -1,14 +1,17 @@
 import { createHash } from 'crypto'
 import { AppDataSource } from '../app'
 import { MemberPlan } from '../entity/memberPlan'
-import { Member } from '../entity/member'
+import { Member, ROLES } from '../entity/member'
 import { Transaction } from '../entity/transaction'
-import { PaymentEvent, OperationsAudit } from '../entity/cubitOperations'
+import { PaymentEvent, OperationsAudit, OperationsSettings } from '../entity/cubitOperations'
 import { recordPayment, fail, requestKey } from './payments'
 import { validDay, day } from './ledger'
 
 // This local fixture endpoint cannot establish PayPal authenticity. Live webhooks remain blocked.
 export async function receiveSimulation(body: any, author: string) {
+  const payerEmail=paymentEmail(body.payerEmail || '',false),payerName=String(body.payerName||'').trim()
+  if(payerName.length>150)fail('Payer name may be at most 150 characters.')
+  if(body.currency && body.currency!=='USD')fail('Only USD payments can be reviewed in this workspace.')
   const input = { id: requestKey(body.id), kind: String(body.kind), resourceId: requestKey(body.resourceId),
     subscriptionId: String(body.subscriptionId || '').slice(0, 100), parentResourceId: String(body.parentResourceId || '').slice(0, 100),
     eventDate: body.eventDate, amount: Number(body.amount || 0) }
@@ -16,12 +19,12 @@ export async function receiveSimulation(body: any, author: string) {
   if (!['payment', 'refund', 'cancellation'].includes(input.kind) || !validDay(input.eventDate) || input.eventDate > day(new Date()) ||
       input.eventDate < '1900-01-01' || !Number.isFinite(input.amount) || input.amount < 0 || input.amount > 99999999 ||
       Math.abs(input.amount * 100 - Math.round(input.amount * 100)) > 0.00001 || (input.kind !== 'cancellation' && !input.amount)) fail('Invalid test event.')
-  const hash = createHash('sha256').update(JSON.stringify(input)).digest('hex')
+  const hash = createHash('sha256').update(JSON.stringify({...input,...(payerEmail?{payerEmail}:{}),...(payerName?{payerName}:{})})).digest('hex')
   const previous = await AppDataSource.manager.findOneBy(PaymentEvent, { id: input.id })
   if (previous) { if (previous.payloadHash !== hash) fail('Event ID already exists with different contents.', 409); return previous }
   try {
     const saved = await AppDataSource.manager.save(PaymentEvent, AppDataSource.manager.create(PaymentEvent, {
-      ...input, payloadHash: hash, detail: 'Local simulation; not received from PayPal.', status: 'Unmatched' }))
+      ...input, payerEmail,payerName,payloadHash: hash, detail: 'Offline test event. Staff must choose a member before recording it.', status: 'Unmatched' }))
     await AppDataSource.manager.save(OperationsAudit, { kind: 'Test event received', author, detail: saved.id })
     return saved
   } catch (err: any) {
@@ -30,18 +33,50 @@ export async function receiveSimulation(body: any, author: string) {
   }
 }
 
-export async function processEvent(id: string, memberId: string | undefined, author: string) {
+export function paymentEmail(value:any,required=true) {
+  if(typeof value!=='string')fail('Enter a valid email address.')
+  const email=value.trim().toLowerCase()
+  if(!email&&!required)return ''
+  if(email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))fail('Enter a valid email address.')
+  return email
+}
+export function newMemberValues(body:any) {
+  if(!body||body.confirmCreate!==true)fail('Confirm that you want to create a new member.')
+  const firstName=typeof body.firstName==='string'?body.firstName.trim():'',lastName=typeof body.lastName==='string'?body.lastName.trim():''
+  if(!firstName||!lastName||firstName.length>100||lastName.length>100)fail('Enter a first and last name (at most 100 characters each).')
+  return {firstName,lastName,email:paymentEmail(body.email)}
+}
+
+export async function processEvent(id: string, memberId: string | undefined, author: string,createMember?:any) {
+  if(memberId && createMember)fail('Choose an existing member or create a new one, not both.')
+  if(memberId!==undefined && typeof memberId!=='string')fail('Choose a valid member.')
+  const newValues=createMember?newMemberValues(createMember):null
   return AppDataSource.transaction(async manager => {
+    // Serialize reconciliation/creation, including different event IDs for the
+    // same capture. A retry must never leave an extra member or payment behind.
+    await manager.findOneOrFail(OperationsSettings,{where:{id:'default'},lock:{mode:'pessimistic_write'}})
     const event = await manager.findOne(PaymentEvent, { where: { id }, lock: { mode: 'pessimistic_write' } })
     if (!event) fail('Event not found.', 404)
-    if (event.status === 'Processed') return event
+    if (event.status === 'Processed') {
+      if(memberId && memberId!==event.memberId)fail('This event was already recorded for another member.',409)
+      return event
+    }
     event.attempts++
-    const plans = event.subscriptionId ? await manager.find(MemberPlan, { where: { paypalSubscriptionId: event.subscriptionId } }) : []
-    const matches = [...new Set(plans.map(p => p.memberId))]
-    const selected = memberId || event.memberId || (matches.length === 1 ? matches[0] : '')
+    let selected = memberId || event.memberId || ''
+    const duplicate=event.kind==='cancellation'?null:await manager.findOneBy(Transaction,{requestKey:`paypal:${event.kind}:${event.resourceId}`})
+    if(duplicate && newValues)fail('This payment is already recorded. Match it to the existing member instead of creating another.',409)
+    if(newValues) {
+      if(event.kind!=='payment')fail('Only an unmatched payment can create a member. Match refunds and cancellations to an existing member.')
+      const emails=[...new Set([newValues.email,event.payerEmail].filter(Boolean))]
+      const existing=await manager.createQueryBuilder(Member,'m').where('LOWER(TRIM(m.email)) IN (:...emails) OR LOWER(TRIM(m.paypalEmail)) IN (:...emails)',{emails}).getCount()
+      if(existing)fail('A member already uses this contact or payer email. Search and match that member instead.',409)
+      const member=await manager.save(Member,manager.create(Member,{...newValues,paypalEmail:event.payerEmail||newValues.email,
+        password:'Not Set',role:ROLES.MEMBER,status:'Inactive',statusReason:'No membership plan assigned',balance:0}))
+      selected=member.id
+      await manager.save(OperationsAudit,{memberId:selected,kind:'Member created from payment',author,detail:JSON.stringify({eventId:event.id,payerEmail:event.payerEmail})})
+    }
     if (!selected || !await manager.findOneBy(Member, { id: selected })) {
-      event.status = 'Unmatched'; event.detail = 'Choose a member to reconcile this event.'
-      return manager.save(event)
+      fail('Choose an existing member or explicitly create a member before recording this event.')
     }
     event.memberId = selected
     if (event.kind === 'cancellation') {

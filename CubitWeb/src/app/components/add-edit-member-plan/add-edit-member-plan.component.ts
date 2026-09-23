@@ -5,6 +5,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { MemberService } from '../../services/member.service';
 import { PlanService } from '../../services/plan.service';
 import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { Plan } from '../../entities/plan';
 
 @Component({
@@ -19,6 +20,7 @@ export class AddEditMemberPlanComponent implements OnInit {
   plans = new Observable<Plan[]>();
   planForm: UntypedFormGroup;
   error = '';
+  private catalog:any[]=[];
 
   constructor(private drafts:DraftGuard,
     public dialogRef: MatDialogRef<AddEditMemberPlanComponent>,
@@ -58,7 +60,7 @@ export class AddEditMemberPlanComponent implements OnInit {
   Save() {
     if (this.planForm.valid) {
       this.memberService
-        .savePlan(this.planForm.value)
+        .savePlan({...this.planForm.value,catalogRevision:this.catalog.find(p=>p.id===this.planForm.value.planId)?.revision})
         .then((result) => {
           this.dialogRef.close('Saved');
         })
@@ -72,6 +74,6 @@ export class AddEditMemberPlanComponent implements OnInit {
 
   ngOnInit() {
     this.dialogRef.keydownEvents().subscribe(e=>{if(e.key==='Escape'){e.preventDefault();this.onCancel();}});
-    this.plans = this.planService.getPlanList();
+    this.plans = this.planService.getPlanList().pipe(tap(plans=>this.catalog=plans));
   }
 }
