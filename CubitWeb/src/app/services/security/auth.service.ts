@@ -14,6 +14,7 @@ export class AuthService implements CanActivate {
     catch { return false; }
   }
   get isAdmin() { try { return JSON.parse(atob(this.authToken.split('.')[1])).role === 'admin'; } catch { return false; } }
+  get isDemo() { try { return JSON.parse(atob(this.authToken.split('.')[1])).aud === 'cubit-demo'; } catch { return false; } }
   get home() { return this.isAdmin ? '/memberlist' : '/portal'; }
   get accountLabel(){try{return JSON.parse(atob(this.authToken.split('.')[1])).email||'Signed in';}catch{return '';}}
   canActivate(route: ActivatedRouteSnapshot) {

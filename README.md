@@ -79,6 +79,14 @@ The current hosted review runs on a separate VPS with HTTPS, a Node service, and
 
 Code updates are explicitly deployed from GitHub with a database backup and health check. Failed activation restores the previous code release; database restoration is a separate operation. Existing backups are local to the VPS, not yet the planned nightly off-server backup service.
 
+### Synthetic demonstration workspace
+
+The hosted sign-in page also supports a separate synthetic demonstration account. Its session is routed to a separate application process and database, with its own database user, signing key, and operating-system account. It never filters the copied member database to create a demo view. Demo requests fail closed when the demo service is unavailable.
+
+The demo contains fictional members, membership plans, payments, access records, and sample waivers. A persistent banner identifies the workspace. Staff-style edits affect only the shared demo; use fictional details when trying it. Demo edits persist across restarts and are not automatically reset. The shared demo sign-in email, password, and administrator role cannot be changed through the interface.
+
+The operator initializes an empty `cubit_demo` schema using `dist/demo/bootstrap.js`, then runs `deploy/cubit-demo.service` on loopback port 5002 under its own restricted account. Initialization refuses a populated schema. Runtime has no schema-management privileges and cannot read the imported review database or its environment file. PayPal, live doors, DocuSeal, email, and scheduled processing remain disconnected. Demo credentials are supplied separately from repository contents.
+
 ### Repository privacy
 
 Application source, assets, tests, and development tools belong in Git. Databases, imported exports, credentials, backups, logs, and screenshots of member records belong outside it. `.private/`, environment files, dependencies, and generated builds are ignored.

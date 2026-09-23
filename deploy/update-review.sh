@@ -36,6 +36,7 @@ runuser -u ubuntu -- bash -c '
   cd CubitServices
   node tests/local-safety.cjs
   node tests/hosted-safety.cjs
+  node tests/hosted-demo.cjs
   node tests/billing.cjs
   node tests/activity-patterns.cjs
   node tests/review-controls.cjs
@@ -49,14 +50,30 @@ mysqldump --single-transaction --no-tablespaces --set-gtid-purged=OFF cubit_revi
 # Keep the service and code together when a release changes its working directory.
 unit_path=/etc/systemd/system/cubit-review.service
 unit_backup=$(mktemp /run/cubit-review-service.XXXXXX)
-trap 'rm -f "$unit_backup"' EXIT
+demo_unit=/etc/systemd/system/cubit-demo.service
+demo_backup=''
+trap 'rm -f "$unit_backup"; if [[ -n "$demo_backup" ]]; then rm -f "$demo_backup"; fi' EXIT
 cp -p "$unit_path" "$unit_backup"
-if install -m 644 "$release/deploy/cubit-review.service" "$unit_path" &&
-   ln -sfn "$release" /opt/cubit/current.next &&
-   mv -Tf /opt/cubit/current.next /opt/cubit/current &&
-   systemctl daemon-reload && systemctl restart cubit-review; then
+if [[ -f "$demo_unit" ]]; then
+  demo_backup=$(mktemp /run/cubit-demo-service.XXXXXX)
+  cp -p "$demo_unit" "$demo_backup"
+  mysqldump --single-transaction --no-tablespaces --set-gtid-purged=OFF cubit_demo | gzip > "/var/backups/cubit/demo-before-${revision}-$(date -u +%Y%m%dT%H%M%SZ).sql.gz"
+fi
+activate() {
+  install -m 644 "$release/deploy/cubit-review.service" "$unit_path" || return
+  if [[ -n "$demo_backup" ]]; then install -m 644 "$release/deploy/cubit-demo.service" "$demo_unit" || return; fi
+  ln -sfn "$release" /opt/cubit/current.next && mv -Tf /opt/cubit/current.next /opt/cubit/current || return
+  systemctl daemon-reload || return
+  if [[ -n "$demo_backup" ]]; then systemctl restart cubit-demo || return; fi
+  systemctl restart cubit-review
+}
+if activate; then
   for attempt in $(seq 1 30); do
     if curl -fsS http://127.0.0.1:5001/health | grep -q '"mode":"hosted-review"'; then
+      if [[ -n "$demo_backup" ]] && ! curl -fsS http://127.0.0.1:5002/health | grep -q '"mode":"hosted-demo"'; then
+        sleep 1
+        continue
+      fi
       echo "Activated $revision"
       exit 0
     fi
@@ -65,10 +82,12 @@ if install -m 644 "$release/deploy/cubit-review.service" "$unit_path" &&
 fi
 echo 'Activation failed; restoring previous code and service definition.' >&2
 install -m 644 "$unit_backup" "$unit_path"
+if [[ -n "$demo_backup" ]]; then install -m 644 "$demo_backup" "$demo_unit"; fi
 if [[ -n "$previous" && -d "$previous" ]]; then
   ln -sfn "$previous" /opt/cubit/current.next
   mv -Tf /opt/cubit/current.next /opt/cubit/current
   systemctl daemon-reload
+  if [[ -n "$demo_backup" ]]; then systemctl restart cubit-demo; fi
   systemctl restart cubit-review
 else
   systemctl daemon-reload

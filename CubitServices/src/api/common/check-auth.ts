@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { Member } from '../../entity/member';
 import { environment } from '../configuration';
+import { jwtHelper } from './jwtHelper';
 
 export const VerifyLoggedIn = (
   req: Request,
@@ -16,7 +17,7 @@ export const VerifyLoggedIn = (
       token = req.headers.authorization.split(' ')[1];
     }
 
-    const decoded: any = jwt.verify(token, environment.jwtSecret);
+    const decoded: any = jwtHelper.ValidateJWT(token);
 
     const memberClass = new Member();
     memberClass.GetMemberByEmail(decoded.email).then(

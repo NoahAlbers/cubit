@@ -8,6 +8,8 @@ import { lockMember, ensureBilling } from '../../billing/store'
 import { day } from '../../billing/ledger'
 import { fail } from '../../billing/payments'
 import { memberWaivers, startSigning, completeDemo, syncSigning } from '../../waivers/store'
+import { localConfig } from '../../dev/config'
+import { demoEmail, demoMemberId } from '../../demo/identity'
 
 const router=express.Router()
 router.use(signedIn)
@@ -43,6 +45,8 @@ router.put('/profile',route(async(req:any,res:any)=>{
   if(!values.firstName||!values.lastName||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email) ||
       (values.emergencyEmail&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.emergencyEmail)))fail('Enter a name and valid email addresses.')
   values.email=values.email.toLowerCase()
+  if(localConfig.runtimeMode==='hosted-demo' && req.member.id===demoMemberId && values.email!==demoEmail)
+    fail('The shared demo sign-in email cannot be changed.',403)
   await AppDataSource.transaction(async manager=>{
     // A shared lock serializes portal email changes to prevent duplicate login addresses.
     await manager.findOneOrFail(OperationsSettings,{where:{id:'default'},lock:{mode:'pessimistic_write'}})

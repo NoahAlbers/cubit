@@ -19,5 +19,5 @@ jobs:
       - run: pnpm --dir CubitWeb install --frozen-lockfile
       - run: node dev/build-web.cjs
       - run: pnpm --dir CubitServices build
-      - run: node tests/local-safety.cjs && node tests/hosted-safety.cjs && node tests/billing.cjs && node tests/activity-patterns.cjs && node tests/review-controls.cjs
+      - run: node tests/local-safety.cjs && node tests/hosted-safety.cjs && node tests/hosted-demo.cjs && node tests/billing.cjs && node tests/activity-patterns.cjs && node tests/review-controls.cjs
         working-directory: CubitServices

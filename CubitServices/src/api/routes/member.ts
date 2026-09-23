@@ -6,6 +6,8 @@ import { jwtHelper } from '../common/jwtHelper'
 import { VerifyLoggedIn } from '../common/check-auth'
 import { Guid } from 'guid-typescript'
 import { MemberPlan } from '../../entity/memberPlan'
+import { localConfig } from '../../dev/config'
+import { demoEmail, demoMemberId } from '../../demo/identity'
 
 const router = express.Router()
 const memberClass = new Member()
@@ -33,6 +35,10 @@ router.get('/', VerifyLoggedIn, (req, res, next) => {
 
 router.put('/', async (req, res, next) => {
   const postedMemberData = req.body
+  if(localConfig.runtimeMode==='hosted-demo' && postedMemberData.id===demoMemberId &&
+    ((postedMemberData.email!==undefined && postedMemberData.email!==demoEmail) ||
+     (postedMemberData.role!==undefined && postedMemberData.role!==ROLES.ADMIN) || postedMemberData.password))
+    return res.status(403).json({message:'The shared demo sign-in email, password and role cannot be changed.'})
   for (const key of Object.keys(postedMemberData)) if (!['id', 'firstName', 'lastName', 'email', 'paypalEmail', 'phone',
     'emergencyContact', 'emergencyEmail', 'emergencyPhone', 'picture', 'role', 'password'].includes(key)) delete postedMemberData[key]
 

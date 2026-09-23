@@ -4,6 +4,8 @@ import { environment } from '../environments/environment';
 import { AuthService } from './services/security/auth.service';
 import { Router, NavigationEnd } from '@angular/router';
 import { ListNavigationService } from './services/list-navigation.service';
+import { switchMap, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -31,8 +33,10 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.http.get<any>('/health').subscribe(d=>{this.dataMode=d.dataMode;this.workspaceLabel=d.workspaceLabel||'Local workspace';});
-    this.auth.isAuthenticated$.subscribe((res) => (this.isAuthenticated = res));
+    this.auth.isAuthenticated$.pipe(switchMap(signedIn=>{
+      this.isAuthenticated=signedIn;this.workspaceLabel='';this.dataMode='';
+      return this.http.get<any>('/health').pipe(catchError(()=>of({dataMode:'',workspaceLabel:this.auth.isDemo?'Synthetic demo unavailable':'Workspace unavailable'})));
+    })).subscribe(d=>{this.dataMode=d.dataMode;this.workspaceLabel=d.workspaceLabel||'Workspace';});
   }
 
 

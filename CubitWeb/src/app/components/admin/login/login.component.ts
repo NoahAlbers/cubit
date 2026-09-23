@@ -39,7 +39,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.http.get<any>('/health').subscribe(d=>this.demoAvailable=d.dataMode==='demo');
+    this.http.get<any>('/health').subscribe(d=>this.demoAvailable=d.mode==='local-development'&&d.dataMode==='demo');
     this.reducedMotion.addEventListener('change', this.stopMotion);
     if (this.auth.validToken()) this.router.navigateByUrl(this.auth.home);
   }

@@ -22,7 +22,7 @@
     <div class="sidebar-bottom"><span class="environment-label"><span class="demo-dot"></span>{{workspaceLabel}}</span></div>
   </aside>
   <div class="workspace-body">
-    <header class="topbar" *ngIf="isAuthenticated"><span>Melbourne Makerspace <span class="muted">/ {{sectionName}}</span></span><div class="account-controls"><div class="account-identity"><span>{{auth.accountLabel}}</span><small>{{auth.isAdmin?'Staff administrator':'Member'}}</small></div><button class="secondary" (click)="logout()">Sign out</button></div></header>
-    <main id="main" tabindex="-1"><router-outlet></router-outlet></main>
+    <header class="topbar" *ngIf="isAuthenticated"><span>Melbourne Makerspace <span class="muted">/ {{sectionName}}</span></span><div class="account-controls"><div class="account-identity"><span>{{auth.accountLabel}}</span><small>{{auth.isDemo?'Demo administrator':auth.isAdmin?'Staff administrator':'Member'}}</small></div><button class="secondary" (click)="logout()">Sign out</button></div></header>
+    <div class="synthetic-demo-banner" *ngIf="isAuthenticated && auth.isDemo"><strong>Synthetic demo</strong> Fictional members, payments and visits. Changes affect the shared demo only; use fictional details.</div><main id="main" tabindex="-1"><router-outlet></router-outlet></main>
   </div>
 </div>

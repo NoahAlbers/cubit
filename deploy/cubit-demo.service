@@ -1,0 +1,28 @@
+[Unit]
+Description=Cubit synthetic demo
+After=network.target mysql.service
+Requires=mysql.service
+
+[Service]
+Type=simple
+User=cubit-demo
+Group=cubit-demo
+WorkingDirectory=/opt/cubit/current/CubitServices
+EnvironmentFile=/etc/cubit-demo/demo.env
+ExecStart=/usr/bin/node dist/app.js
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_UNIX AF_INET6 AF_INET
+IPAddressDeny=any
+IPAddressAllow=localhost
+
+[Install]
+WantedBy=multi-user.target

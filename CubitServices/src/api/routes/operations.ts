@@ -76,13 +76,13 @@ router.get('/automation', route(async(req:any,res:any)=>{
   res.json({settings,migration:settings.migrationSummary?JSON.parse(settings.migrationSummary):null,runs:runs.map(r=>{
     const s=JSON.parse(r.summary);return {...r,summary:{date:s.date,members:s.members,newCharges:s.newCharges,accessChanges:s.accessChanges,error:s.error}}
   }),events,audit,
-    mode:localConfig.dataMode==='imported'?'Reviewing imported membership data. No live integrations.':'Local development: payment events are simulations.',
-    schedule:localConfig.dataMode==='imported'?'Automatic processing is paused for the imported-data review. Billing dates use UTC to preserve the imported dates.':'Daily after 9:00 AM in this PC’s timezone, while Cubit is running. Missed runs catch up at the next start.',
-    imported:localConfig.dataMode==='imported'})
+    mode:localConfig.runtimeMode==='hosted-demo'?'Synthetic demo: all members, payments and visits are fictional. Changes affect demo data only.':localConfig.dataMode==='imported'?'Reviewing imported membership data. No live integrations.':'Local development: payment events are simulations.',
+    schedule:localConfig.runtimeMode==='hosted-demo'?'Automatic processing is paused. Preview or run processing manually on the synthetic data.':localConfig.dataMode==='imported'?'Automatic processing is paused for the imported-data review. Billing dates use UTC to preserve the imported dates.':'Daily after 9:00 AM in this PC’s timezone, while Cubit is running. Missed runs catch up at the next start.',
+    imported:localConfig.dataMode==='imported'||localConfig.runtimeMode==='hosted-demo'})
 }))
 router.post('/automation/settings',route(async(req:any,res:any)=>{
   const b=req.body
-  if(localConfig.dataMode==='imported' && b.dailyEnabled)fail('Automatic processing is paused during imported-data review.')
+  if((localConfig.dataMode==='imported'||localConfig.runtimeMode==='hosted-demo') && b.dailyEnabled)fail('Automatic processing is paused in this review environment.')
   if(Object.keys(b).some(k=>!['id','graceDays','dailyEnabled','version','migrationSummary'].includes(k))||!Number.isInteger(b.graceDays)||b.graceDays<0||b.graceDays>365||typeof b.dailyEnabled!=='boolean')fail('Enter 0–365 grace days and valid billing settings.')
   const saved=await AppDataSource.transaction(async manager=>{
     const settings=await manager.findOneOrFail(OperationsSettings,{where:{id:'default'},lock:{mode:'pessimistic_write'}})

@@ -8,6 +8,7 @@ import { DataSource } from 'typeorm'
 import path from 'path'
 import { staffOnly } from './api/common/staff-auth'
 import { loginLimit } from './api/common/login-limit'
+import { demoProxy } from './demo/proxy'
 const bodyParser = require('body-parser')
 const extension = __filename.endsWith('.js') ? 'js' : 'ts'
 
@@ -18,7 +19,7 @@ export const AppDataSource = new DataSource({
   username: localConfig.username,
   password: localConfig.password,
   database: localConfig.database,
-  namingStrategy: process.platform === 'win32' || localConfig.runtimeMode === 'hosted-review' ? new WindowsNamingStrategy() : undefined,
+  namingStrategy: process.platform === 'win32' || localConfig.runtimeMode !== 'local' ? new WindowsNamingStrategy() : undefined,
   synchronize: false,
   logging: false,
   entities: [path.join(__dirname, `entity/**/*.${extension}`)],
@@ -28,7 +29,7 @@ export const AppDataSource = new DataSource({
 
 const app: Application = express()
 app.disable('x-powered-by')
-if (localConfig.runtimeMode === 'hosted-review') app.set('trust proxy', 'loopback')
+if (localConfig.runtimeMode !== 'local') app.set('trust proxy', 'loopback')
 
 app.use(morgan('dev')) //nicer console logging and errors
 app.use(bodyParser.json())
@@ -40,14 +41,18 @@ app.use(express.json())
 // Prevent the copied browser bundle from contacting any other API origin.
 app.use((req, res, next) => {
   res.setHeader('Content-Security-Policy', "connect-src 'self'")
+  res.setHeader('Cache-Control', 'no-store')
   next()
 })
 
+if (localConfig.runtimeMode !== 'local') app.use('/login', loginLimit())
+if (localConfig.runtimeMode === 'hosted-review') app.use(demoProxy(process.env.DEMO_ENABLED==='true'))
+
 app.get('/health', (req, res) => {
   res.status(AppDataSource.isInitialized ? 200 : 503).json({
-    mode: localConfig.runtimeMode === 'hosted-review' ? 'hosted-review' : 'local-development',
+    mode: localConfig.runtimeMode === 'local' ? 'local-development' : localConfig.runtimeMode,
     dataMode: localConfig.dataMode, databaseReady: AppDataSource.isInitialized,
-    workspaceLabel: localConfig.runtimeMode === 'hosted-review' ? 'Hosted review · copied member data' :
+    workspaceLabel: localConfig.runtimeMode === 'hosted-demo' ? 'Synthetic demo · fictional records only' : localConfig.runtimeMode === 'hosted-review' ? 'Hosted review · copied member data' :
       localConfig.dataMode === 'imported' ? 'Local testing · imported membership data' : 'Local demo workspace',
   })
 })
@@ -56,7 +61,7 @@ app.get('/health', (req, res) => {
 app.use('/paypal', (req, res) => {
   res.status(403).json({ message: 'PayPal synchronization is disabled in this review environment.' })
 })
-if (localConfig.runtimeMode === 'hosted-review') {
+if (localConfig.runtimeMode !== 'local') {
   app.use('/ACON', (req,res)=>res.status(403).json({message:'Door integration is disabled in the hosted review.'}))
 }
 
@@ -70,7 +75,7 @@ app.get(['/', '/memberlist', '/overdue', '/member/:memberId', '/accessLog', '/re
 
 //get rid of stupid CORS errors
 app.use((req, res, next) => {
-  if (localConfig.runtimeMode === 'hosted-review') return next()
+  if (localConfig.runtimeMode !== 'local') return next()
   res.header('Access-Control-Allow-Origin', '*')
   res.header('Access-Control-Allow-Headers', '*')
 
@@ -97,7 +102,6 @@ const taskRoutes = require('./api/routes/task')
 app.use('/task', taskRoutes)
 
 const loginRoutes = require('./api/routes/login')
-if (localConfig.runtimeMode === 'hosted-review') app.use('/login', loginLimit())
 app.use('/login', loginRoutes)
 
 const accessLogRoutes = require('./api/routes/accessLog')
@@ -132,7 +136,10 @@ app.use('*', (req, res, next) => {
 
 export async function startLocalApp() {
   await AppDataSource.initialize()
-  if (localConfig.dataMode === 'imported') {
+  if (localConfig.runtimeMode === 'hosted-demo') {
+    const rows=await AppDataSource.query("SELECT complete FROM cubit_demo_manifest WHERE id='synthetic-v1'")
+    if(rows.length!==1||!rows[0].complete)throw Error('Synthetic demo has not been initialized.')
+  } else if (localConfig.dataMode === 'imported') {
     const rows = await AppDataSource.query("SELECT complete FROM cubit_import_manifest WHERE id = 'current'")
     if (rows.length !== 1 || !rows[0].complete) throw Error('The local import has not been validated.')
   } else {
@@ -158,7 +165,7 @@ export async function startLocalApp() {
   const server = app.listen(localConfig.port, localConfig.listenHost, () => {
     console.log(`Cubit ${localConfig.runtimeMode} ready on port ${localConfig.port}`)
   })
-  const stopScheduler = localConfig.dataMode === 'demo' ? startAutomationScheduler() : () => {}
+  const stopScheduler = localConfig.runtimeMode === 'local' && localConfig.dataMode === 'demo' ? startAutomationScheduler() : () => {}
   server.on('close', stopScheduler)
   return server
 }
