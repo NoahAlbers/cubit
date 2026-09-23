@@ -3,6 +3,8 @@ import { DraftDialogComponent, DraftExitDirective } from './services/draft-guard
 import { FieldFeedbackDirective } from './services/field-feedback.directive';
 import { MemberIconDirective } from './components/shared/member-icon.directive';
 import { ArrowComponent } from './components/shared/arrow.component';
+import { InfoComponent } from './components/shared/info.component';
+import { WaiverLockComponent } from './components/waivers/waiver-lock.component';
 import { NgModule } from '@angular/core';
 import { AppMaterialModule } from './/app-material.module';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -48,7 +50,7 @@ import { AccessLogService } from './services/access-log.service';
 
 @NgModule({
     declarations: [
-        DraftDialogComponent, DraftExitDirective, FieldFeedbackDirective, MemberIconDirective, ArrowComponent,
+        DraftDialogComponent, DraftExitDirective, FieldFeedbackDirective, MemberIconDirective, ArrowComponent, InfoComponent, WaiverLockComponent,
         DirectoryComponent,
         StaffToolsComponent, EditChargeComponent, ReportsComponent, AutomationComponent, PortalComponent, WaiversComponent, MemberWaiversComponent,
         AppComponent,

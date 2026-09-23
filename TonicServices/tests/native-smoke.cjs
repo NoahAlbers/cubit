@@ -2,12 +2,13 @@
 const assert = require('assert/strict')
 const http = require('http')
 
-function request(route, { method = 'GET', body, token, accept = 'application/json' } = {}) {
+function request(route, { method = 'GET', body, token, previewToken, accept = 'application/json' } = {}) {
   return new Promise((resolve, reject) => {
     const encoded = body === undefined ? undefined : JSON.stringify(body)
     const headers = { Accept: accept }
     if (encoded) { headers['Content-Type'] = 'application/json'; headers['Content-Length'] = Buffer.byteLength(encoded) }
     if (token) headers.Authorization = 'Bearer ' + token
+    if (previewToken) headers['X-Cubit-Waiver-Preview'] = previewToken
     const req = http.request({ hostname: '127.0.0.1', port: 5001, path: route, method, headers }, res => {
       let text = ''
       res.setEncoding('utf8')

@@ -1,5 +1,5 @@
 import { Injectable, NgZone } from '@angular/core';
-import { Router, NavigationStart, NavigationEnd, UrlTree } from '@angular/router';
+import { Router, NavigationStart, NavigationEnd, Scroll, UrlTree } from '@angular/router';
 import { take } from 'rxjs/operators';
 
 const lists = ['/memberlist','/overdue','/accessLog','/reports','/waivers','/automation'];
@@ -7,8 +7,15 @@ const lists = ['/memberlist','/overdue','/accessLog','/reports','/waivers','/aut
 export class ListNavigationService {
   private last = new Map<string,string>();
   private positions = new Map<string,number>();
+  private pendingScroll?:{path:string;y:number};
   constructor(private router:Router, private zone:NgZone) {
     router.events.subscribe(event => {
+      if(event instanceof Scroll && this.pendingScroll) {
+        const pending=this.pendingScroll;this.pendingScroll=undefined;
+        // Router scroll restoration runs on the Scroll event, after navigation
+        // resolves. Restore on the next frame so query-only view changes stay put.
+        if(this.path(router.url)===pending.path)requestAnimationFrame(()=>window.scrollTo(0,pending.y));
+      }
       if(event instanceof NavigationStart && this.isList(router.url)) {
         this.positions.set(router.url,window.scrollY);
         if(this.positions.size>100)this.positions.delete(this.positions.keys().next().value);
@@ -16,6 +23,11 @@ export class ListNavigationService {
       if(event instanceof NavigationEnd && this.isList(event.urlAfterRedirects))
         this.last.set(this.path(event.urlAfterRedirects),event.urlAfterRedirects);
     });
+  }
+  async preservingScroll(navigate:()=>Promise<boolean>){
+    const pending={path:this.path(this.router.url),y:window.scrollY};this.pendingScroll=pending;
+    try{if(!await navigate()&&this.pendingScroll===pending)this.pendingScroll=undefined;}
+    catch(error){if(this.pendingScroll===pending)this.pendingScroll=undefined;throw error;}
   }
   private path(url:string) { return url.split(/[?#]/)[0]; }
   private isList(url:string) { return lists.includes(this.path(url)); }

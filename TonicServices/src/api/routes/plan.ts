@@ -7,6 +7,7 @@ import { MemberPlan } from '../../entity/memberPlan'
 import { Member } from '../../entity/member'
 import { day, validDay } from '../../billing/ledger'
 import { lockMember, postCharges, refreshAccess } from '../../billing/store'
+import { sortPlans } from '../../billing/plan-order'
 
 const router = express.Router()
 
@@ -14,7 +15,7 @@ router.get('/', (req, res) => {
   AppDataSource.manager
     .find(Plan, { where: req.query.available === 'true' ? { available: true } : {}, order: { monthlyCost: 'ASC', name: 'ASC' } })
     .then((planList) => {
-      res.status(200).json(planList)
+      res.status(200).json(sortPlans(planList))
     })
     .catch((err) => {
       return res.status(500).json({ error: err })

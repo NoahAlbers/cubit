@@ -7,10 +7,14 @@ import { directoryRows } from '../../billing/directory'
 import { publishWaiver, publicSignature, memberWaivers, syncSigning } from '../../waivers/store'
 import { docusealConfig } from '../../waivers/docuseal'
 import { fail } from '../../billing/payments'
+import { unlockWaiverPreview, requireWaiverPreview } from '../../waivers/preview'
+import { loginLimit } from '../common/login-limit'
 
 const router=express.Router()
 router.use(staffOnly)
 router.use((req,res,next)=>{res.setHeader('Cache-Control','no-store');next()})
+router.post('/unlock',loginLimit(),unlockWaiverPreview)
+router.use(requireWaiverPreview)
 const route=(fn:any)=>async(req:any,res:any,next:any)=>{try{await fn(req,res)}catch(err){next(err)}}
 router.get('/',route(async(req:any,res:any)=>{
   const [waivers,versions,signatures,members]=await Promise.all([

@@ -103,6 +103,7 @@ export class MemberComponent implements OnInit, OnDestroy {
   cutoffPreview: any; cutoffBusy = false; cutoffError = ''; cutoffSaved = '';
   historyOrder = 'desc';
   historyRows: BillingRow[] = [];
+  get lastPaymentDate(){return (this.billing?.payments||[]).filter(p=>Number(p.amount)>0&&!p.correctedBy&&!p.reversalOf&&new Date(p.transactionDate)<=new Date()).map(p=>p.transactionDate).sort().pop()||null;}
   paymentChanges: any[] = [];
   private initialSections = new Set<string>();
   private anchorScroll?: Subscription;

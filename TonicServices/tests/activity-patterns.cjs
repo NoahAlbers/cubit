@@ -17,4 +17,20 @@ assert.equal(leap.monthDays[0].values[28],0);assert.equal(leap.monthDays[0].valu
 assert.equal(localAccessEntries([event('2026-07-01T15:00:00Z')],'2026-07-01','2026-07-01',new Date('2026-07-01T14:00:00Z')).length,0)
 assert.equal(heat.weekHours.flatMap(r=>r.values).reduce((a,b)=>a+b,0),heat.total)
 assert.equal(heat.monthDays.flatMap(r=>r.values).reduce((a,b)=>a+(b||0),0),heat.total)
-console.log('PASS: local calendar boundaries, denied/future/invalid events, DST transitions, partial periods, leap dates and matching heatmap totals.')
+const annual=busiestTimes(localAccessEntries([
+  ...Array(2).fill(event('2023-01-01T15:00:00Z')),
+  ...Array(4).fill(event('2024-01-01T15:00:00Z')),
+  event('2024-02-29T15:00:00Z'),event('2025-01-01T15:00:00Z',false),
+],'2023-01-01','2025-12-31',new Date('2026-01-01T00:00:00Z')),'2023-01-01','2025-12-31')
+assert.equal(annual.monthDays.length,12)
+assert.equal(annual.monthDays[0].label,'January')
+assert.equal(annual.monthDays[0].values[0],2,'Include the zero-visit year in the average')
+assert.equal(annual.monthDays[0].samples[0],3)
+assert.equal(annual.monthDays[1].values[28],1,'Leap day averages only years containing February 29')
+assert.equal(annual.monthDays[1].samples[28],1)
+assert.equal(annual.monthDays[1].values[29],null)
+const partial=busiestTimes([],'2024-12-15','2025-01-10')
+assert.deepEqual(partial.monthDays.map(r=>r.label),['January','December'])
+assert.equal(partial.monthDays[0].samples[9],1);assert.equal(partial.monthDays[0].values[10],null)
+assert.equal(partial.monthDays[1].values[13],null);assert.equal(partial.monthDays[1].samples[14],1)
+console.log('PASS: calendar boundaries, DST, partial periods, zero-visit days, leap days and multi-year calendar averages.')

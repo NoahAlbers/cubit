@@ -64,13 +64,16 @@ export class ReportsComponent implements OnInit, OnDestroy {
   }
   remember(){return this.router.navigate([],{relativeTo:this.route,queryParams:{from:this.data?.from||this.from,to:this.data?.to||this.to,growth:this.growthView,busy:this.busyView},replaceUrl:true});}
   pointTooltip(point:any){return 'translate('+Math.max(52,Math.min(426,point.x-77))+','+(point.y<100?point.y+16:point.y-58)+')';}
-  setGrowth(view:string){this.clearComparison();this.activePoint=null;const y=window.scrollY;this.growthView=view;this.remember().then(()=>this.navigation.restoreScroll(y));}
-  setBusy(){const y=window.scrollY;this.prepareHeat();this.remember().then(()=>this.navigation.restoreScroll(y));}
+  setGrowth(view:string){this.clearComparison();this.activePoint=null;this.growthView=view;this.navigation.preservingScroll(()=>this.remember());}
+  setBusy(){this.prepareHeat();this.navigation.preservingScroll(()=>this.remember());}
   prepareHeat(){this.heatRows=this.data?.busiestTimes?.[this.busyView]||[];this.heatColumns=Array.from({length:this.busyView==='weekHours'?24:31},(_,i)=>i);this.heatMax=this.heatRows.reduce((max,row)=>Math.max(max,...row.values.map(v=>v||0)),0);this.heatDetail='';this.heatHover='';this.activePoint=null;}
   heatColor(value:number|null){if(value===null)return '';if(!value||!this.heatMax)return '#edf2f8';return ['#dceafa','#a6c9f1','#5c99dd','#216cbf','#094fa3'][Math.min(4,Math.ceil(value/this.heatMax*5)-1)];}
   heatText(value:number){return this.heatMax&&value/this.heatMax>0.4?'#ffffff':'#153653';}
   hourLabel(hour:number){const h=hour%24;return h===0?'Midnight':(h%12||12)+(h<12?'am':'pm');}
-  cellLabel(row:any,col:number){const when=this.busyView==='weekHours'?row.label+' '+this.hourLabel(col)+'–'+this.hourLabel(col+1):row.label+'-'+String(col+1).padStart(2,'0');return when+' · '+row.values[col]+' successful check-ins';}
+  cellLabel(row:any,col:number){
+    if(this.busyView==='weekHours')return row.label+' '+this.hourLabel(col)+'–'+this.hourLabel(col+1)+' · '+row.values[col]+' successful check-ins';
+    return row.label+' '+(col+1)+' · '+new Intl.NumberFormat('en-US',{maximumFractionDigits:1}).format(row.values[col])+' average check-ins · '+row.totals[col]+' entries across '+row.samples[col]+' included date'+(row.samples[col]===1?'':'s');
+  }
   monthLabel(month:string){return new Date(month+'-01T00:00:00Z').toLocaleDateString('en-US',{month:'short',year:'2-digit',timeZone:'UTC'});}
   monthScope(month:string){
     if(!this.data)return '';

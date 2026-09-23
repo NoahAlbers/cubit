@@ -3,15 +3,15 @@ import { HttpClient } from '@angular/common/http';
 import { forkJoin } from 'rxjs';
 @Component({selector:'app-staff-tools',template:`
 <div class="profile-grid staff-tools">
-  <section class="panel detail-panel"><h2>Staff notes</h2>
+  <section class="panel detail-panel"><div class="heading-with-info"><h2>Staff notes</h2><app-info title="Staff notes"><p>Leave context that other staff should know when helping this member.</p><h3>Who can read them?</h3><p>Only staff administrators can see these notes. They are not shown in the member portal.</p><h3>What gets recorded?</h3><p>Each note keeps its author and date. Adding a note does not change the plan, billing, or access. If a note needs correcting, add a follow-up so the history stays clear.</p></app-info></div>
     <label class="sr-only" for="staff-note">New staff note</label><textarea id="staff-note" [(ngModel)]="note" maxlength="4000" rows="3" placeholder="Add a note for other staff…"></textarea>
-    <div class="section-heading"><small class="muted">Staff only · notes keep their author and date</small><button class="primary" (click)="addNote()" [disabled]="busy || !note.trim()">Add note</button></div>
+    <div class="section-heading"><span></span><button class="primary" (click)="addNote()" [disabled]="busy || !note.trim()">Add note</button></div>
     <div class="note-entry" *ngFor="let n of notes"><p>{{n.text}}</p><small>{{n.author}} · {{n.createdAt | date:'medium'}}</small></div>
     <p class="empty-small" *ngIf="!notes.length">No staff notes yet.</p>
   </section>
-  <section class="panel detail-panel" *ngIf="ops"><h2>Access</h2>
+  <section class="panel detail-panel" *ngIf="ops"><div class="heading-with-info"><h2>Access</h2><app-info title="Access"><h3>Block membership access</h3><p>Use a staff block when a member should not be eligible for entry, even if their payments are current. Enter a reason and select Save access.</p><h3>Restoring eligibility</h3><p>Uncheck the block and save with a reason. The member still needs a current plan, to meet the billing rules, and to have an enabled key.</p><h3>Individual keys</h3><p>Disable a single lost or replaced card under Access keys. Payments never clear a staff block or re-enable a key disabled by staff.</p><p>This review changes only the copied records. It does not communicate with the door system.</p></app-info></div>
     <label class="checkbox-line"><input type="checkbox" [(ngModel)]="ops.accessHold"> Block membership access</label>
-    <p class="muted">A staff block stays in place when payments arrive. Individually disabled keys also stay disabled.</p>
+
     <label>Reason for change<input [(ngModel)]="opsReason" maxlength="500"></label>
     <button class="secondary" (click)="saveOps()" [disabled]="busy || !opsReason.trim()">Save access</button>
     <details *ngIf="ops.history.length"><summary>Access and automation history</summary><div class="note-entry" *ngFor="let event of ops.history"><b>{{event.kind}}</b><p>{{event.detail}}</p><small>{{event.author}} · {{event.createdAt | date:'medium'}}</small></div></details>

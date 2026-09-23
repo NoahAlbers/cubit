@@ -26,12 +26,14 @@ export class AuthService implements CanActivate {
   logout() {
     this.authToken = '';
     sessionStorage.removeItem('cubit-token');
+    sessionStorage.removeItem('cubit-waiver-preview');
     localStorage.removeItem('token');
     this.isAuthenticated$.next(false);
     this.router.navigateByUrl('/');
   }
   login(email: string, password: string) {
     return this.http.post<any>('/login', { email, password }).pipe(tap(result => {
+      sessionStorage.removeItem('cubit-waiver-preview');
       this.authToken = result.token;
       sessionStorage.setItem('cubit-token', result.token);
       this.isAuthenticated$.next(true);

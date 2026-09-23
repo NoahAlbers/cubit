@@ -1,4 +1,5 @@
-<section class="page waivers-page" [appDraft]="hasUnsavedChanges()"><div class="page-heading"><h1>Waivers</h1><button class="primary" (click)="edit()" [disabled]="busy">＋ New waiver</button></div>
+<section class="page" *ngIf="!gate.unlocked"><h1>Waivers</h1><div class="panel detail-panel waiver-lock-panel"><app-waiver-lock (unlocked)="load()"></app-waiver-lock></div></section>
+<ng-container *ngIf="gate.unlocked"><section class="page waivers-page" [appDraft]="hasUnsavedChanges()"><div class="page-heading"><h1>Waivers</h1><button class="primary" (click)="edit()" [disabled]="busy">＋ New waiver</button></div>
   <p class="error" role="alert" *ngIf="error">{{error}}</p><p role="status" class="success-message" *ngIf="saved">{{saved}}</p><p *ngIf="!data&&!error">Loading waivers…</p>
   <ng-container *ngIf="data">
     <div class="notice-strip">{{data.docusealConnected ? 'DocuSeal is connected. Local demo signatures are labeled separately.' : 'Local waiver demo · DocuSeal is not connected. Demo signatures are not legal agreements.'}}</div>
@@ -25,3 +26,4 @@
     <details class="panel detail-panel"><summary>DocuSeal connection</summary><p>Documents and signature fields are designed in DocuSeal. Cubit publishes versions, opens individual signing requests, and verifies completion with the DocuSeal API.</p><p *ngIf="!data.docusealConnected">The local demo works without an account. To test DocuSeal, configure a sandbox key on the server, restart Cubit, and publish a waiver with a DocuSeal template ID. Keep API keys out of waiver text.</p><a href="https://www.docuseal.com/docs/api" target="_blank" rel="noopener noreferrer">DocuSeal documentation <app-arrow name="external-link"></app-arrow></a></details>
   </ng-container>
 </section>
+</ng-container>

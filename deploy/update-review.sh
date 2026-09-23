@@ -37,6 +37,8 @@ runuser -u ubuntu -- bash -c '
   node tests/local-safety.cjs
   node tests/hosted-safety.cjs
   node tests/billing.cjs
+  node tests/activity-patterns.cjs
+  node tests/review-controls.cjs
 ' _ "$release"
 # Read-only code for the service. Secrets and database are outside all releases.
 chown -R root:root "$release"

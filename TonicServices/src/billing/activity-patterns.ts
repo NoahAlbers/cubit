@@ -15,21 +15,25 @@ export function localAccessEntries(logs:any[], from:string, to:string, now = new
 
 export function busiestTimes(entries:ReturnType<typeof localAccessEntries>, from:string, to:string) {
   const weekHours=weekdays.map(label=>({label,values:Array<number>(24).fill(0)}))
-  const monthDays:{label:string,values:(number|null)[]}[]=[]
-  for(let d=new Date(from.slice(0,7)+'-01T00:00:00Z');d.toISOString().slice(0,10)<=to;d.setUTCMonth(d.getUTCMonth()+1)){
-    const month=d.toISOString().slice(0,7),last=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate()
-    monthDays.push({label:month,values:Array.from({length:31},(_,i)=>{
-      const date=month+'-'+String(i+1).padStart(2,'0')
-      return i<last&&date>=from&&date<=to?0:null
-    })})
+  const names=['January','February','March','April','May','June','July','August','September','October','November','December']
+  const months=new Map<number,{label:string,values:(number|null)[],samples:number[],totals:number[]}>()
+  // Count every included calendar date, including dates with zero visits. A
+  // partial month or leap day only contributes when that actual date is included.
+  for(let d=new Date(from+'T00:00:00Z');d.toISOString().slice(0,10)<=to;d.setUTCDate(d.getUTCDate()+1)){
+    const month=d.getUTCMonth(),day=d.getUTCDate()-1
+    if(!months.has(month))months.set(month,{label:names[month],values:Array(31).fill(null),samples:Array(31).fill(0),totals:Array(31).fill(0)})
+    months.get(month)!.samples[day]++
   }
-  const months=new Map(monthDays.map(row=>[row.label,row]))
   let total=0
   for(const entry of entries){
     if(!entry.event.accessGranted)continue
     weekHours[entry.weekday].values[entry.hour]++
-    months.get(entry.date.slice(0,7))!.values[Number(entry.date.slice(8,10))-1]!++
+    const month=months.get(Number(entry.date.slice(5,7))-1)
+    if(month)month.totals[Number(entry.date.slice(8,10))-1]++
     total++
   }
+  const monthDays=[...months.entries()].sort((a,b)=>a[0]-b[0]).map(([,row])=>({
+    ...row,values:row.samples.map((count,i)=>count?row.totals[i]/count:null),
+  }))
   return {timeZone:activityTimeZone,total,weekHours,monthDays}
 }
