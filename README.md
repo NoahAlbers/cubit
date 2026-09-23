@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="CubitWeb/src/assets/cubit-logo.png" alt="Cubit — Melbourne Makerspace membership management" width="320">
+  <img src="CubitWeb/src/assets/cubit-logo.png" alt="Cubit — Melbourne Makerspace membership management" width="620">
 </p>
 
 # Cubit
