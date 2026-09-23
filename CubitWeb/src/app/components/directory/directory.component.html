@@ -1,9 +1,5 @@
 <section class="page directory-page">
-  <div class="page-heading">
-
-    <a *ngIf="!overdue" class="button primary" routerLink="/member/New" [queryParams]="navigation.memberQuery">＋ Add member</a>
-    <a *ngIf="overdue" class="button secondary" routerLink="/memberlist">View all members <app-arrow name="arrow-right"></app-arrow></a>
-  </div>
+  <div class="directory-summary-toolbar">
   <div class="stats compact-stats" *ngIf="data">
     <ng-container *ngIf="!overdue">
       <div class="stat"><span>ACTIVE MEMBERS</span><strong>{{data.summary.active}}</strong></div>
@@ -15,6 +11,9 @@
       <button class="stat stat-link" (click)="filters.access='enabled';filtersOpen=true;apply()"><span>WITH ACCESS ENABLED</span><strong>{{data.summary.filteredAccessAllowed}}</strong></button>
       <div class="stat"><span>LONGEST PAST DUE</span><strong>{{data.summary.oldestDays}} days</strong></div>
     </ng-container>
+  </div>
+    <a *ngIf="!overdue" class="button primary" routerLink="/member/New" [queryParams]="navigation.memberQuery">＋ Add member</a>
+    <a *ngIf="overdue" class="button primary" routerLink="/memberlist">View all members <app-arrow name="arrow-right"></app-arrow></a>
   </div>
   <section class="panel directory-panel" aria-label="Member directory">
     <div class="search-row">

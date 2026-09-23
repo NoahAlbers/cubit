@@ -1,5 +1,4 @@
-<section class="page">
-  <p class="page-description">Successful entries and denied attempts.</p>
+<section class="page access-log-page">
   <section class="panel directory-panel">
     <div class="filter-row"><label>Search activity<input type="search" maxlength="200" [(ngModel)]="search" (ngModelChange)="searchChanged()" placeholder="Member, email or details"></label><label>Time period<select [(ngModel)]="period" (ngModelChange)="apply()"><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="180">Last 6 months (180 days)</option><option value="365">Last year (365 days)</option><option value="all">All history</option></select></label><label>Result<select [(ngModel)]="result" (ngModelChange)="apply()"><option value="all">All attempts</option><option value="granted">Granted</option><option value="denied">Denied</option></select></label></div>
     <div class="result-bar" aria-live="polite">{{loading?'Loading activity…':total+' access events'}}</div><p class="error" *ngIf="error" role="alert">{{error}}</p>

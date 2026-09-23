@@ -12,7 +12,7 @@
       <a [routerLink]="navigation.target('/reports')" [queryParams]="navigation.query('/reports')" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/reports.svg" alt=""> Reports</a>
       <a [routerLink]="navigation.target('/waivers')" [queryParams]="navigation.query('/waivers')" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/waiver.svg" alt=""> Waivers</a>
       <a routerLink="/audit" [queryParams]="navigation.query('/audit')" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/audit.svg" alt=""> Audit log</a>
-      <a routerLink="/portal"><img class="nav-icon" src="assets/icons/members.svg" alt=""> My portal</a>
+      <a routerLink="/portal"><img class="nav-icon" src="assets/icons/portal.svg" alt=""> My portal</a>
     </nav>
     <nav id="main-navigation" aria-label="Member navigation" *ngIf="portalView">
       <a routerLink="/portal" routerLinkActive="selected" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{exact:true}"><img class="nav-icon" src="assets/icons/members.svg" alt=""> Overview</a>
