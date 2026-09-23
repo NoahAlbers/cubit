@@ -10,6 +10,8 @@ dist/
 *.log
 *.sql
 !CubitServices/src/dev/staff-tools.sql
+!CubitServices/src/dev/waiver-documents.sql
+tmp/
 *.tgz
 *.tar
 *.tar.gz

@@ -29,6 +29,7 @@ async function main(){
   demo.post('/login',(req,res)=>res.json({workspace:'synthetic',email:req.body.email}))
   demo.use((req,res,next)=>{try{jwt.verify(req.headers.authorization?.slice(7),config.JWT_SECRET,{audience:'cubit-demo',algorithms:['HS256']});next()}catch{res.status(401).json({message:'Unauthorized'})}})
   demo.get('/reports.csv',(req,res)=>res.type('text/csv').attachment('demo.csv').send('name\nFictional Member\n'))
+  demo.post('/upload',express.raw({type:'application/octet-stream'}),(req,res)=>res.type('application/octet-stream').send(req.body))
   demo.use((req,res)=>res.json({workspace:'synthetic',method:req.method,body:req.body}))
   const upstream=await listen(demo)
   const gateway=express();gateway.use(express.json());gateway.use(demoProxy(true,upstream.address().port));gateway.use((req,res)=>{reviewCalls++;res.json({workspace:'review'})})
@@ -42,6 +43,7 @@ async function main(){
     }
     r=await fetch(base+'/api/cubit/members/fake/notes',{method:'POST',headers,body:JSON.stringify({text:'Fictional note'})});assert.deepEqual((await r.json()).body,{text:'Fictional note'})
     r=await fetch(base+'/reports.csv',{headers});assert.match(r.headers.get('content-disposition'),/demo.csv/);assert.match(await r.text(),/Fictional Member/)
+    const bytes=Buffer.from([0,255,3,128,7]);r=await fetch(base+'/upload',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/octet-stream'},body:bytes});assert.deepEqual(Buffer.from(await r.arrayBuffer()),bytes)
     r=await fetch(base+'/api/cubit/members',{headers:{Authorization:'Bearer '+token+'bad'}});assert.equal(r.status,401)
     assert.equal(reviewCalls,0,'No demo request reached the review handlers')
     r=await fetch(base+'/login',{method:'POST',headers,body:JSON.stringify({email:'staff@example.test',password:'fixture'})});assert.equal((await r.json()).workspace,'review','Fresh login is routed by identity, not an old token')

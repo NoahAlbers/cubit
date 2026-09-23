@@ -1,0 +1,8 @@
+[Unit]
+Description=Nightly Cubit and DocuSeal backup
+[Timer]
+OnCalendar=*-*-* 06:15:00 UTC
+Persistent=true
+RandomizedDelaySec=300
+[Install]
+WantedBy=timers.target

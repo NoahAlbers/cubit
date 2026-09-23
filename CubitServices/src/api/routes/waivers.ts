@@ -10,6 +10,8 @@ import { docusealConfig } from '../../waivers/docuseal'
 import { fail } from '../../billing/payments'
 import { unlockWaiverPreview, requireWaiverPreview } from '../../waivers/preview'
 import { loginLimit } from '../common/login-limit'
+import { WaiverDocument } from '../../entity/waiverDocument'
+import { documentLimit, uploadDocument, reviewDocument, sendDocument, publicDocument } from '../../waivers/documents'
 
 const router=express.Router()
 router.use(staffOnly)
@@ -17,16 +19,26 @@ router.use((req,res,next)=>{res.setHeader('Cache-Control','no-store');next()})
 router.post('/unlock',loginLimit(),unlockWaiverPreview)
 router.use(requireWaiverPreview)
 const route=(fn:any)=>async(req:any,res:any,next:any)=>{try{await fn(req,res)}catch(err){next(err)}}
+router.post('/documents/template',express.raw({type:'application/octet-stream',limit:documentLimit}),route(async(req:any,res:any)=>
+  res.status(201).json(await uploadDocument(null,null,req.body,String(req.headers['x-cubit-filename']||'waiver'),req.member,true))))
+router.post('/members/:memberId/versions/:versionId/documents',express.raw({type:'application/octet-stream',limit:documentLimit}),route(async(req:any,res:any)=>
+  res.status(201).json(await uploadDocument(req.params.memberId,req.params.versionId,req.body,String(req.headers['x-cubit-filename']||'waiver'),req.member,true))))
+router.get('/documents/:id',route(async(req:any,res:any)=>sendDocument(req,res,true)))
+router.post('/documents/:id/review',route(async(req:any,res:any)=>res.json(await reviewDocument(req.params.id,req.body,req.member.email))))
 router.get('/',route(async(req:any,res:any)=>{
   const [waivers,versions,signatures,members]=await Promise.all([
     AppDataSource.manager.find(Waiver),AppDataSource.manager.find(WaiverVersion,{order:{createdAt:'DESC',number:'DESC'}}),
     AppDataSource.manager.find(WaiverSignature,{order:{createdAt:'DESC'}}),directoryRows(),
   ])
   const required=waivers.filter(w=>w.required&&!w.archived)
+  const documents=await AppDataSource.manager.find(WaiverDocument,{order:{createdAt:'DESC'}})
+  const accepted=(memberId:string,versionId:string)=>signatures.some(s=>s.memberId===memberId&&s.versionId===versionId&&s.status==='Signed')||documents.some(d=>d.memberId===memberId&&d.versionId===versionId&&d.status==='Accepted')
   const compliance=members.map(m=>({id:m.id,name:`${m.firstName} ${m.lastName}`,email:m.email,status:m.status,
-    missing:required.filter(w=>!signatures.some(s=>s.memberId===m.id&&s.versionId===w.currentVersionId&&s.status==='Signed')).map(w=>({id:w.id,name:w.name})),
-    signed:required.filter(w=>signatures.some(s=>s.memberId===m.id&&s.versionId===w.currentVersionId&&s.status==='Signed')).length}))
-  res.json({docusealConnected:docusealConfig().enabled,waivers:waivers.map(w=>({...w,version:versions.find(v=>v.id===w.currentVersionId),
+    missing:required.filter(w=>!accepted(m.id,w.currentVersionId)).map(w=>({id:w.id,name:w.name})),
+    signed:required.filter(w=>accepted(m.id,w.currentVersionId)).length}))
+  res.json({docusealConnected:docusealConfig().enabled,docusealUrl:docusealConfig().publicUrl,
+    documents:documents.map(d=>({...publicDocument(d),memberName:members.find(m=>m.id===d.memberId)?`${members.find(m=>m.id===d.memberId)!.firstName} ${members.find(m=>m.id===d.memberId)!.lastName}`:'',versionName:versions.find(v=>v.id===d.versionId)?.name})),
+    waivers:waivers.map(w=>({...w,version:versions.find(v=>v.id===w.currentVersionId),
     versions:versions.filter(v=>v.waiverId===w.id).map(v=>({...v,signedCount:signatures.filter(s=>s.versionId===v.id&&s.status==='Signed').length}))})),
     compliance,summary:{active:compliance.filter(m=>m.status==='Active').length,missing:compliance.filter(m=>m.status==='Active'&&m.missing.length).length,
       complete:compliance.filter(m=>m.status==='Active'&&!m.missing.length).length,required:required.length},

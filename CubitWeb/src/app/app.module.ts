@@ -10,6 +10,7 @@ import { MemberIconDirective } from './components/shared/member-icon.directive';
 import { ArrowComponent } from './components/shared/arrow.component';
 import { InfoComponent } from './components/shared/info.component';
 import { WaiverLockComponent } from './components/waivers/waiver-lock.component';
+import { WaiverDocumentsComponent } from './components/waivers/waiver-documents.component';
 import { NgModule } from '@angular/core';
 import { AppMaterialModule } from './/app-material.module';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -57,7 +58,7 @@ import { AccessLogService } from './services/access-log.service';
 
 @NgModule({
     declarations: [
-        ContactFieldsDirective, PhonePipe, CopyFieldDirective, MemberStatusDirective, DraftDialogComponent, DraftExitDirective, FieldFeedbackDirective, MemberIconDirective, ArrowComponent, InfoComponent, WaiverLockComponent,
+        ContactFieldsDirective, PhonePipe, CopyFieldDirective, MemberStatusDirective, DraftDialogComponent, DraftExitDirective, FieldFeedbackDirective, MemberIconDirective, ArrowComponent, InfoComponent, WaiverLockComponent, WaiverDocumentsComponent,
         DirectoryComponent,
         PaymentMatchingComponent, PlanCatalogComponent, AuditLogComponent, StaffSettingsComponent,
         StaffToolsComponent, EditChargeComponent, ReportsComponent, AutomationComponent, PortalComponent, WaiversComponent, MemberWaiversComponent,

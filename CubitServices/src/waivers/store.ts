@@ -4,12 +4,14 @@ import { Waiver, WaiverVersion, WaiverSignature } from '../entity/waiver'
 import { Member } from '../entity/member'
 import { OperationsAudit } from '../entity/cubitOperations'
 import { fail, reasonText } from '../billing/payments'
-import { createSigning, retrieveSigning, verifiedCompletion, validateTemplate, docusealConfig } from './docuseal'
+import { createSigning, retrieveSigning, verifiedCompletion, validateTemplate, docusealConfig, downloadSigningFile } from './docuseal'
+import { WaiverDocument } from '../entity/waiverDocument'
+import { publicDocument, inspectDocument } from './documents'
 
 export function publicSignature(s: WaiverSignature) {
   return { id:s.id, versionId:s.versionId, waiverId:s.waiverId, provider:s.provider, status:s.status,
-    signerName:s.signerName, completedAt:s.completedAt, createdAt:s.createdAt, documentUrl:s.documentUrl,
-    signingUrl:s.provider==='docuseal' && s.slug && s.status!=='Signed' ? `https://docuseal.com/s/${s.slug}` : null }
+    signerName:s.signerName, completedAt:s.completedAt, createdAt:s.createdAt, documentUrl:null,
+    signingUrl:s.provider==='docuseal' && s.slug && s.status!=='Signed' ? `${docusealConfig().publicUrl}/s/${s.slug}` : null }
 }
 function publicVersion(v: WaiverVersion) {
   return {id:v.id,number:v.number,name:v.name,description:v.description,demoText:v.demoText,provider:v.provider,createdAt:v.createdAt}
@@ -24,22 +26,29 @@ export async function memberWaivers(memberId: string) {
     const signature=signatures.find(s=>s.versionId===version.id)
     return { id:w.id, required:w.required, version:publicVersion(version), signature:signature ? publicSignature(signature) : null }
   })
-  return { current, history:signatures.filter(s=>s.status==='Signed').map(s=>({...publicSignature(s),version:publicVersion(versions.find(v=>v.id===s.versionId)!)})),
-    missing:current.filter(w=>w.required && w.signature?.status!=='Signed').length }
+  const allDocuments=await AppDataSource.manager.find(WaiverDocument,{where:[{memberId},{source:'template'}],order:{createdAt:'DESC'}})
+  const documents=allDocuments.filter(d=>d.memberId===memberId||!!d.versionId).map(d=>({...publicDocument(d),versionName:versions.find(v=>v.id===d.versionId)?.name}))
+  const items=current.map(w=>({...w,complete:w.signature?.status==='Signed'||documents.some(d=>d.memberId===memberId&&d.versionId===w.version.id&&d.status==='Accepted')}))
+  return { current:items,documents,history:signatures.filter(s=>s.status==='Signed').map(s=>({...publicSignature(s),version:publicVersion(versions.find(v=>v.id===s.versionId)!)})),
+    missing:items.filter(w=>w.required&&!w.complete).length }
 }
 
 export async function publishWaiver(id: string|undefined, input: any, author: string) {
   const name=reasonText(input.name,150), description=reasonText(input.description,2000)
-  if(typeof input.required!=='boolean' || !['demo','docuseal'].includes(input.provider))fail('Choose a valid waiver type and requirement.')
+  if(typeof input.required!=='boolean' || !['demo','docuseal','paper'].includes(input.provider))fail('Choose a valid waiver type and requirement.')
   const demoText=input.provider==='demo'?reasonText(input.demoText,20000):''
   const signerRole=input.provider==='docuseal'?reasonText(input.signerRole,100):'Member'
+  let providerTemplate:{sha256:string,fingerprint:string}|undefined
   if(input.provider==='docuseal') {
     if(!Number.isSafeInteger(input.docusealTemplateId)||input.docusealTemplateId<1)fail('Enter a valid DocuSeal template ID.')
     // Published versions must not share a mutable DocuSeal template.
     if(await AppDataSource.manager.countBy(WaiverVersion,{docusealTemplateId:input.docusealTemplateId}))fail('Clone the DocuSeal template before publishing a new version.',409)
-    await validateTemplate(input.docusealTemplateId,signerRole)
+    providerTemplate=await validateTemplate(input.docusealTemplateId,signerRole)
   }
   return AppDataSource.transaction(async manager=>{
+    const document=input.sourceDocumentId?await manager.findOne(WaiverDocument,{where:{id:input.sourceDocumentId,source:'template'},lock:{mode:'pessimistic_write'}}):null
+    if(input.provider!=='demo'&&(!document||document.versionId))fail('Upload a fresh PDF for this waiver version before publishing.')
+    if(providerTemplate&&document!.sha256!==providerTemplate.sha256)fail('The uploaded PDF must match the original PDF in the DocuSeal template.')
     const waiver=id?await manager.findOne(Waiver,{where:{id},lock:{mode:'pessimistic_write'}}):manager.create(Waiver,{name,revision:0})
     if(!waiver)fail('Waiver not found.',404)
     if(id && input.revision!==waiver.revision)fail('This waiver changed. Reload before publishing.',409)
@@ -48,7 +57,8 @@ export async function publishWaiver(id: string|undefined, input: any, author: st
     if(!id)await manager.save(waiver)
     const number=await manager.countBy(WaiverVersion,{waiverId:waiver.id})+1
     const version=await manager.save(WaiverVersion,manager.create(WaiverVersion,{waiverId:waiver.id,number,name,description,demoText,
-      provider:input.provider,docusealTemplateId:input.provider==='docuseal'?input.docusealTemplateId:null,signerRole,author}))
+      provider:input.provider,docusealTemplateId:input.provider==='docuseal'?input.docusealTemplateId:null,providerFingerprint:providerTemplate?.fingerprint,signerRole,author}))
+    if(document){document.versionId=version.id;await manager.save(document)}
     waiver.name=name;waiver.required=input.required;waiver.currentVersionId=version.id;waiver.revision++
     await manager.save(waiver)
     await recordAudit(manager,{kind:'Waiver published',author,entityId:waiver.id,before,after:{name:waiver.name,required:waiver.required,currentVersionId:waiver.currentVersionId},reason:'Published version '+number})
@@ -59,6 +69,7 @@ export async function publishWaiver(id: string|undefined, input: any, author: st
 export async function startSigning(member: Member, versionId: string) {
   const version=await AppDataSource.manager.findOneBy(WaiverVersion,{id:versionId})
   if(!version)fail('Waiver not found.',404)
+  if(version.provider==='paper')fail('Download this waiver, sign it, then upload the completed PDF or photos for staff review.')
   if(version.provider==='docuseal'&&!docusealConfig().enabled)fail('DocuSeal is not connected yet.',503)
   // Commit the reservation before contacting DocuSeal; ambiguous failures can be recovered.
   const reservation=await AppDataSource.transaction(async manager=>{
@@ -104,10 +115,27 @@ export async function completeDemo(memberId: string,id: string,input: any) {
 export async function syncSigning(memberId: string,id: string) {
   const signature=await AppDataSource.manager.findOneBy(WaiverSignature,{id,memberId})
   if(!signature)fail('Signing request not found.',404)
-  if(signature.provider==='demo'||signature.status==='Signed')return publicSignature(signature)
+  if(signature.provider==='demo')return publicSignature(signature)
+  if(signature.status==='Signed'&&await AppDataSource.manager.countBy(WaiverDocument,{signatureId:id,source:'signed document'}))return publicSignature(signature)
   const version=await AppDataSource.manager.findOneByOrFail(WaiverVersion,{id:signature.versionId})
-  const verified=verifiedCompletion(await retrieveSigning(signature),signature,version)
-  // Terminal signatures cannot regress when a delayed status check returns.
-  await AppDataSource.manager.createQueryBuilder().update(WaiverSignature).set(verified).where('id = :id AND status != :status',{id,status:'Signed'}).execute()
+  const result=await retrieveSigning(signature),verified=verifiedCompletion(result,signature,version)
+  const files:{content:Buffer,source:string,filename:string}[]=[]
+  if(verified.status==='Signed'){
+    if(!Array.isArray(result.documents)||result.documents.length!==1)fail('This integration expects one signed waiver PDF. Contact staff to archive this submission.',409)
+    if(!verified.documentUrl||!result.audit_log_url)fail('DocuSeal is preparing the signed document and audit certificate. Check again shortly.',409)
+    files.push({content:await downloadSigningFile(verified.documentUrl),source:'signed document',filename:version.name+'.pdf'})
+    files.push({content:await downloadSigningFile(result.audit_log_url),source:'signing certificate',filename:version.name+'-audit.pdf'})
+  }
+  await AppDataSource.transaction(async manager=>{
+    const current=await manager.findOneOrFail(WaiverSignature,{where:{id},lock:{mode:'pessimistic_write'}})
+    if(current.status==='Signed'&&await manager.countBy(WaiverDocument,{signatureId:id,source:'signed document'}))return
+    for(const file of files){const inspected=inspectDocument(file.content,file.filename)
+      if(inspected.mime!=='application/pdf')fail('DocuSeal returned an invalid signed PDF.',502)
+      await manager.save(WaiverDocument,manager.create(WaiverDocument,{...inspected,content:file.content,memberId,versionId:version.id,signatureId:id,
+        source:file.source,status:'Stored',uploadedBy:'DocuSeal'}))
+    }
+    if(current.status!=='Signed'||verified.status==='Signed')await manager.update(WaiverSignature,id,{...verified,documentUrl:null} as any)
+    if(files.length)await recordAudit(manager,{memberId,kind:'Signed waiver archived',author:'DocuSeal',entityId:id,after:{versionId:version.id,completedAt:verified.completedAt,files:files.length}})
+  })
   return publicSignature(await AppDataSource.manager.findOneByOrFail(WaiverSignature,{id}))
 }

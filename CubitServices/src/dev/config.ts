@@ -45,7 +45,7 @@ export function readHostedReviewConfig(env: NodeJS.ProcessEnv) {
       env.DATABASE_URI !== '127.0.0.1' || env.DATABASE_NAME !== 'cubit_review' ||
       env.DATABASE_USERNAME !== 'cubit_app' || env.HOST !== '127.0.0.1' ||
       !env.DATABASE_PASSWORD || !env.JWT_SECRET || env.JWT_SECRET.length < 48 ||
-      env.DOCUSEAL_ENABLED === 'true') {
+      (env.DOCUSEAL_ENABLED === 'true' && (env.DOCUSEAL_API_URL !== 'http://127.0.0.1:3000/api' || !env.DOCUSEAL_API_KEY || !env.DOCUSEAL_PUBLIC_URL?.startsWith('https://')))) {
     throw new Error('Invalid hosted review configuration.')
   }
   const port = Number(env.PORT || 5001), databasePort = Number(env.DATABASE_PORT || 3306)

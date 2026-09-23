@@ -23,6 +23,7 @@ export class WaiverVersion {
   @Column() provider: string
   @Column({ nullable: true, unique: true }) docusealTemplateId: number
   @Column({ default: 'Member' }) signerRole: string
+  @Column({nullable:true}) providerFingerprint: string
   @Column() author: string
   @Column({ default: () => 'CURRENT_TIMESTAMP' }) createdAt: Date
 }

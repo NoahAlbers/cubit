@@ -138,6 +138,7 @@ app.use('*', (req, res, next) => {
 
 export async function startLocalApp() {
   await AppDataSource.initialize()
+  await (await import('./dev/upgrade-waiver-documents')).upgradeWaiverDocuments(AppDataSource,localConfig.runtimeMode==='local')
   await (await import('./dev/upgrade-billing-tools')).upgradeBillingTools(AppDataSource,localConfig.runtimeMode==='local')
   if (localConfig.runtimeMode === 'hosted-demo') {
     const rows=await AppDataSource.query("SELECT complete FROM cubit_demo_manifest WHERE id='synthetic-v1'")
@@ -171,6 +172,8 @@ export async function startLocalApp() {
   })
   const stopScheduler = localConfig.runtimeMode === 'local' && localConfig.dataMode === 'demo' ? startAutomationScheduler() : () => {}
   server.on('close', stopScheduler)
+  const stopWaivers=(await import('./waivers/reconcile')).startWaiverReconciliation()
+  server.on('close',stopWaivers)
   return server
 }
 

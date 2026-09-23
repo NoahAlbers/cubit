@@ -20,9 +20,11 @@ export function demoProxy(enabled: boolean, port = 5002): RequestHandler {
     if (!demo) return next()
     res.setHeader('Cache-Control', 'no-store')
     if (!enabled) return res.status(503).json({message:'The synthetic demo is temporarily unavailable.'})
-    const body = ['GET','HEAD'].includes(req.method) ? undefined : JSON.stringify(req.body || {})
+    const binary=req.headers['content-type']==='application/octet-stream'
+    const body = binary||['GET','HEAD'].includes(req.method) ? undefined : JSON.stringify(req.body || {})
     const headers: http.OutgoingHttpHeaders = {accept:req.headers.accept || 'application/json', 'x-forwarded-for':req.ip}
-    for (const key of ['authorization','x-cubit-waiver-preview']) if(req.headers[key])headers[key]=req.headers[key]
+    for (const key of ['authorization','x-cubit-waiver-preview','x-cubit-filename']) if(req.headers[key])headers[key]=req.headers[key]
+    if(binary){headers['content-type']='application/octet-stream';if(req.headers['content-length'])headers['content-length']=req.headers['content-length']}
     if (body) { headers['content-type']='application/json'; headers['content-length']=Buffer.byteLength(body) }
     const upstream = http.request({hostname:'127.0.0.1',port,path:req.originalUrl,method:req.method,headers}, response => {
       res.status(response.statusCode || 502)
@@ -33,6 +35,6 @@ export function demoProxy(enabled: boolean, port = 5002): RequestHandler {
     upstream.setTimeout(30000,()=>upstream.destroy(new Error('Demo timeout')))
     upstream.on('error',()=>{if(!res.headersSent)res.status(503).json({message:'The synthetic demo is temporarily unavailable.'});else res.destroy()})
     res.on('close',()=>upstream.destroy())
-    upstream.end(body)
+    if(binary)req.pipe(upstream);else upstream.end(body)
   }
 }

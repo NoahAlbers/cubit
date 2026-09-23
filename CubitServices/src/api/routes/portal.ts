@@ -12,11 +12,15 @@ import { fail } from '../../billing/payments'
 import { memberWaivers, startSigning, completeDemo, syncSigning } from '../../waivers/store'
 import { localConfig } from '../../dev/config'
 import { demoEmail, demoMemberId } from '../../demo/identity'
+import { documentLimit, uploadDocument, sendDocument } from '../../waivers/documents'
 
 const router=express.Router()
 router.use(signedIn)
 router.use((req,res,next)=>{res.setHeader('Cache-Control','no-store');next()})
 const route=(fn:any)=>async(req:any,res:any,next:any)=>{try{await fn(req,res)}catch(err){next(err)}}
+router.post('/waivers/:versionId/documents',express.raw({type:'application/octet-stream',limit:documentLimit}),route(async(req:any,res:any)=>
+  res.status(201).json(await uploadDocument(req.member.id,req.params.versionId,req.body,String(req.headers['x-cubit-filename']||'waiver'),req.member,false))))
+router.get('/documents/:id',route(async(req:any,res:any)=>sendDocument(req,res,false)))
 const profileFields=['firstName','lastName','email','phone','emergencyContact','emergencyEmail','emergencyPhone'] as const
 function profile(member: Member) {
   return Object.fromEntries(profileFields.map(k=>[k,member[k]||'']))

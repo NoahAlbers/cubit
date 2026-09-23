@@ -92,9 +92,10 @@ async function main(){
       process.env.DOCUSEAL_ENABLED='true';process.env.DOCUSEAL_API_KEY='offline-mock-key'
       axios.defaults.adapter=async config=>{
         calls.push(config)
-        assert.equal(config.headers['X-Auth-Token'],'offline-mock-key')
+        if(!config.url.includes('/file/'))assert.equal(config.headers['X-Auth-Token'],'offline-mock-key')
         let data
-        if(config.url.endsWith('/templates/20'))data={submitters:[{name:'Member'}]}
+        if(config.url.includes('/file/'))data=Buffer.from('%PDF-1.4\nMock only\n%%EOF')
+        else if(config.url.endsWith('/templates/20'))data={submitters:[{name:'Member'}],fields:[{type:'signature',required:true}],documents:[{url:'https://docuseal.com/file/original.pdf'}],schema:[]}
         else if(config.url.endsWith('/submissions')&&config.method==='post'){
           const body=JSON.parse(config.data);assert.equal(body.send_email,false);assert.equal(body.send_sms,false)
           assert.equal(body.submitters[0].external_id,'correlation');assert.equal(body.submitters[0].email,'test@example.test')
@@ -104,8 +105,8 @@ async function main(){
         else throw Error('Unexpected outbound request')
         return {data,status:200,statusText:'OK',headers:{},config}
       }
-      await validateTemplate(20,'Member')
-      assert.equal((await createSigning({...version,signerRole:'Member'},{...signature,signerName:'Test'})).id,30)
+      const template=await validateTemplate(20,'Member')
+      assert.equal((await createSigning({...version,signerRole:'Member',providerFingerprint:template.fingerprint},{...signature,signerName:'Test'})).id,30)
       assert.equal((await retrieveSigning({...signature,submissionId:null})).id,10)
       assert.equal(calls.filter(c=>c.method==='post').length,1,'Recovery must not create a duplicate request')
     }finally{

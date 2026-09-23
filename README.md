@@ -75,11 +75,19 @@ Members can view their status, current plan, charges and payments, and waiver re
 
 Staff handle sign-in help and contact requests manually. Invite-based accounts and self-service recovery are planned. Login credentials currently remain associated with member records.
 
-### Waiver foundation
+### Digital and uploaded waivers
 
 Waiver management is a work-in-progress preview with an additional password gate for staff. The foundation includes versioned templates, required and optional documents, signing history, and a view of active members missing required waivers.
 
-Local demo signing supports exploring the workflow. DocuSeal integration code exists, but live signing is disabled in the hosted review and has not been validated with a live provider account. Demo signatures are not legal agreements. Production document retention, signing verification, and the final staff/member experience remain planned work.
+Members can sign through a separately hosted DocuSeal signing page or upload a signed PDF, JPG, or PNG. Staff can attach files or use a phone camera on a member profile. Uploads remain pending until staff checks and accepts them; rejected and superseded files remain available. The active-member compliance list counts the current required version only.
+
+With DocuSeal explicitly configured, Cubit verifies completion server-to-server and saves the signed PDF and signing audit certificate in its private database. Pending submissions are checked every five minutes, with retries if downloading fails. Original templates, file hashes, upload dates, review notes, and audit history are retained. Downloads require authentication and are restricted to staff or the owning member. Files are limited to 10 MB each; member-facing forms accept up to five files per upload batch.
+
+Publishing a DocuSeal version requires the same original PDF used in its template, a single signer role, and a required signature field. Cubit fingerprints the document and fields; editing the published template blocks new signing requests until staff clones it and publishes a new version. Existing requests keep their original submission. The synthetic demo stays disconnected from DocuSeal, and its signatures are not legal agreements.
+
+Self-hosted setup uses the free template builder and submission API, without paid embedding. Set `DOCUSEAL_ENABLED=true`, `DOCUSEAL_API_KEY`, `DOCUSEAL_API_URL`, and `DOCUSEAL_PUBLIC_URL` in the private service environment. Hosted review permits only `http://127.0.0.1:3000/api`; its public signing URL must use HTTPS. Keep SMTP unconfigured, submission email/SMS disabled, and DocuSeal on an internal Docker network behind the HTTPS proxy. Credentials, waiver PDFs, and signed records do not belong in Git.
+
+`deploy/backup-waivers.sh` and its systemd timer back up both Cubit databases, DocuSeal files, a consistent SQLite snapshot, and private configuration nightly. Backups are root-only and retained on the VPS. Before operational use, configure encrypted off-server backups, test a full restore, and agree on retention/access procedures. Same-server backups alone do not protect against losing the VPS.
 
 ## Interface and branding
 
@@ -90,7 +98,7 @@ Cubit uses Melbourne Makerspace blue (`#094fa3`), red (`#ed1c24`), and shades of
 The current hosted review runs on a separate VPS with HTTPS, a Node service, and MySQL bound to loopback. Its application service is restricted to loopback network traffic. It uses its own database and administrator credentials.
 
 - Existing Tonic remains operational and unchanged. No review edits synchronize back to it.
-- PayPal, physical-door integration, and live DocuSeal are disabled in review mode.
+- PayPal and physical-door integration stay disabled in review mode. Self-hosted DocuSeal can be explicitly enabled over loopback; the synthetic demo cannot enable it.
 - Scheduled billing processing is paused for imported-data reviews. Staff can explicitly preview and apply processing to the copied data.
 - Cubit currently sends **no automated emails**. Staff contact members using their own email tools.
 - Review passwords are separate from original credentials. Demo logins do not grant access to imported or hosted review data.
@@ -237,7 +245,7 @@ Add nightly database backups, protected off-server storage, retention rules, and
 
 ### Production digital waivers
 
-Complete the DocuSeal workflow so staff can manage and version documents, members can sign remotely, and authorized staff can retrieve signed documents and signing evidence. Finish provider verification, secure retention, permissions, and compliance reporting before treating signatures as operational records.
+The review includes versioned documents, DocuSeal signing, uploaded paper waivers, staff review, retained files and signing certificates, and compliance reporting. Before operational rollout, approve the final document and signing process, configure off-server backup retention, and verify staff/member account provisioning.
 
 ### Dedicated Cubit hosting
 

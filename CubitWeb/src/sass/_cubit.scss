@@ -295,3 +295,6 @@ select:not([multiple]):not([size]){appearance:none;-webkit-appearance:none;paddi
   .member-sticky .profile-toolbar .button{min-height:40px;padding:7px 10px}
   .member-page [id],.member-page #access-keys{scroll-margin-top:150px}
 }
+
+/* Retained waiver documents and paper-waiver review. */
+.waiver-files{margin-top:20px}.waiver-upload{padding:18px;background:#f5f8fd;border:1px solid var(--line);border-radius:8px;margin-bottom:24px}.waiver-upload p{font-size:13px}.waiver-upload label:not(.file-picker){max-width:520px}.file-picker{position:relative;overflow:hidden;cursor:pointer;flex-direction:row}.file-picker input{position:absolute;inset:0;opacity:0;cursor:pointer}.file-picker:focus-within{outline:3px solid #87b4ed;outline-offset:2px}.waiver-file{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;border-top:1px solid var(--line);padding:16px 0}.waiver-file>div:first-child{flex:1;min-width:160px;overflow-wrap:anywhere}.waiver-file>.actions{margin:0;flex-wrap:wrap}.waiver-file p{margin:8px 0;font-size:13px}.waiver-review{flex-basis:100%;padding:16px;background:#f5f8fd;border-radius:6px}.waiver-file .badge{margin-top:8px}
