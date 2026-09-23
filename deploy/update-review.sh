@@ -27,8 +27,10 @@ runuser -u ubuntu -- bash -c '
   set -euo pipefail
   cd "$1"
   export CI=true NG_CLI_ANALYTICS=false
-  pnpm --dir TonicServices install --frozen-lockfile
-  pnpm --dir CubitWeb install --frozen-lockfile
+  # Copy rather than hardlink dependencies: sealing release ownership must not
+  # change ownership/permissions of the builder's shared pnpm store.
+  pnpm --dir TonicServices install --frozen-lockfile --package-import-method=copy
+  pnpm --dir CubitWeb install --frozen-lockfile --package-import-method=copy
   node dev/build-web.cjs
   pnpm --dir TonicServices build
   cd TonicServices
