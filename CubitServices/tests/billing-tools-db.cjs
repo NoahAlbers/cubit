@@ -20,6 +20,9 @@ async function main(){
  await db.synchronize();await db.manager.save(OperationsSettings,{id:'default',graceDays:60,dailyEnabled:false});
  const members=[];for(const [firstName,role]of [['Staff','admin'],['Existing','member'],['Another','member'],['Future','member']])members.push(await db.manager.save(Member,db.manager.create(Member,{firstName,lastName:'Fixture',email:firstName.toLowerCase()+'@example.test',paypalEmail:firstName.toLowerCase()+'.billing@example.test',role,password:'Not Set'})));
  const [staff,existing,another,future]=members;token=jwtHelper.GenerateJWT(staff);
+ const {StaffNote}=require('../src/entity/cubitOperations'),{upgradeStaffTools}=require('../src/dev/upgrade-staff-tools');
+ await db.manager.save(StaffNote,{memberId:existing.id,text:'Preserved fixture note',author:staff.email,createdAt:new Date('2004-01-01T00:00:00Z')});
+ await upgradeStaffTools(db,true);const legacyCount=await db.manager.count(OperationsAudit);await upgradeStaffTools(db,true);assert.equal(await db.manager.count(OperationsAudit),legacyCount,'History migration is idempotent');
  server=await new Promise(resolve=>{const s=app.listen(0,'127.0.0.1',()=>resolve(s))});base=`http://127.0.0.1:${server.address().port}`;
  for(const path of ['/api/cubit/plan-catalog','/api/cubit/payment-matching','/api/cubit/matching-members?q=existing']){assert.equal((await request(path,null,'GET',null)).status,401);assert.equal((await request(path,null,'GET',jwtHelper.GenerateJWT(existing))).status,403);}
  let p=await ok('/api/cubit/plan-catalog',{id:randomUUID(),name:'Test Standard',monthlyCost:60,available:true});
@@ -67,6 +70,39 @@ async function main(){
  const refund=await add(event({kind:'refund',amount:30,parentResourceId:unknown.resourceId}));await reconcile(refund,{memberId:existing.id});
  const excessive=await add(event({kind:'refund',amount:40,parentResourceId:unknown.resourceId}));assert.equal((await attempt(excessive,{memberId:existing.id})).status,400);
  assert.ok(await db.manager.countBy(OperationsAudit,{kind:'Member created from payment'}));
+
+ // New audit and preference APIs share the same permission boundary as billing.
+ for(const path of ['/api/cubit/audit','/api/cubit/staff/preferences']){assert.equal((await request(path,null,'GET',null)).status,401);assert.equal((await request(path,null,'GET',jwtHelper.GenerateJWT(existing))).status,403);}
+ const beforeNotes=await db.manager.countBy(OperationsAudit,{kind:'Staff note added'});
+ await ok('/api/cubit/members/'+existing.id+'/notes',{text:'New audited staff note'});
+ assert.equal(await db.manager.countBy(OperationsAudit,{kind:'Staff note added'}),beforeNotes+1);
+ const password='audit-secret-never-persist';await ok('/member',{id:existing.id,phone:'555-0109',password},'PUT');
+ const fob=await ok('/key',{id:'New',memberId:existing.id,serialNumber:'TEST-FOB-001',status:'Active'});
+ assert.equal((await request('/key',{id:'New',memberId:another.id,serialNumber:'test-fob-001',status:'Active'})).status,409,'Duplicate fob assignment');
+ assert.equal((await request('/key',{...fob,status:'Inactive',expectedStatus:'Active'})).status,400,'Fob changes require a reason');
+ await ok('/key',{...fob,status:'Inactive',expectedStatus:'Active',reason:'Reported lost'});
+ assert.equal((await request('/key',{...fob,status:'Inactive',expectedStatus:'Active',reason:'Stale request'})).status,409);
+ assert.equal((await request('/key',{...fob,memberId:another.id,expectedStatus:'Inactive',reason:'Try reassignment'})).status,409);
+ await ok('/key/'+fob.id,{reason:'Replaced fob',expectedStatus:'Inactive',expectedSerial:fob.serialNumber},'DELETE');
+ const all=await ok('/api/cubit/audit?memberId='+existing.id+'&pageSize=100&actor=staff');
+ assert.ok(all.rows.some(a=>a.kind==='Fob removed'));assert.ok(all.rows.some(a=>a.kind==='Membership plan assigned'));assert.ok(all.rows.some(a=>a.kind==='Payment recorded'));
+ const keyAudit=all.rows.find(a=>a.kind==='Fob updated');assert.equal(keyAudit.author,staff.email);assert.equal(keyAudit.reason,'Reported lost');assert.deepEqual(keyAudit.changes.find(c=>c.field==='status'),{field:'status',before:'Active',after:'Inactive'});
+ const raw=await db.manager.find(OperationsAudit);assert.ok(!JSON.stringify(raw).includes(password));assert.ok(!JSON.stringify(raw).includes('$2b$'),'Password hashes never audited');
+ assert.ok(raw.filter(a=>a.kind==='Fob assigned').every(a=>JSON.parse(a.detail).actorId===staff.id));
+ const old=await ok('/api/cubit/audit?memberId='+existing.id+'&from=2004-01-01&to=2004-01-01');assert.equal(old.total,1);assert.equal(old.rows[0].legacy,true);
+ assert.equal((await request('/api/cubit/audit?from=2026-02-30')).status,400);
+ const filtered=await ok('/api/cubit/audit?kind='+encodeURIComponent('Fob removed')+'&author='+encodeURIComponent(staff.email));assert.equal(filtered.total,1);
+ await db.manager.insert(OperationsAudit,Array.from({length:25},(_,i)=>({kind:'Pagination fixture',author:staff.email,detail:'Fixture '+i})));
+ const page2=await ok('/api/cubit/audit?kind=Pagination%20fixture&page=2&pageSize=20&sort=action&order=asc');assert.equal(page2.total,25);assert.equal(page2.rows.length,5);assert.equal(page2.page,2);
+ let prefs=await ok('/api/cubit/staff/preferences');assert.equal(prefs.deliveryEnabled,false);assert.equal(prefs.preferences.enabled,false);assert.equal(prefs.preferences.dedupeMinutes,15);
+ const settings={enabled:true,unknownFobs:true,refusedFobs:true,dedupeMinutes:15,revision:0};prefs=await ok('/api/cubit/staff/preferences',settings,'PUT');assert.equal(prefs.deliveryEnabled,false);
+ assert.equal((await request('/api/cubit/staff/preferences',settings,'PUT')).status,409,'Concurrent/stale preference edit');
+ assert.equal((await request('/api/cubit/staff/preferences',{...settings,revision:1,staffId:another.id},'PUT')).status,400,'Cannot edit another staff account');
+ const admin2=await db.manager.save(Member,db.manager.create(Member,{firstName:'Other',lastName:'Staff',email:'staff2@example.test',paypalEmail:'staff2@example.test',role:'admin',password:'Not Set'}));
+ const otherPrefs=await request('/api/cubit/staff/preferences',null,'GET',jwtHelper.GenerateJWT(admin2));assert.equal(otherPrefs.data.preferences.enabled,false,'Preferences isolated per staff member');
+ const preview=await ok('/api/cubit/staff/preferences/preview',{});assert.equal(preview.deliveryEnabled,false);assert.deepEqual(preview.results.map(r=>r.decision),['Would alert','Duplicate suppressed','Would alert','Successful entry \u2014 no email','Would alert']);
+ assert.equal((await request('/api/cubit/audit',{kind:'Forged entry'})).status,404,'Audit has no mutation API');
+ console.log('PASS: retained legacy history, transactional audit attribution/snapshots, payment/plan/fob/note/profile history, password redaction, audit filters/pagination, private preferences, stale edits and no-send alert preview.');
  console.log('PASS: explicit matching, ambiguity, atomic member creation, duplicate/concurrent capture and identity guards, refunds, permissions, catalog changes/retirement/restoration, stale edits and preserved historical/future rates and charges.');
 }
 main().catch(e=>{console.error(e);process.exitCode=1}).finally(async()=>{if(server)await new Promise(resolve=>server.close(resolve));if(db.isInitialized)await db.destroy();});

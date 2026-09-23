@@ -1,3 +1,4 @@
+import { recordAudit } from '../staff/audit'
 import { EntityManager } from 'typeorm'
 import { BillingCharge, ChargeAdjustment } from '../entity/cubitOperations'
 import { lockMember, readBilling, refreshAccess, postCharges } from './store'
@@ -22,6 +23,7 @@ export async function addCharge(manager: EntityManager, memberId: string, input:
   const charge = await manager.save(BillingCharge, manager.create(BillingCharge, {
     memberId, memberPlanId: `manual:${key}`, planName: name, dueDate: input.date, amount: amount / 100, requestKey: key, createdBy: author,
   }))
+  await recordAudit(manager,{memberId,kind:'Charge added',author,entityId:charge.id,after:{amount:charge.amount,dueDate:charge.dueDate,description:charge.planName}})
   await postCharges(manager, memberId)
   await refreshAccess(manager, member, author)
   return charge
@@ -47,6 +49,7 @@ export async function editCharge(manager: EntityManager, chargeId: string, input
   const saved = await manager.save(ChargeAdjustment, manager.create(ChargeAdjustment, {
     memberId: member.id, chargeId, credit: (expected - amount)/100, reason, author, requestKey: key,
   }))
+  await recordAudit(manager,{memberId:member.id,kind:'Charge corrected',author,entityId:chargeId,before:{amount:expected/100},after:{amount:amount/100},reason})
   await refreshAccess(manager, member, author)
   return saved
 }

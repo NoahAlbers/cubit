@@ -1,3 +1,4 @@
+import { recordAudit } from '../../staff/audit'
 import express from 'express'
 import { AppDataSource } from '../../app'
 import { staffOnly } from '../common/staff-auth'
@@ -40,9 +41,10 @@ router.post('/:id/archive',route(async(req:any,res:any)=>{
     const waiver=await manager.findOne(Waiver,{where:{id:req.params.id},lock:{mode:'pessimistic_write'}})
     if(!waiver)fail('Waiver not found.',404)
     if(req.body.revision!==waiver.revision)fail('This waiver changed. Reload before saving.',409)
+    const before={name:waiver.name,archived:waiver.archived}
     waiver.archived=req.body.archived;waiver.revision++
     await manager.save(waiver)
-    await manager.save(OperationsAudit,{kind:waiver.archived?'Waiver archived':'Waiver restored',author:req.member.email,detail:waiver.id})
+    await recordAudit(manager,{kind:waiver.archived?'Waiver archived':'Waiver restored',author:req.member.email,entityId:waiver.id,before,after:{name:waiver.name,archived:waiver.archived}})
     return waiver
   }))
 }))

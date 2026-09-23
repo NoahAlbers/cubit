@@ -14,7 +14,7 @@ import { forkJoin } from 'rxjs';
 
     <label>Reason for change<input [(ngModel)]="opsReason" maxlength="500"></label>
     <button class="secondary" (click)="saveOps()" [disabled]="busy || !opsReason.trim()">Save access</button>
-    <details *ngIf="ops.history.length"><summary>Access and automation history</summary><div class="note-entry" *ngFor="let event of ops.history"><b>{{event.kind}}</b><p>{{event.detail}}</p><small>{{event.author}} · {{event.createdAt | date:'medium'}}</small></div></details>
+    <div class="actions"><a class="button secondary" routerLink="/audit" [queryParams]="{memberId:memberId,actor:'all'}">View account audit log</a></div>
   </section>
 </div><p class="error" role="alert" *ngIf="error">{{error}}</p><p class="success-message" role="status" *ngIf="message">{{message}}</p>
 `})

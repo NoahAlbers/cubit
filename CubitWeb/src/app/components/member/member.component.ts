@@ -294,50 +294,17 @@ export class MemberComponent implements OnInit, OnDestroy {
   }
 
   setKeyStatus(key: Key) {
-    if (key.status == 'Active') {
-      key.status = 'Inactive';
-    } else {
-      key.status = 'Active';
-    }
-
-    this.keyService.saveKey(key).then(() => {
-      this.snackBar.open(`Key set to ${key.status}`, null, {
-        duration: 1500,
-      });
+    const status=key.status==='Active'?'Inactive':'Active';
+    this.dialog.open(AlertDialogComponent,{data:{header:status==='Active'?'Enable fob':'Disable fob',OkCancel:true,requireReason:true,message:`Set fob ${key.serialNumber} to ${status.toLowerCase()}?`}}).afterClosed().subscribe(result=>{
+      if(!result?.reason)return;
+      this.keyService.saveKey({...key,status},result.reason,key.status).then(()=>{this.loadKeys();this.snackBar.open(`Fob ${status.toLowerCase()}`,null,{duration:2000});}).catch(err=>this.snackBar.open(err.error?.message||'Could not update fob.',null,{duration:5000}));
     });
   }
-
   deleteKey(key: Key) {
-    const messageText = 'Are you sure you want to delete this key?';
-
-    this.dialog
-      .open(AlertDialogComponent, {
-        disableClose: true,
-        data: {
-          OkCancel: true,
-          message: messageText,
-        },
-      })
-      .afterClosed()
-      .subscribe((result) => {
-        if (result === 'ok') {
-          const keyToUpdate = key;
-          this.keyService.deleteKey(keyToUpdate).then(
-            () => {
-              this.loadKeys();
-              this.snackBar.open('key deleted', null, {
-                duration: 1500,
-              });
-            },
-            (err) => {
-              this.snackBar.open('error deleting key, check console.', null, {
-                duration: 1500,
-              });
-              console.error(err);
-            }
-          );
-        }
-      });
+    this.dialog.open(AlertDialogComponent,{data:{header:'Remove fob',OkCancel:true,requireReason:true,message:`Remove fob ${key.serialNumber} from this account? Its change history will remain in the audit log.`}}).afterClosed().subscribe(result=>{
+      if(!result?.reason)return;
+      this.keyService.deleteKey(key,result.reason).then(()=>{this.loadKeys();this.snackBar.open('Fob removed',null,{duration:2000});}).catch(err=>this.snackBar.open(err.error?.message||'Could not remove fob.',null,{duration:5000}));
+    });
   }
 
   addEditTransaction(id) {

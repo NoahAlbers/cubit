@@ -11,6 +11,7 @@
       <a [routerLink]="navigation.target('/automation')" [queryParams]="navigation.query('/automation')" [class.selected]="billingSection" [attr.aria-current]="billingSection ? 'page' : null"><img class="nav-icon" src="assets/icons/settings.svg" alt=""> Billing & automation</a>
       <a [routerLink]="navigation.target('/reports')" [queryParams]="navigation.query('/reports')" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/reports.svg" alt=""> Reports</a>
       <a [routerLink]="navigation.target('/waivers')" [queryParams]="navigation.query('/waivers')" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/waiver.svg" alt=""> Waivers</a>
+      <a routerLink="/audit" [queryParams]="navigation.query('/audit')" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/audit.svg" alt=""> Audit log</a>
       <a routerLink="/portal"><img class="nav-icon" src="assets/icons/members.svg" alt=""> My portal</a>
     </nav>
     <nav id="main-navigation" aria-label="Member navigation" *ngIf="portalView">
@@ -23,7 +24,7 @@
     <div class="sidebar-bottom" *ngIf="workspaceLabel"><span class="environment-label"><span class="demo-dot"></span>{{workspaceLabel}}</span></div>
   </aside>
   <div class="workspace-body">
-    <header class="topbar" *ngIf="isAuthenticated"><span>Melbourne Makerspace <span class="muted">/ {{sectionName}}</span></span><div class="account-controls"><div class="account-identity"><span>{{auth.accountLabel}}</span><small>{{auth.isDemo?'Demo administrator':auth.isAdmin?'Staff administrator':'Member'}}</small></div><button class="secondary" (click)="logout()">Sign out</button></div></header>
+    <header class="topbar" *ngIf="isAuthenticated"><span>Melbourne Makerspace <span class="muted">/ {{sectionName}}</span></span><div class="account-controls"><div class="account-identity"><span>{{auth.accountLabel}}</span><small>{{auth.isDemo?'Demo administrator':auth.isAdmin?'Staff administrator':'Member'}}</small></div><a class="button secondary" *ngIf="auth.isAdmin" routerLink="/staff/settings">Notification settings</a><button class="secondary" (click)="logout()">Sign out</button></div></header>
     <div class="synthetic-demo-banner" *ngIf="isAuthenticated && auth.isDemo"><strong>Synthetic demo</strong> Fictional members, payments and visits. Changes affect the shared demo only; use fictional details.</div><main id="main" tabindex="-1"><router-outlet></router-outlet></main>
   </div>
 </div>

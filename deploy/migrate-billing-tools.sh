@@ -13,4 +13,11 @@ for schema in cubit_review cubit_demo; do
   if [[ $(mysql -N -B -e "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$schema' AND TABLE_NAME='plan' AND COLUMN_NAME='revision'") == 0 ]]; then
     mysql "$schema" -e 'ALTER TABLE plan ADD COLUMN revision int NOT NULL DEFAULT 1'
   fi
+  mysql "$schema" < "$(dirname "$0")/../CubitServices/src/dev/staff-tools.sql"
+  for definition in 'idx_audit_time:createdAt,id' 'idx_audit_member_time:memberId,createdAt' 'idx_audit_author:author'; do
+    name=${definition%%:*}; columns=${definition#*:}
+    if [[ $(mysql -N -B -e "SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA='$schema' AND TABLE_NAME='operations_audit' AND INDEX_NAME='$name'") == 0 ]]; then
+      mysql "$schema" -e "CREATE INDEX $name ON operations_audit ($columns)"
+    fi
+  done
 done

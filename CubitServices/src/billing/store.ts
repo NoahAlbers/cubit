@@ -1,3 +1,4 @@
+import { recordAudit } from '../staff/audit'
 import { EntityManager } from 'typeorm'
 import { AppDataSource } from '../app'
 import { Member } from '../entity/member'
@@ -50,9 +51,7 @@ export async function refreshAccess(manager: EntityManager, member: Member, auth
   const state = await readBilling(manager, member.id)
   const settings = await manager.findOneByOrFail(OperationsSettings, { id: 'default' })
   const decision = accessDecision(member, state.plans, state.ledger, settings.graceDays)
-  if (member.billingSuspended !== decision.suspended) await manager.save(OperationsAudit, manager.create(OperationsAudit, {
-    memberId: member.id, kind: decision.suspended ? 'Billing access suspended' : 'Billing access restored', author, detail: decision.reason,
-  }))
+  if (member.billingSuspended !== decision.suspended) await recordAudit(manager,{memberId:member.id,kind:decision.suspended?'Billing access suspended':'Billing access restored',author,actorType:'system',before:{billingSuspended:member.billingSuspended},after:{billingSuspended:decision.suspended},reason:decision.reason})
   await manager.update(Member, member.id, { status: decision.status, balance: state.ledger.balance,
     billingSuspended: decision.suspended, statusReason: decision.reason })
   return { ...state, ...decision }

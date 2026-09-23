@@ -1,3 +1,5 @@
+import { AuditLogComponent } from './components/audit-log/audit-log.component';
+import { StaffSettingsComponent } from './components/staff-settings/staff-settings.component';
 import { BrowserModule } from '@angular/platform-browser';
 import { DraftDialogComponent, DraftExitDirective } from './services/draft-guard';
 import { FieldFeedbackDirective } from './services/field-feedback.directive';
@@ -54,7 +56,7 @@ import { AccessLogService } from './services/access-log.service';
     declarations: [
         DraftDialogComponent, DraftExitDirective, FieldFeedbackDirective, MemberIconDirective, ArrowComponent, InfoComponent, WaiverLockComponent,
         DirectoryComponent,
-        PaymentMatchingComponent, PlanCatalogComponent,
+        PaymentMatchingComponent, PlanCatalogComponent, AuditLogComponent, StaffSettingsComponent,
         StaffToolsComponent, EditChargeComponent, ReportsComponent, AutomationComponent, PortalComponent, WaiversComponent, MemberWaiversComponent,
         AppComponent,
         LoginComponent,

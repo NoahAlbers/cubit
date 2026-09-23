@@ -1,3 +1,4 @@
+import { recordAudit, snapshot, paymentFields } from '../staff/audit'
 import { EntityManager } from 'typeorm'
 import { Transaction } from '../entity/transaction'
 import { validDay, day } from './ledger'
@@ -46,6 +47,8 @@ export async function recordPayment(manager: EntityManager, data: any, author: s
       correctionReason: data.correctionReason.trim() }))
     await manager.update(Transaction, original.id, { correctedBy: payment.id })
   }
+  await recordAudit(manager,{memberId:member.id,kind:original?'Payment corrected':amount<0?'Refund recorded':'Payment recorded',author,entityId:payment.id,
+    before:snapshot(original,paymentFields),after:snapshot(payment,paymentFields),reason:payment.correctionReason||''})
   await postCharges(manager, member.id)
   await refreshAccess(manager, member, author)
   return payment

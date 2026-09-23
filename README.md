@@ -49,6 +49,15 @@ The access log supports date ranges beyond the last 30 days, search, result filt
 
 The hosted review displays copied records. It does not receive live door events, update a controller, or change physical access.
 
+### Staff audit history and notification preferences
+
+- The sidebar **Audit log** shows recorded changes across the workspace. Each member profile has an **Audit log** button filtered to that account. Both views support date ranges, staff/action/search filters, sortable columns, and pagination with retained navigation state.
+- Payment recordings/corrections, assigned plans and final billing dates, manual charges/corrections, fob assignments/status/removal, profile changes, notes, catalog/settings changes, waiver administration, processing, and report exports are recorded. Change records keep the acting staff identity, time, selected before/after values, and reasons where applicable. Password changes record the action only, never the password or hash.
+- Account mutations and their audit records commit together. Fob status changes/removal require a reason and reject stale edits. There is no audit editing or deletion API. Direct database/operator changes are outside application auditing.
+- Existing billing and note history is preserved once during migration. Preserved rows are identified, and missing historical values are not invented. Staff actions are the default; system/member activity can also be included. Date filters and displayed audit times use UTC.
+- **Notification settings** in the top right stores preferences for the signed-in staff member only. Unknown and refused fobs are separate choices, with a configurable duplicate window (15 minutes by default). Everything is opted out initially; successful entries never qualify.
+- The fictional-scan preview demonstrates filtering and duplicate suppression. **There is no email transport, delivery worker, live-event subscription, or email queue in this release.** Preferences do not enable sending in local, review, or demo environments. A live rollout still needs authenticated door ingestion, durable suppression across workers/restarts, an explicitly enabled mail transport, and delivery/retry tests. Historical scans must not be replayed as alerts.
+
 ### Reports
 
 - Current membership status and summary figures.
@@ -192,7 +201,7 @@ After committing and pushing an approved update, the configured operator runs:
 
 The helper fetches GitHub using the operator PC's credentials, sends a source-only Git bundle over SSH, and invokes the VPS updater. GitHub credentials remain on the PC. A push alone does not deploy. Review the configured target before using this environment-specific helper.
 
-The updater builds a new release, runs checks, backs up both installed workspace databases, applies the additive billing-tools column migration, activates the code and matching service definitions, and checks `/health`. Failure restores the previous release and service definitions; added columns remain compatible with the prior release. It does not import data or change account credentials. App database users retain their restricted permissions; the deployment operator runs migrations. Old development notes are preserved privately rather than published as current instructions.
+The updater builds a new release, runs checks, backs up both installed workspace databases, applies the additive billing/staff-tools migration and preserves existing audit history, activates the code and matching service definitions, and checks `/health`. Failure restores the previous release and service definitions; added columns remain compatible with the prior release. It does not import data or change account credentials. App database users retain their restricted permissions; the deployment operator runs migrations. Old development notes are preserved privately rather than published as current instructions.
 
 ## Planned development
 
@@ -210,10 +219,6 @@ Connect verified PayPal events to the existing offline matching queue after prov
 
 Catalog administration is available. A future workflow may help staff schedule an existing member's transition to a new plan or rate, with an explicit effective date and change history. Editing a catalog price will never perform that transition implicitly.
 
-### Complete staff change history
-
-Extend existing billing and staff-note history into a consistent record of payment, membership-plan, and fob changes. Show who made each change, when it happened, the previous and new values, and the reason where appropriate.
-
 ### Member photo uploads
 
 Restore a usable photo-upload workflow with image validation, appropriate storage, and staff/member permissions. Retain identicons when a member has no photo.
@@ -224,7 +229,7 @@ Clearly surface scans from unknown fobs and let authorized staff assign a new fo
 
 ### Focused access-alert emails
 
-Add configurable email alerts for unknown or refused fobs, with duplicate suppression to avoid repeated messages. Successful entries should not generate email. This is a future, explicitly enabled feature; the current software sends no automatic emails.
+Staff preferences and the no-send preview are available. Connect them to verified live access events and an explicitly enabled email transport, with durable per-recipient duplicate suppression, failure recovery, and delivery tests before launch. Successful entries must never generate email. The current software still sends no automatic emails.
 
 ### Nightly backups and operational HTTPS
 

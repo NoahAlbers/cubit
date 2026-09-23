@@ -235,3 +235,5 @@ select:not([multiple]):not([size]){appearance:none;-webkit-appearance:none;paddi
   details { margin: 16px 0; }
   td { overflow-wrap: anywhere; }
 }
+
+.audit-details{background:#f4f7fb;white-space:normal!important}.audit-details td{white-space:pre-wrap;overflow-wrap:anywhere;max-width:420px}.audit-details pre{white-space:pre-wrap;overflow-wrap:anywhere}.staff-settings-page>section{max-width:900px}.staff-settings-page input[type=number]{max-width:160px}.audit-page .filter-row select{max-width:250px}.account-controls{flex-wrap:wrap}.audit-page .filter-row{align-items:end}

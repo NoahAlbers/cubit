@@ -1,3 +1,4 @@
+import { recordAudit } from '../../staff/audit'
 import express from 'express'
 import { AppDataSource } from '../../app'
 import { Member } from '../../entity/member'
@@ -70,6 +71,8 @@ router.post('/plans/:id/cutoff', async (req, res, next) => {
         await postCharges(manager, plan.memberId)
         await manager.save(BillingChange, manager.create(BillingChange, { memberId: plan.memberId,
           memberPlanId: plan.id, previousDate, finalBillingDate, reason: reason.trim(), changedBy: req.member!.email }))
+        await recordAudit(manager,{memberId:plan.memberId,kind:'Final billing date changed',author:req.member!.email,entityId:plan.id,
+          before:{finalBillingDate:previousDate},after:{finalBillingDate},reason:reason.trim()})
         await refreshAccess(manager, member, req.member!.email)
       }
       return { before, after, previousDate, finalBillingDate, saved: preview !== true }

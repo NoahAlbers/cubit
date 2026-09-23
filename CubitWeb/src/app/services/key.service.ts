@@ -22,14 +22,13 @@ export class KeyService {
     );
   }
 
-  saveKey(key: Key): Promise<any> {
-    console.log('saving key to web service', key);
-    return this.http.post(environment.apiUrl + 'key', key).toPromise();
+  saveKey(key: Key, reason?:string, expectedStatus?:string): Promise<any> {
+    return this.http.post(environment.apiUrl + 'key', {...key,reason,expectedStatus}).toPromise();
   }
 
-  deleteKey(key: Key): Promise<any> {
+  deleteKey(key: Key, reason:string): Promise<any> {
     return this.http
-      .delete(environment.apiUrl + `key/${key.id}`)
+      .delete(environment.apiUrl + `key/${key.id}`,{body:{reason,expectedStatus:key.status,expectedSerial:key.serialNumber}})
       .toPromise();
   }
 }

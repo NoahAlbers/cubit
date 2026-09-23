@@ -1,3 +1,5 @@
+import { AuditLogComponent } from './components/audit-log/audit-log.component';
+import { StaffSettingsComponent } from './components/staff-settings/staff-settings.component';
 import { NgModule } from '@angular/core';
 import { DraftGuard } from './services/draft-guard';
 import { CommonModule } from '@angular/common';
@@ -23,6 +25,8 @@ const routes: Routes = [
   { path: 'reports', component: ReportsComponent, canActivate: [AuthService] },
   { path: 'automation', component: AutomationComponent, canActivate: [AuthService] },
   { path: 'payments', component: PaymentMatchingComponent, canActivate: [AuthService], canDeactivate:[DraftGuard] },
+  { path: 'audit', component: AuditLogComponent, canActivate: [AuthService] },
+  { path: 'staff/settings', component: StaffSettingsComponent, canActivate: [AuthService], canDeactivate:[DraftGuard] },
   { path: 'plans', component: PlanCatalogComponent, canActivate: [AuthService], canDeactivate:[DraftGuard] },
   { path: 'waivers', component: WaiversComponent, canActivate: [AuthService], canDeactivate:[DraftGuard] },
   { path: 'portal', component: PortalComponent, canActivate: [AuthService], canDeactivate:[DraftGuard], data: { portal: true,section:'overview' } },

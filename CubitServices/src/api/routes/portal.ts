@@ -1,3 +1,4 @@
+import { recordAudit, snapshot } from '../../staff/audit'
 import express from 'express'
 import { AppDataSource } from '../../app'
 import { signedIn } from '../common/member-auth'
@@ -53,7 +54,7 @@ router.put('/profile',route(async(req:any,res:any)=>{
     const member=await lockMember(manager,req.member.id)
     if(await manager.createQueryBuilder(Member,'m').where('LOWER(m.email) = :email AND m.id != :id',{email:values.email,id:member.id}).getCount())fail('That email is already in use.',409)
     await manager.update(Member,member.id,values)
-    await manager.save(OperationsAudit,{memberId:member.id,kind:'Member updated contact details',author:member.email,detail:JSON.stringify({fields:profileFields.filter(k=>values[k]!==member[k])})})
+    await recordAudit(manager,{memberId:member.id,kind:'Member updated contact details',author:member.email,actorType:'member',entityId:member.id,before:snapshot(member,[...profileFields]),after:values})
   })
   res.json({profile:values})
 }))

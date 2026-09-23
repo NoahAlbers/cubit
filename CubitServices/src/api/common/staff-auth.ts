@@ -1,3 +1,4 @@
+import { auditActor } from '../../staff/audit'
 import { Request, Response, NextFunction } from 'express'
 import { AppDataSource } from '../../app'
 import { Member, ROLES } from '../../entity/member'
@@ -13,7 +14,7 @@ export async function staffOnly(req: Request, res: Response, next: NextFunction)
     if (!member) return res.status(401).json({ message: 'Please sign in.' })
     if (member.role !== ROLES.ADMIN) return res.status(403).json({ message: 'Staff access is required.' })
     req.member = member
-    next()
+    auditActor.run({id:member.id,email:member.email},()=>next())
   } catch {
     return res.status(401).json({ message: 'Your session has expired. Please sign in again.' })
   }

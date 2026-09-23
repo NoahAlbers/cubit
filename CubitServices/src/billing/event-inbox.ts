@@ -1,3 +1,4 @@
+import { recordAudit, snapshot, profileFields } from '../staff/audit'
 import { createHash } from 'crypto'
 import { AppDataSource } from '../app'
 import { MemberPlan } from '../entity/memberPlan'
@@ -23,10 +24,12 @@ export async function receiveSimulation(body: any, author: string) {
   const previous = await AppDataSource.manager.findOneBy(PaymentEvent, { id: input.id })
   if (previous) { if (previous.payloadHash !== hash) fail('Event ID already exists with different contents.', 409); return previous }
   try {
-    const saved = await AppDataSource.manager.save(PaymentEvent, AppDataSource.manager.create(PaymentEvent, {
+    return await AppDataSource.transaction(async manager=>{
+    const saved = await manager.save(PaymentEvent, manager.create(PaymentEvent, {
       ...input, payerEmail,payerName,payloadHash: hash, detail: 'Offline test event. Staff must choose a member before recording it.', status: 'Unmatched' }))
-    await AppDataSource.manager.save(OperationsAudit, { kind: 'Test event received', author, detail: saved.id })
+    await recordAudit(manager,{kind:'Test event received',author,entityId:saved.id,after:{kind:saved.kind,resourceId:saved.resourceId,payerEmail:saved.payerEmail,amount:saved.amount,eventDate:saved.eventDate}})
     return saved
+    })
   } catch (err: any) {
     if (err.code === 'ER_DUP_ENTRY') { const row = await AppDataSource.manager.findOneByOrFail(PaymentEvent, { id: input.id }); if (row.payloadHash !== hash) fail('Event ID conflict.', 409); return row }
     throw err
@@ -73,11 +76,12 @@ export async function processEvent(id: string, memberId: string | undefined, aut
       const member=await manager.save(Member,manager.create(Member,{...newValues,paypalEmail:event.payerEmail||newValues.email,
         password:'Not Set',role:ROLES.MEMBER,status:'Inactive',statusReason:'No membership plan assigned',balance:0}))
       selected=member.id
-      await manager.save(OperationsAudit,{memberId:selected,kind:'Member created from payment',author,detail:JSON.stringify({eventId:event.id,payerEmail:event.payerEmail})})
+      await recordAudit(manager,{memberId:selected,kind:'Member created from payment',author,entityId:member.id,after:snapshot(member,profileFields),reason:'Explicitly created while matching offline event '+event.id})
     }
     if (!selected || !await manager.findOneBy(Member, { id: selected })) {
       fail('Choose an existing member or explicitly create a member before recording this event.')
     }
+    const beforeEvent={memberId:event.memberId,status:event.status}
     event.memberId = selected
     if (event.kind === 'cancellation') {
       const memberPlans = await manager.find(MemberPlan, { where: { memberId: selected }, order: { startDate: 'DESC' } })
@@ -100,7 +104,7 @@ export async function processEvent(id: string, memberId: string | undefined, aut
         requestKey: `paypal:${event.kind}:${event.resourceId}`, confirmation: event.resourceId }, author)
       event.status = 'Processed'; event.detail = 'Recorded once; member balance and access recalculated.'
     }
-    await manager.save(OperationsAudit, { memberId: selected, kind: 'Event reconciliation', author, detail: `${event.id}: ${event.status}` })
+    await recordAudit(manager,{memberId:selected,kind:'Event reconciliation',author,entityId:event.id,before:beforeEvent,after:{memberId:selected,status:event.status},reason:event.detail})
     return manager.save(event)
   })
 }

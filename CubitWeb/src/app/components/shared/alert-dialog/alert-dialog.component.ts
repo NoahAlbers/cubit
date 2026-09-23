@@ -8,6 +8,7 @@ import { MatLegacyDialogRef as MatDialogRef, MAT_LEGACY_DIALOG_DATA as MAT_DIALO
 })
 export class AlertDialogComponent implements OnInit {
   message;
+  reason='';
   OkCancel = false;
   header = "";
   constructor(
@@ -27,7 +28,8 @@ export class AlertDialogComponent implements OnInit {
   }
 
   ok() {
-    this.dialogRef.close("ok");
+    if(this.data.requireReason&&!this.reason.trim())return;
+    this.dialogRef.close(this.data.requireReason?{reason:this.reason.trim()}:"ok");
   }
 
   close() {

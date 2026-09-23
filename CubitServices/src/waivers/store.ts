@@ -1,3 +1,4 @@
+import { recordAudit } from '../staff/audit'
 import { AppDataSource } from '../app'
 import { Waiver, WaiverVersion, WaiverSignature } from '../entity/waiver'
 import { Member } from '../entity/member'
@@ -43,13 +44,14 @@ export async function publishWaiver(id: string|undefined, input: any, author: st
     if(!waiver)fail('Waiver not found.',404)
     if(id && input.revision!==waiver.revision)fail('This waiver changed. Reload before publishing.',409)
     if(waiver.archived)fail('Restore the waiver before publishing a new version.',409)
+    const before=id?{name:waiver.name,required:waiver.required,currentVersionId:waiver.currentVersionId}:null
     if(!id)await manager.save(waiver)
     const number=await manager.countBy(WaiverVersion,{waiverId:waiver.id})+1
     const version=await manager.save(WaiverVersion,manager.create(WaiverVersion,{waiverId:waiver.id,number,name,description,demoText,
       provider:input.provider,docusealTemplateId:input.provider==='docuseal'?input.docusealTemplateId:null,signerRole,author}))
     waiver.name=name;waiver.required=input.required;waiver.currentVersionId=version.id;waiver.revision++
     await manager.save(waiver)
-    await manager.save(OperationsAudit,{kind:'Waiver published',author,detail:JSON.stringify({waiverId:waiver.id,version:number,required:waiver.required})})
+    await recordAudit(manager,{kind:'Waiver published',author,entityId:waiver.id,before,after:{name:waiver.name,required:waiver.required,currentVersionId:waiver.currentVersionId},reason:'Published version '+number})
     return { ...waiver, version }
   })
 }
@@ -94,7 +96,7 @@ export async function completeDemo(memberId: string,id: string,input: any) {
     if(!waiver || waiver.archived || waiver.currentVersionId!==signature.versionId)fail('This waiver was updated. Reload before signing.',409)
     signature.signerName=name;signature.status='Signed';signature.completedAt=new Date()
     await manager.save(signature)
-    await manager.save(OperationsAudit,{memberId,kind:'Demo waiver signed',author:signature.signerEmail,detail:JSON.stringify({signatureId:id,versionId:signature.versionId})})
+    await recordAudit(manager,{memberId,kind:'Demo waiver signed',author:signature.signerEmail,actorType:'member',entityId:id,after:{versionId:signature.versionId,status:signature.status},reason:'Demonstration only'})
     return publicSignature(signature)
   })
 }

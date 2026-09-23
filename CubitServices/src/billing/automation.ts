@@ -1,3 +1,4 @@
+import { recordAudit } from '../staff/audit'
 import { randomUUID } from 'crypto'
 import { EntityManager } from 'typeorm'
 import { AppDataSource } from '../app'
@@ -35,7 +36,7 @@ export async function runAutomation(preview: boolean, trigger: string, daily = f
       const prior = await manager.findOneBy(AutomationRun, { id })
       if (daily && (!settings.dailyEnabled || prior?.status === 'Completed')) return { skipped: true }
       const summary = await automationPlan(manager, settings, !preview)
-      if (!preview) await manager.save(AutomationRun, manager.create(AutomationRun, { id, status: 'Completed', trigger, summary: JSON.stringify(summary) }))
+      if (!preview) {await manager.save(AutomationRun, manager.create(AutomationRun, { id, status: 'Completed', trigger, summary: JSON.stringify(summary) }));await recordAudit(manager,{kind:'Billing processing completed',author:trigger,entityId:id,after:{newCharges:summary.newCharges,accessChanges:summary.accessChanges.length},actorType:daily?'system':'staff'})}
       return summary
     })
   } catch (err: any) {

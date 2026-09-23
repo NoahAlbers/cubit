@@ -1,3 +1,4 @@
+import { recordAudit } from '../../staff/audit'
 import express from 'express'
 import { AppDataSource } from '../../app'
 import { staffOnly } from '../common/staff-auth'
@@ -22,7 +23,9 @@ router.post('/members/:id/notes', route(async (req: any,res: any) => {
   const text = reasonText(req.body.text,4000)
   res.status(201).json(await AppDataSource.transaction(async manager => {
     await lockMember(manager,req.params.id)
-    return manager.save(StaffNote,manager.create(StaffNote,{memberId:req.params.id,text,author:req.member.email}))
+    const note=await manager.save(StaffNote,manager.create(StaffNote,{memberId:req.params.id,text,author:req.member.email}))
+    await recordAudit(manager,{memberId:req.params.id,kind:'Staff note added',author:req.member.email,entityId:note.id,after:{text}})
+    return note
   }))
 }))
 router.get('/members/:id/operations', route(async (req: any,res: any) => {
@@ -36,11 +39,12 @@ router.post('/members/:id/operations', route(async(req:any,res:any)=>{
   if(typeof req.body.accessHold!=='boolean'||Object.keys(req.body).some(k=>!['accessHold','reason'].includes(k))) fail('Invalid access settings.')
   await AppDataSource.transaction(async manager=>{
     const member=await lockMember(manager,req.params.id)
+    const before={accessHold:member.accessHold,accessHoldReason:member.accessHoldReason}
     member.accessHold=req.body.accessHold; member.accessHoldReason=member.accessHold?reason:''
     await manager.save(member)
     await postCharges(manager,member.id); await refreshAccess(manager,member,req.member.email)
-    await manager.save(OperationsAudit,{memberId:member.id,author:req.member.email,kind:'Staff access change',
-      detail:`Access ${member.accessHold ? 'blocked by staff' : 'uses billing eligibility'}. ${reason}`})
+    await recordAudit(manager,{memberId:member.id,author:req.member.email,kind:'Staff access change',before,
+      after:{accessHold:member.accessHold,accessHoldReason:member.accessHoldReason},reason})
   })
   res.json({saved:true})
 }))
@@ -56,6 +60,8 @@ router.post('/charges/:id/adjustments', route(async(req:any,res:any)=>{
     const charge=state.ledger.charges.find(c=>c.id===lookup.id)
     if(!charge||Math.round(credit*100)>Math.round(charge.amount*100)) fail('Credit exceeds the remaining charge amount.')
     const saved=await manager.save(ChargeAdjustment,manager.create(ChargeAdjustment,{memberId:member.id,chargeId:lookup.id,credit,reason,author:req.member.email,requestKey:key}))
+    await recordAudit(manager,{memberId:member.id,kind:'Charge credit applied',author:req.member.email,entityId:lookup.id,
+      before:{amount:charge.amount},after:{amount:charge.amount-credit},reason})
     await refreshAccess(manager,member,req.member.email)
     return saved
   })
@@ -91,7 +97,7 @@ router.post('/automation/settings',route(async(req:any,res:any)=>{
     for(const k of ['graceDays','dailyEnabled']) (settings as any)[k]=b[k]
     settings.version++
     await manager.save(settings)
-    await manager.save(OperationsAudit,{kind:'Automation settings changed',author:req.member.email,detail:JSON.stringify({before,after:settings})})
+    await recordAudit(manager,{kind:'Automation settings changed',author:req.member.email,before:{graceDays:before.graceDays,dailyEnabled:before.dailyEnabled},after:{graceDays:settings.graceDays,dailyEnabled:settings.dailyEnabled}})
     return settings
   })
   res.json(saved)
@@ -117,7 +123,7 @@ router.get('/reports/:type.csv',route(async(req:any,res:any)=>{
   if(!['roster','transactions','overdue','checkins'].includes(req.params.type))fail('Report not available.',404)
   const data=await reportData(req.query)
   const contents=exportReport(req.params.type,data)
-  await AppDataSource.manager.save(OperationsAudit,{kind:'Report exported',author:req.member.email,detail:JSON.stringify({report:req.params.type,from:data.from,to:data.to})})
+  await recordAudit(AppDataSource.manager,{kind:'Report exported',author:req.member.email,after:{report:req.params.type,from:data.from,to:data.to}})
   res.setHeader('Content-Type','text/csv; charset=utf-8')
   res.setHeader('Content-Disposition',`attachment; filename="cubit-${req.params.type}-${data.asOf}.csv"`)
   res.send(contents)

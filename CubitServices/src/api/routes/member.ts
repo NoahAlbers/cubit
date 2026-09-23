@@ -1,3 +1,4 @@
+import { recordAudit, snapshot, profileFields } from '../../staff/audit'
 import { AppDataSource } from './../../app'
 import express from 'express'
 import { Member, ROLES } from '../../entity/member'
@@ -55,7 +56,11 @@ router.put('/', async (req, res, next) => {
     const before=await manager.findOneByOrFail(Member,{id:postedMemberData.id})
     if(typeof postedMemberData.email==='string'&&postedMemberData.email.trim().toLowerCase()!==before.email.trim().toLowerCase())
       await rejectDuplicateContact(manager,postedMemberData.email,postedMemberData.id)
-    return manager.save(Member,postedMemberData)
+    const saved=await manager.save(Member,postedMemberData)
+    const after={...before,...saved}, oldValues=snapshot(before,profileFields),newValues=snapshot(after,profileFields)
+    if(JSON.stringify(oldValues)!==JSON.stringify(newValues))await recordAudit(manager,{memberId:before.id,kind:'Member details updated',author:req.member!.email,entityId:before.id,before:oldValues,after:newValues})
+    if(postedMemberData.password)await recordAudit(manager,{memberId:before.id,kind:'Member password changed',author:req.member!.email,entityId:before.id,after:{passwordChanged:true}})
+    return saved
   })
     .then((member: Member) => {
       //remove the password field from the payload
@@ -99,7 +104,9 @@ router.post('/', async (req, res, next) => {
   AppDataSource.transaction(async manager=>{
     await lockIdentities(manager)
     await rejectDuplicateContact(manager,member.email)
-    return manager.insert(Member,member)
+    const result=await manager.insert(Member,member)
+    await recordAudit(manager,{memberId:member.id,kind:'Member created',author:req.member!.email,entityId:member.id,after:snapshot(member,profileFields)})
+    return result
   })
     .then((result) => {
       //remove the password field from the payload

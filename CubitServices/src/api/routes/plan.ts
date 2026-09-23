@@ -1,3 +1,4 @@
+import { recordAudit, snapshot, planFields } from '../../staff/audit'
 import { paypalTransactions } from './../../entity/PaypalTransaction'
 import { AppDataSource } from './../../app'
 import express from 'express'
@@ -65,6 +66,7 @@ router.post('/memberplan', async (req, res, next) => {
 
   const memberPlan = await manager.save(MemberPlan, manager.create(MemberPlan, { ...postedMemberPlan,
     startDate: new Date(`${start}T12:00:00`), billingRate: Number(catalog.monthlyCost), billingName: catalog.name }))
+  await recordAudit(manager,{memberId:member.id,kind:'Membership plan assigned',author:req.member!.email,entityId:memberPlan.id,after:snapshot(memberPlan,planFields)})
   await postCharges(manager, member.id)
   await refreshAccess(manager, member, req.member!.email)
   return memberPlan

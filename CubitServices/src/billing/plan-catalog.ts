@@ -1,3 +1,4 @@
+import { recordAudit } from '../staff/audit'
 import { EntityManager } from 'typeorm'
 import { AppDataSource } from '../app'
 import { Plan } from '../entity/plan'
@@ -27,7 +28,7 @@ export async function saveCatalogPlan(id:string,body:any,author:string,create=fa
         fail('This plan has already been created with different details.',409)
       }
       const saved=await manager.save(Plan,manager.create(Plan,{id,...values,revision:1}))
-      await manager.save(OperationsAudit,{kind:'Plan created',author,detail:JSON.stringify({planId:id,after:values})})
+      await recordAudit(manager,{kind:'Plan created',author,entityId:id,after:values})
       return saved
     }
     if(!plan)fail('Plan not found.',404)
@@ -38,8 +39,7 @@ export async function saveCatalogPlan(id:string,body:any,author:string,create=fa
     await freezeAssignments(manager,plan)
     Object.assign(plan,values,{revision:plan.revision+1})
     await manager.save(plan)
-    await manager.save(OperationsAudit,{kind:before.available&&!values.available?'Plan retired':!before.available&&values.available?'Plan restored':'Plan updated',author,
-      detail:JSON.stringify({planId:id,before,after:values})})
+    await recordAudit(manager,{kind:before.available&&!values.available?'Plan retired':!before.available&&values.available?'Plan restored':'Plan updated',author,entityId:id,before,after:values})
     return plan
   })
 }

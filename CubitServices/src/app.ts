@@ -66,7 +66,7 @@ if (localConfig.runtimeMode !== 'local') {
 }
 
 // Browser navigation serves the Angular shell; JSON calls keep the legacy API URLs.
-app.get(['/', '/memberlist', '/overdue', '/member/:memberId', '/accessLog', '/reports', '/automation', '/payments', '/plans', '/waivers', '/portal', '/portal/:section', '/app-login'], (req, res, next) => {
+app.get(['/', '/memberlist', '/overdue', '/member/:memberId', '/accessLog', '/reports', '/automation', '/payments', '/plans', '/audit', '/staff/settings', '/waivers', '/portal', '/portal/:section', '/app-login'], (req, res, next) => {
   if ((req.headers.accept || '').includes('text/html')) {
     return res.sendFile(path.resolve('public/index.html'))
   }
@@ -93,6 +93,7 @@ app.use('/api/waivers', require('./api/routes/waivers'))
 app.use('/api/cubit', require('./api/routes/cubit'))
 app.use('/api/cubit', require('./api/routes/operations'))
 app.use('/api/cubit', require('./api/routes/billing-tools'))
+app.use('/api/cubit', require('./api/routes/staff-tools'))
 app.use(['/member', '/plan', '/transaction', '/key', '/accessLog', '/task', '/ACON'], staffOnly)
 //this is where to look for the route file
 const memberRoutes = require('./api/routes/member')
@@ -161,6 +162,7 @@ export async function startLocalApp() {
   const { seedWaivers } = await import('./dev/seed-waivers')
   await seedWaivers()
   }
+  await (await import('./dev/upgrade-staff-tools')).upgradeStaffTools(AppDataSource,localConfig.runtimeMode==='local')
   const { upgradeKeyHistory } = await import('./dev/upgrade-key-history')
   await upgradeKeyHistory(AppDataSource)
   const { startAutomationScheduler } = await import('./billing/automation')
