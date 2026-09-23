@@ -17,7 +17,7 @@ export class CopyFieldDirective implements OnInit,OnDestroy {
   private async copy(event:Event){
       event.preventDefault();event.stopPropagation();
       const input=this.el.nativeElement.querySelector('input') as HTMLInputElement;
-      const value=this.appCopy===undefined?input?.value:this.appCopy;
+      const value=input?input.value:this.appCopy;
       if(!value){this.snack.open('Nothing to copy',null,{duration:1800});return;}
       try{await navigator.clipboard.writeText(value);this.snack.open('Copied '+this.copyLabel,null,{duration:1800});}
       catch{this.snack.open('Copy unavailable. Select the value and copy it manually.',null,{duration:3500});}
