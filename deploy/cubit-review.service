@@ -1,0 +1,29 @@
+[Unit]
+Description=Cubit isolated hosted review
+After=network.target mysql.service
+Requires=mysql.service
+
+[Service]
+Type=simple
+User=cubit
+Group=cubit
+WorkingDirectory=/opt/cubit/current/TonicServices
+EnvironmentFile=/etc/cubit/review.env
+ExecStart=/usr/bin/node dist/app.js
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+# Both inbound/outbound service traffic is limited to loopback. Caddy is separate.
+IPAddressDeny=any
+IPAddressAllow=localhost
+
+[Install]
+WantedBy=multi-user.target

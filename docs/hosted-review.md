@@ -20,6 +20,11 @@ private. PayPal, physical door integration, and live DocuSeal are disabled.
 Cubit sends no email. Staff can test billing edits and manual processing against
 the copied data.
 
+The systemd service also denies all non-loopback network traffic. Only Caddy
+accepts public requests; the Cubit process can reach its local database but cannot
+contact the makerspace or external providers. Do not remove this restriction for
+review testing. The service has no SSH keys or GitHub credentials.
+
 ## Build
 
 Use Node 22 and pnpm 9.15.9. Install each project's frozen lockfile, run the
@@ -31,3 +36,18 @@ the service manager.
 GitHub checks build the code and run database-free tests. A code update must not
 reimport the database or reset credentials. Keep a database backup and the previous
 release before activating an update, and check `/health` after restarting.
+
+## Update the review VPS from GitHub
+
+After committing and pushing changes to `main`, SSH into the VPS and run:
+
+```sh
+sudo cubit-update
+```
+
+This fetches `main`, builds a new release, runs database-free checks, saves a
+private database backup, restarts the service and checks health. Failed health
+checks restore the previous code release. It does not import or reset member data,
+run migrations, or change credentials. Updates are explicitly triggered; pushing
+to GitHub alone does not change the hosted review. Database rollback is a separate
+manual operation because staff may have edited data since the last release.
