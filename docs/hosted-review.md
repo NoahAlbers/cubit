@@ -39,10 +39,22 @@ release before activating an update, and check `/health` after restarting.
 
 ## Update the review VPS from GitHub
 
-After committing and pushing changes to `main`, SSH into the VPS and run:
+The repository is private. After committing and pushing changes to `main`, run
+this from the Windows checkout:
+
+```powershell
+.\dev\deploy-review.ps1
+```
+
+It fetches the GitHub commit using this PC's Git credentials, transfers a
+source-only Git bundle over SSH, and invokes the server update. The VPS password
+may be requested for both the transfer and the SSH command. GitHub credentials
+remain on this PC. This does not transfer a database or local uncommitted files.
+
+The underlying server command for an already transferred bundle is:
 
 ```sh
-sudo cubit-update
+sudo cubit-update --bundle /home/ubuntu/cubit-source.bundle
 ```
 
 This fetches `main`, builds a new release, runs database-free checks, saves a

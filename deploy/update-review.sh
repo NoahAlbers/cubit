@@ -5,7 +5,15 @@ set -euo pipefail
 exec 9>/run/cubit-update.lock
 flock -n 9 || { echo 'An update is already running.' >&2; exit 1; }
 source_dir=/opt/cubit/source
-runuser -u ubuntu -- git -C "$source_dir" fetch origin main
+if [[ ${1:-} == --bundle && ${2:-} == /home/ubuntu/cubit-source.bundle && $# -eq 2 ]]; then
+  runuser -u ubuntu -- git -C "$source_dir" bundle verify "$2"
+  runuser -u ubuntu -- git -C "$source_dir" fetch "$2" refs/remotes/origin/main:refs/remotes/origin/main
+elif [[ $# -eq 0 ]]; then
+  runuser -u ubuntu -- env GIT_TERMINAL_PROMPT=0 git -C "$source_dir" fetch origin main
+else
+  echo 'Usage: cubit-update [--bundle /home/ubuntu/cubit-source.bundle]' >&2
+  exit 1
+fi
 revision=$(runuser -u ubuntu -- git -C "$source_dir" rev-parse origin/main)
 release="/opt/cubit/releases/${revision}-$(date -u +%Y%m%dT%H%M%SZ)"
 previous=$(readlink -f /opt/cubit/current || true)
