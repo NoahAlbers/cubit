@@ -1,3 +1,4 @@
+import { formatPhone } from '../../services/contact-format';
 import { DraftGuard } from '../../services/draft-guard';
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { NgForm } from '@angular/forms';
@@ -22,7 +23,7 @@ export class PortalComponent implements OnInit, OnDestroy {
   constructor(private drafts:DraftGuard,private http:HttpClient,private route:ActivatedRoute){}
   ngOnInit(){this.section=this.route.snapshot.data.section||'overview';this.load();}
   ngOnDestroy(){this.subscription?.unsubscribe();}
-  load(){this.http.get<any>('/api/portal').subscribe({next:d=>{this.data=d;this.profile={...d.profile};this.originalProfile=JSON.stringify(this.profile);this.sort();},error:e=>this.error=e.error?.message||'Unable to load your membership.'});}
+  load(){this.http.get<any>('/api/portal').subscribe({next:d=>{this.data=d;this.profile={...d.profile,phone:formatPhone(d.profile.phone)??d.profile.phone,emergencyPhone:formatPhone(d.profile.emergencyPhone)??d.profile.emergencyPhone};this.originalProfile=JSON.stringify(this.profile);this.sort();},error:e=>this.error=e.error?.message||'Unable to load your membership.'});}
   sort(){this.rows=billingRows(this.data.billing,this.order);this.page=1;}
   abs(value:number){return Math.abs(value);}
   get currentPlans(){return this.data?.plans.filter(p=>p.current)||[];}

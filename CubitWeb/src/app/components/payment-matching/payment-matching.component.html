@@ -1,5 +1,5 @@
 <section class="page matching-page" [appDraft]="hasUnsavedChanges()">
-  <div class="page-heading"><h1>Payment matching</h1><button class="secondary" (click)="showTest=!showTest" [disabled]="busy">{{showTest?'Close test form':'Add offline test event'}}</button></div>
+  <div class="page-heading"><button class="secondary" (click)="showTest=!showTest" [disabled]="busy">{{showTest?'Close test form':'Add offline test event'}}</button></div>
   <p class="notice-strip">Offline review only. Live PayPal imports are disabled. Nothing is recorded until staff confirms a member.</p>
   <p class="error" role="alert" *ngIf="error">{{error}}</p><p class="success-message" role="status" *ngIf="message">{{message}}</p>
   <section class="panel detail-panel" *ngIf="showTest"><h2>Add an offline test event</h2><form #testForm="ngForm" (ngSubmit)="simulate()"><div class="form-grid">

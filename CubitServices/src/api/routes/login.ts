@@ -1,3 +1,4 @@
+import { validEmail } from '../../contact/validation'
 import express from 'express';
 import { Member } from '../../entity/member';
 import { jwtHelper } from '../common/jwtHelper';
@@ -5,7 +6,7 @@ import { jwtHelper } from '../common/jwtHelper';
 const router = express.Router();
 
 router.post('/', async (req, res, next) => {
-  if (typeof req.body.email !== 'string' || typeof req.body.password !== 'string' || req.body.email.length > 254 || req.body.password.length > 1024) {
+  if (!validEmail(req.body.email) || typeof req.body.password !== 'string' || req.body.email.length > 254 || req.body.password.length > 1024) {
     return res.status(401).json({ message: 'Invalid email or password.' });
   }
   let memberClass = new Member();

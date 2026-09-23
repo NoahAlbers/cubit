@@ -25,10 +25,19 @@ export class AppComponent implements OnInit {
   menuOpen=false;
   constructor(public auth: AuthService, public router: Router, private http: HttpClient, public navigation:ListNavigationService) {router.events.subscribe(e=>{if(e instanceof NavigationEnd)this.menuOpen=false;});}
   get sectionName(){const p=this.router.url.split(/[?#]/)[0];return ({'/memberlist':'Members','/overdue':'Overdue Memberships','/accessLog':'Access Log','/reports':'Reports','/automation':'Billing & Automation','/audit':'Audit Log','/staff/settings':'Notification Settings','/payments':'Payment Matching','/plans':'Plan Catalog','/waivers':'Waivers','/portal':'My Membership','/portal/profile':'My Details','/portal/billing':'Billing History','/portal/waivers':'My Waivers'})[p]||(p.startsWith('/member/')?'Member Profile':'Cubit');}
-  get memberReturnUrl(){return this.router.url.startsWith('/member/')?this.navigation.returnUrl(this.router.parseUrl(this.router.url).queryParams.returnTo):null;}
-  get headerBackTarget(){return this.memberReturnUrl?.split(/[?#]/)[0]||null;}
-  get headerBackQuery(){return this.memberReturnUrl?this.router.parseUrl(this.memberReturnUrl).queryParams:{};}
-  get headerBackLabel(){return this.memberReturnUrl?this.navigation.label(this.memberReturnUrl):'';}
+  get headerBack(){
+    const path=this.router.url.split(/[?#]/)[0],q=this.router.parseUrl(this.router.url).queryParams;
+    if(path.startsWith('/member/')){
+      const url=this.navigation.memberReturn(q.returnTo,path.split('/')[2]);
+      return {target:url.split(/[?#]/)[0],query:this.router.parseUrl(url).queryParams,label:this.navigation.label(url)};
+    }
+    if(path==='/audit'&&q.memberId)return {target:'/member/'+q.memberId,query:{returnTo:this.navigation.memberReturn(q.memberReturnTo,q.memberId)},label:this.navigation.memberName(q.memberId)};
+    if(path==='/plans')return {target:'/automation',query:this.navigation.query('/automation'),label:'Billing & automation'};
+    return null;
+  }
+  get headerBackTarget(){return this.headerBack?.target;}
+  get headerBackQuery(){return this.headerBack?.query;}
+  get headerBackLabel(){return this.headerBack?.label;}
   get billingSection(){return ['/automation','/plans'].includes(this.router.url.split(/[?#]/)[0]);}
   skip(event:Event){event.preventDefault();document.getElementById('main')?.focus();}
   get portalView() { return !this.auth.isAdmin || this.router.url.startsWith('/portal'); }

@@ -1,3 +1,4 @@
+import { validEmail } from '../contact/validation'
 import { recordAudit, snapshot, profileFields } from '../staff/audit'
 import { createHash } from 'crypto'
 import { AppDataSource } from '../app'
@@ -40,7 +41,7 @@ export function paymentEmail(value:any,required=true) {
   if(typeof value!=='string')fail('Enter a valid email address.')
   const email=value.trim().toLowerCase()
   if(!email&&!required)return ''
-  if(email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))fail('Enter a valid email address.')
+  if(!validEmail(email))fail('Enter a valid email address.')
   return email
 }
 export function newMemberValues(body:any) {

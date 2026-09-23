@@ -1,6 +1,5 @@
 <section class="page catalog-page" [appDraft]="hasUnsavedChanges()">
-  <div class="actions"><a class="button secondary" routerLink="/automation" [queryParams]="navigation.query('/automation')"><app-arrow name="arrow-left"></app-arrow> Billing &amp; automation</a></div>
-  <div class="page-heading"><h1>Plans</h1><button class="primary" (click)="edit()" [disabled]="busy">Create plan</button></div>
+  <div class="page-heading"><button class="primary" (click)="edit()" [disabled]="busy">Create plan</button></div>
   <p class="error" role="alert" *ngIf="error">{{error}}</p><p class="success-message" role="status" *ngIf="message">{{message}}</p>
   <section class="panel detail-panel" *ngIf="draft">
     <h2>{{creating?'Create plan':'Edit plan'}}</h2>

@@ -76,7 +76,17 @@ async function main(){
  const beforeNotes=await db.manager.countBy(OperationsAudit,{kind:'Staff note added'});
  await ok('/api/cubit/members/'+existing.id+'/notes',{text:'New audited staff note'});
  assert.equal(await db.manager.countBy(OperationsAudit,{kind:'Staff note added'}),beforeNotes+1);
- const password='audit-secret-never-persist';await ok('/member',{id:existing.id,phone:'555-0109',password},'PUT');
+ const contactBefore=await db.manager.findOneByOrFail(Member,{id:existing.id});
+ const auditBefore=await db.manager.count(OperationsAudit);
+ for(const invalid of [{email:'bad..email@example.test'},{paypalEmail:'bad@domain'},{emergencyEmail:'bad@-domain.test'},{phone:'555-0109'},{emergencyPhone:'321-555-0109 ext 4'}])assert.equal((await request('/member',{id:existing.id,...invalid},'PUT')).status,400);
+ assert.equal((await db.manager.findOneByOrFail(Member,{id:existing.id})).email,contactBefore.email);
+ assert.equal(await db.manager.count(OperationsAudit),auditBefore,'Rejected contact changes neither save nor log');
+ assert.equal((await request('/member',{id:'New',firstName:'Test',lastName:'Invalid',email:'bad',paypalEmail:''})).status,400);
+ const portalValues=Object.fromEntries(['firstName','lastName','email','phone','emergencyContact','emergencyEmail','emergencyPhone'].map(k=>[k,contactBefore[k]||'']));
+ assert.equal((await request('/api/portal/profile',{...portalValues,phone:'not a phone'},'PUT',jwtHelper.GenerateJWT(existing))).status,400);
+ const portalSaved=await request('/api/portal/profile',{...portalValues,phone:'+1 (321) 555-0108'},'PUT',jwtHelper.GenerateJWT(existing));assert.equal(portalSaved.status,200);assert.equal(portalSaved.data.profile.phone,'321-555-0108');
+ const password='audit-secret-never-persist';await ok('/member',{id:existing.id,phone:'(321) 555-0109',password},'PUT');
+ assert.equal((await db.manager.findOneByOrFail(Member,{id:existing.id})).phone,'321-555-0109');
  const fob=await ok('/key',{id:'New',memberId:existing.id,serialNumber:'TEST-FOB-001',status:'Active'});
  assert.equal((await request('/key',{id:'New',memberId:another.id,serialNumber:'test-fob-001',status:'Active'})).status,409,'Duplicate fob assignment');
  assert.equal((await request('/key',{...fob,status:'Inactive',expectedStatus:'Active'})).status,400,'Fob changes require a reason');

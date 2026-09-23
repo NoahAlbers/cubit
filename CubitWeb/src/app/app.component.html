@@ -25,7 +25,7 @@
   </aside>
   <div class="workspace-body">
     <header class="topbar" *ngIf="isAuthenticated">
-      <div class="page-location"><a *ngIf="headerBackTarget" class="button secondary header-back" [routerLink]="headerBackTarget" [queryParams]="headerBackQuery" [attr.aria-label]="'Back to '+headerBackLabel" [attr.title]="'Back to '+headerBackLabel"><app-arrow name="arrow-left"></app-arrow><span>{{headerBackLabel}}</span></a><span class="page-title">{{sectionName}}</span></div>
+      <div class="page-location"><a *ngIf="headerBackTarget" class="button secondary header-back" [routerLink]="headerBackTarget" [queryParams]="headerBackQuery" [attr.aria-label]="'Back to '+headerBackLabel" [attr.title]="'Back to '+headerBackLabel"><app-arrow name="arrow-left"></app-arrow><span>{{headerBackLabel}}</span></a><h1 class="page-title">{{sectionName}}</h1></div>
       <div class="account-controls"><div class="account-identity"><span>{{auth.accountLabel}}</span><small>{{auth.isDemo?'Demo administrator':auth.isAdmin?'Staff administrator':'Member'}}</small></div><a class="button notification-button" *ngIf="auth.isAdmin" routerLink="/staff/settings" routerLinkActive="current" aria-label="Notification settings" title="Notification settings"><img src="assets/icons/notification.svg" alt="" width="24" height="24"></a><button class="secondary sign-out-button" (click)="logout()">Sign out</button></div>
     </header>
     <div class="synthetic-demo-banner" *ngIf="isAuthenticated && auth.isDemo"><strong>Synthetic demo</strong> Fictional members, payments and visits. Changes affect the shared demo only; use fictional details.</div><main id="main" tabindex="-1"><router-outlet></router-outlet></main>

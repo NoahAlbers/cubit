@@ -1,4 +1,5 @@
 import { recordAudit, snapshot, profileFields } from '../../staff/audit'
+import { normalizeContact } from '../../contact/validation'
 import { AppDataSource } from './../../app'
 import express from 'express'
 import { Member, ROLES } from '../../entity/member'
@@ -37,6 +38,7 @@ router.get('/', VerifyLoggedIn, (req, res, next) => {
 
 router.put('/', async (req, res, next) => {
   const postedMemberData = req.body
+  try { normalizeContact(postedMemberData) } catch (error:any) { return res.status(400).json({message:error.message}) }
   if(localConfig.runtimeMode==='hosted-demo' && postedMemberData.id===demoMemberId &&
     ((postedMemberData.email!==undefined && postedMemberData.email!==demoEmail) ||
      (postedMemberData.role!==undefined && postedMemberData.role!==ROLES.ADMIN) || postedMemberData.password))
@@ -80,6 +82,7 @@ router.post('/', async (req, res, next) => {
   const memberClass = new Member()
 
   var member: Member = JSON.parse(JSON.stringify(req.body))
+  try { normalizeContact(member,true) } catch (error:any) { return res.status(400).json({message:error.message}) }
   for (const key of ['accessHold', 'accessHoldReason', 'billingSuspended', 'balance', 'status', 'statusReason']) delete (member as any)[key]
 
   if (member.id != 'New') {

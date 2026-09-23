@@ -1,3 +1,4 @@
+import { formatPhone } from '../../services/contact-format';
 import { Component, OnInit, OnDestroy, NgZone, ElementRef, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import {
@@ -74,7 +75,7 @@ export class MemberComponent implements OnInit, OnDestroy {
   saveDraft(){return this.save(false);}
   revertContact(){this.form.reset(this.originalContact||this.emptyContact());this.saveError='';}
   async closeCutoff(){if(this.cutoffOriginal!==JSON.stringify([this.cutoffDate,this.cutoffReason])&&!await this.drafts.confirmDiscard())return;this.cutoffPlan=null;}
-  get returnUrl() { return this.navigation.returnUrl(this.activatedRoute.snapshot.queryParams.returnTo); }
+  get returnUrl() { return this.navigation.memberReturn(this.activatedRoute.snapshot.queryParams.returnTo,this.memberId); }
   get auditQuery(){const previous=this.router.parseUrl(this.returnUrl);return this.returnUrl.split(/[?#]/)[0]==='/audit'&&previous.queryParams.memberId===this.memberId?previous.queryParams:{memberId:this.memberId,memberReturnTo:this.returnUrl};}
   get returnTarget() { return this.returnUrl.split(/[?#]/)[0]; }
   get returnQuery() { return this.router.parseUrl(this.returnUrl).queryParams; }
@@ -343,10 +344,11 @@ export class MemberComponent implements OnInit, OnDestroy {
     this.memberService.getMember(memberId).subscribe({next:(data) => {
       Object.keys(data).forEach((KeyName) => {
         if (this.form.controls[KeyName]) {
-          this.form.controls[KeyName].setValue(data[KeyName]);
+          this.form.controls[KeyName].setValue(['phone','emergencyPhone'].includes(KeyName)?(formatPhone(data[KeyName])??data[KeyName]):data[KeyName]);
         }
       });
       this.memberPicture = data.picture || '';
+      this.navigation.rememberMember(memberId,`${data.firstName} ${data.lastName}`.trim());
       this.originalContact={...this.form.getRawValue()};this.form.markAsPristine();
       this.form.enable();this.contactLoading=false;
       this.sectionLoaded('member');
@@ -369,7 +371,7 @@ export class MemberComponent implements OnInit, OnDestroy {
     const submitted=this.form.getRawValue();this.form.disable();
     try{
       const data=await this.memberService.saveMember(submitted).pipe(take(1)).toPromise();
-      const isNew=this.memberId==='New';this.form.controls.id.setValue(data.id);this.originalContact={...this.form.getRawValue()};this.form.markAsPristine();
+      const isNew=this.memberId==='New';this.form.patchValue(data);this.originalContact={...this.form.getRawValue()};this.form.markAsPristine();
       if(isNew&&navigateAfterCreate){this.created=true;await this.router.navigate(['/member',data.id],{queryParams:{returnTo:this.returnUrl},replaceUrl:true});}
       this.snackBar.open(isNew?'Member created':'Contact details saved',null,{duration:2500});return true;
     }catch(err){this.saveError=err.error?.message||'Could not save contact details. Please try again.';return false;}

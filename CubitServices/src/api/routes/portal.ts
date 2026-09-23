@@ -1,4 +1,5 @@
 import { recordAudit, snapshot } from '../../staff/audit'
+import { normalizeContact } from '../../contact/validation'
 import express from 'express'
 import { AppDataSource } from '../../app'
 import { signedIn } from '../common/member-auth'
@@ -43,9 +44,7 @@ router.put('/profile',route(async(req:any,res:any)=>{
     if(typeof b[k]!=='string'||b[k].trim().length>(k==='phone'||k==='emergencyPhone'?50:150))fail('Enter valid contact details.')
     values[k]=b[k].trim()
   }
-  if(!values.firstName||!values.lastName||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email) ||
-      (values.emergencyEmail&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.emergencyEmail)))fail('Enter a name and valid email addresses.')
-  values.email=values.email.toLowerCase()
+  normalizeContact(values,true)
   if(localConfig.runtimeMode==='hosted-demo' && req.member.id===demoMemberId && values.email!==demoEmail)
     fail('The shared demo sign-in email cannot be changed.',403)
   await AppDataSource.transaction(async manager=>{

@@ -1,3 +1,6 @@
+import { ContactFieldsDirective, PhonePipe } from './services/contact-fields.directive';
+import { CopyFieldDirective } from './components/shared/copy-field.directive';
+import { MemberStatusDirective } from './components/shared/member-status.directive';
 import { AuditLogComponent } from './components/audit-log/audit-log.component';
 import { StaffSettingsComponent } from './components/staff-settings/staff-settings.component';
 import { BrowserModule } from '@angular/platform-browser';
@@ -54,7 +57,7 @@ import { AccessLogService } from './services/access-log.service';
 
 @NgModule({
     declarations: [
-        DraftDialogComponent, DraftExitDirective, FieldFeedbackDirective, MemberIconDirective, ArrowComponent, InfoComponent, WaiverLockComponent,
+        ContactFieldsDirective, PhonePipe, CopyFieldDirective, MemberStatusDirective, DraftDialogComponent, DraftExitDirective, FieldFeedbackDirective, MemberIconDirective, ArrowComponent, InfoComponent, WaiverLockComponent,
         DirectoryComponent,
         PaymentMatchingComponent, PlanCatalogComponent, AuditLogComponent, StaffSettingsComponent,
         StaffToolsComponent, EditChargeComponent, ReportsComponent, AutomationComponent, PortalComponent, WaiversComponent, MemberWaiversComponent,
