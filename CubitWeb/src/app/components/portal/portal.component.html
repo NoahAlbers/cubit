@@ -16,7 +16,7 @@
       </section>
     </ng-container>
     <ng-container *ngIf="section==='waivers'">
-      <div class="notice-strip">Demo waivers are practice only. They are not legal agreements.</div>
+      <div class="notice-strip" *ngIf="hasDemoWaivers">Demo waivers are practice only. They are not legal agreements.</div>
       <section id="waiver-review" tabindex="-1" class="panel detail-panel" *ngIf="signing" aria-label="Review waiver">
         <div class="section-heading"><div><h2>{{signing.version.name}}</h2><small>Version {{signing.version.number}}</small></div><button class="quiet" (click)="closeSigning()" [disabled]="busy">Close</button></div>
         <ng-container *ngIf="signing.version.provider==='demo'&&signing.signature.status!=='Signed'"><pre class="waiver-document">{{signing.version.demoText}}</pre><label>Your full name<input [(ngModel)]="signName" maxlength="150" autocomplete="name"></label><label class="checkbox-line"><input type="checkbox" [(ngModel)]="acknowledged">I understand this is a demo signature, not a legal agreement.</label><button class="primary" [disabled]="busy||!signName.trim()||!acknowledged" (click)="completeDemo()">{{busy?'Saving…':'Complete demo signing'}}</button></ng-container>

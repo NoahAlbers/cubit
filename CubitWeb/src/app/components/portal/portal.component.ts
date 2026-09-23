@@ -27,6 +27,7 @@ export class PortalComponent implements OnInit, OnDestroy {
   sort(){this.rows=billingRows(this.data.billing,this.order);this.page=1;}
   abs(value:number){return Math.abs(value);}
   get currentPlans(){return this.data?.plans.filter(p=>p.current)||[];}
+  get hasDemoWaivers(){return this.data?.waivers.current.some(w=>w.version.provider==='demo');}
   async saveProfile():Promise<boolean>{
     this.details?.form.markAllAsTouched();if(this.busy||!this.details?.valid)return false;
     this.busy=true;this.error='';this.saved='';
