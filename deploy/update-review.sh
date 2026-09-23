@@ -28,7 +28,7 @@ runuser -u ubuntu -- bash -c '
   cd "$1"
   export CI=true NG_CLI_ANALYTICS=false
   # Copy rather than hardlink dependencies: sealing release ownership must not
-  # change ownership/permissions of the builder's shared pnpm store.
+  # change ownership/permissions of the shared pnpm build cache.
   pnpm --dir TonicServices install --frozen-lockfile --package-import-method=copy
   pnpm --dir CubitWeb install --frozen-lockfile --package-import-method=copy
   node dev/build-web.cjs
