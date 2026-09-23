@@ -36,7 +36,7 @@ export class AppComponent implements OnInit {
     this.auth.isAuthenticated$.pipe(switchMap(signedIn=>{
       this.isAuthenticated=signedIn;this.workspaceLabel='';this.dataMode='';
       return this.http.get<any>('/health').pipe(catchError(()=>of({dataMode:'',workspaceLabel:this.auth.isDemo?'Synthetic demo unavailable':'Workspace unavailable'})));
-    })).subscribe(d=>{this.dataMode=d.dataMode;this.workspaceLabel=d.workspaceLabel||'Workspace';});
+    })).subscribe(d=>{this.dataMode=d.dataMode;this.workspaceLabel=d.mode==='hosted-review'?'':d.workspaceLabel||'Workspace';});
   }
 
 
