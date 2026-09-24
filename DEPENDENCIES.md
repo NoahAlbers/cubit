@@ -12,6 +12,7 @@ building and running its affected workflows.
 | Vitest / jsdom / Playwright | 5.0.1 / 30.1.1 / 1.63.0 |
 | QR generator / Zone.js / tslib | 2.0.4 / 0.16.3 / 2.8.1 |
 | TypeScript / Node types | 6.0.3 / 22.20.4 |
+| Zod / ESLint / typescript-eslint / Prettier | 4.6.5 / 10.11.0 / 8.70.1 / 3.9.9 |
 | GitHub checkout / setup-node | 7.0.1 / 7.0.0, immutable commit pins |
 
 Every other direct npm dependency matched the registry's latest stable release

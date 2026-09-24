@@ -269,6 +269,8 @@ The updater builds a new release, runs checks, backs up both installed workspace
 
 Application startup never synchronizes schemas, runs migrations, or seeds records. It refuses an unmigrated database. Native development setup explicitly runs `node dev/migrate-local.cjs` before starting the app; existing local data is backed up first. Compose uses a separate initialization container with operator credentials, which the app container never receives. Synthetic seeding is an explicit operator step. Frozen migrations live under `CubitServices/src/migrations`; add a new migration when entity definitions change rather than modifying an applied migration. CI verifies fresh creation, existing-schema upgrades, idempotency, data preservation, and schema drift.
 
+Operations, staff preferences, waivers and backup routes validate request bodies with strict Zod schemas before mutation. Unexpected fields and invalid types return a 400 response; business conflicts such as stale revisions still return 409. Backend source uses ESLint and Prettier, enforced in CI. Run `pnpm --dir CubitServices lint` and `pnpm --dir CubitServices format:check` before committing; `pnpm --dir CubitServices format` applies formatting. Existing service internals are being typed incrementally; the four request boundaries prohibit explicit `any`.
+
 ## Planned development
 
 These are next steps, not claims of production-ready functionality. Existing foundations are noted where relevant.

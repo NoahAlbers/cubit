@@ -1,11 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToMany,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { Member } from './member';
 import { Plan } from './plan';
 
@@ -41,14 +34,14 @@ export class MemberPlan {
   @Column()
   paypalSubscriptionPlanId: string;
 
-  @ManyToOne((type) => Member)
+  @ManyToOne(() => Member)
   @JoinColumn()
   member: Member;
 
   @Column()
   planId: string;
 
-  @ManyToOne((type) => Plan)
+  @ManyToOne(() => Plan)
   @JoinColumn()
   plan: Plan;
 }
