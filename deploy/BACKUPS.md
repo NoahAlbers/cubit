@@ -86,9 +86,10 @@ file hashes, restores both databases into a temporary networkless MySQL
 container, checks core tables and waiver BLOB hashes, and validates DocuSeal's
 SQLite database and retained file checksums. The temporary container has no host
 mounts and cannot contact the makerspace. It is removed after the test. Allow
-enough free disk and memory; the test database is limited to a 2 GB tmpfs and
-768 MB container memory. Larger future databases require an operator-reviewed
-increase or a separate recovery server.
+enough free disk and memory; the test uses an anonymous Docker volume and a
+768 MB container memory limit. Its volume is removed with the container, including
+cleanup of interrupted rehearsals when the worker next starts. Larger future
+databases may require an operator-reviewed increase or a separate recovery server.
 
 For replacement-server recovery, a server operator must:
 

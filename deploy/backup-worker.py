@@ -110,7 +110,7 @@ def capture():
     def keep_file(info): return None if pathlib.PurePosixPath(info.name).name.startswith('db.sqlite3') else info
     with tarfile.open(payload/'docuseal-files.tgz','w:gz') as archive: archive.add(source,arcname='docuseal',filter=keep_file)
     with tarfile.open(payload/'configuration.tgz','w:gz') as archive:
-        for location in ['/etc/cubit','/etc/docuseal','/etc/caddy','/etc/systemd/system/cubit-docuseal-proxy.service','/etc/systemd/system/cubit-docuseal-proxy.socket']:
+        for location in ['/etc/cubit','/etc/docuseal','/etc/caddy','/etc/systemd/system/caddy.service.d','/etc/systemd/system/cubit-docuseal-proxy.service','/etc/systemd/system/cubit-docuseal-proxy.socket']:
             if pathlib.Path(location).exists(): archive.add(location,arcname=location.lstrip('/'))
         archive.add(CONFIG,arcname='etc/cubit-backup/config.json')
         archive.add('/opt/cubit/current/deploy',arcname='deployment')
@@ -167,9 +167,15 @@ def verify(settings):
         container='cubit-recovery-'+secrets.token_hex(6);password=secrets.token_urlsafe(32)
         env={**os.environ,'MYSQL_ROOT_PASSWORD':password,'MYSQL_PWD':password}
         try:
-            run(['docker','run','-d','--name',container,'--network','none','--memory','768m','--cpus','1','--tmpfs','/var/lib/mysql:rw,size=2g','--env','MYSQL_ROOT_PASSWORD',cfg['restoreImage']],env=env)
+            # MySQL's anonymous volume is removed with the test container.
+            # A tmpfs would charge database files against its memory limit.
+            run(['docker','run','-d','--name',container,'--label','com.cubit.recovery=true','--network','none','--memory','768m','--cpus','1','--env','MYSQL_ROOT_PASSWORD',cfg['restoreImage']],env=env)
             for attempt in range(90):
-                try: run(['docker','exec','--env','MYSQL_PWD',container,'mysql','-uroot','-N','-e','SELECT 1'],env=env,timeout=10);break
+                try:
+                    # The image first starts a temporary bootstrap server. Do not
+                    # import until entrypoint has exec'd the final mysqld as PID 1.
+                    if run(['docker','exec',container,'cat','/proc/1/comm'],timeout=10).strip()!=b'mysqld': raise RuntimeError('Recovery database is initializing')
+                    run(['docker','exec','--env','MYSQL_PWD',container,'mysql','-uroot','-N','-e','SELECT 1'],env=env,timeout=10);break
                 except RuntimeError:
                     if attempt==89: raise
                     time.sleep(2)
@@ -178,15 +184,21 @@ def verify(settings):
                 run(['docker','exec','--env','MYSQL_PWD',container,'mysql','-uroot','-e','CREATE DATABASE '+schema],env=env)
                 with gzip.open(base/(schema+'.sql.gz'),'rb') as dumpfile, tempfile.TemporaryFile() as errors:
                     p=subprocess.Popen(['docker','exec','-i','--env','MYSQL_PWD',container,'mysql','-uroot','--binary-mode',schema],stdin=subprocess.PIPE,stdout=errors,stderr=errors,env=env)
-                    try: shutil.copyfileobj(dumpfile,p.stdin)
-                    finally: p.stdin.close()
-                    if p.wait(timeout=900): raise RuntimeError('Isolated database restore failed')
+                    try:
+                        shutil.copyfileobj(dumpfile,p.stdin)
+                        p.stdin.close()
+                    except BrokenPipeError: pass
+                    if p.wait(timeout=900):
+                        errors.seek(0);diagnostic=errors.read()
+                        (STATE/'last-import-error.txt').write_bytes(diagnostic)
+                        code=re.search(rb'ERROR \d+ \([A-Z0-9]+\)(?: at line \d+)?',diagnostic)
+                        raise RuntimeError('Isolated database restore failed'+(': '+code[0].decode() if code else ' (see private import diagnostic)'))
                 query='SELECT COUNT(*) FROM member; SELECT COUNT(*) FROM transaction; SELECT COUNT(*) FROM waiver_document WHERE SHA2(content,256)<>sha256 OR OCTET_LENGTH(content)<>bytes; CHECK TABLE member,transaction,waiver_document,waiver_version'
                 rows=run(['docker','exec','--env','MYSQL_PWD',container,'mysql','-uroot','-N',schema,'-e',query],env=env).decode().splitlines()
                 if len(rows)<7 or rows[2]!='0' or any(not row.endswith('\tOK') for row in rows[3:]): raise RuntimeError('Restored tables or waiver BLOBs failed verification')
                 counts[schema]={'members':int(rows[0]),'payments':int(rows[1])}
             return {'snapshot':selected[:12],'scope':'off-server' if remote else 'local','counts':counts,'message':'Restored '+('off-server' if remote else 'local')+' backup into an isolated database; tables, waiver files and checksums passed.'}
-        finally: subprocess.run(['docker','rm','-f',container],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        finally: subprocess.run(['docker','rm','-fv',container],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
 
 def https_check():
     result={'ok':False,'checkedAt':nowstr(),'message':'Certificate or redirect check failed.'}
@@ -209,6 +221,10 @@ def heartbeat():
 
 def cycle():
     initialize()
+    # No other worker can be running while this process owns flock. Remove
+    # only our labeled, networkless rehearsal containers after interruption.
+    for container in run(['docker','ps','-aq','--filter','label=com.cubit.recovery=true']).decode().split():
+        if re.fullmatch('[a-f0-9]{12,64}',container): run(['docker','rm','-fv',container])
     sql("INSERT IGNORE INTO backup_settings(id,settings,revision) VALUES ('default',"+literal(json.dumps(DEFAULTS))+",1)")
     # flock guarantees no live worker owns these; recover interrupted operations visibly.
     sql("UPDATE backup_job SET status='Failed',finishedAt=UTC_TIMESTAMP(),result='{"+'"message":"Worker interrupted; retry the operation. Never restored over the working database."'+"}' WHERE status='Running'")

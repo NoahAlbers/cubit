@@ -22,9 +22,10 @@ async function main() {
     for (const route of ['/ACON','/ACON/whitelist','/paypal/update']) {
       assert.equal((await fetch(base+route)).status,403)
     }
-    for (const route of ['/member','/key','/api/portal']) {
+    for (const route of ['/member','/key','/api/portal','/api/backups']) {
       assert.equal((await fetch(base+route)).status,401)
     }
+    assert.equal((await fetch(base+'/api/backups/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'backup'})})).status,401)
     const health=await fetch(base+'/health')
     assert.equal(health.status,503)
     assert.equal((await health.json()).mode,'hosted-review')
