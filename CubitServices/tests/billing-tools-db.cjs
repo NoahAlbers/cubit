@@ -27,6 +27,7 @@ async function main(){
  await upgradeStaffTools();const legacyCount=await db.manager.count(OperationsAudit);await upgradeStaffTools();assert.equal(await db.manager.count(OperationsAudit),legacyCount,'History migration is idempotent');
  server=await new Promise(resolve=>{const s=app.listen(0,'127.0.0.1',()=>resolve(s))});base=`http://127.0.0.1:${server.address().port}`;
  await require('./request-schemas.cjs')({request,db,memberId:existing.id});
+ await require('./grace-reversibility.cjs')({request,db});
  await require('./member-waiver-records.cjs')({request,db,member:existing,other:another,staff});
  const drift=require('node:child_process').spawnSync(process.execPath,[require.resolve('typeorm/cli.js'),'migration:generate','--check','-d','dist/database.js',require('node:path').join(require('node:os').tmpdir(),'cubit-ci-schema-drift')],{cwd:require('node:path').resolve(__dirname,'..'),env:process.env,encoding:'utf8',windowsHide:true});
  assert.equal(drift.status,0,'TypeORM migration:generate --check: '+drift.stdout+drift.stderr);
