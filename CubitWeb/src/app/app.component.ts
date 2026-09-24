@@ -33,6 +33,8 @@ export class AppComponent implements OnInit {
   sidebarCollapsed=false;
   expandedGroups:Record<string,boolean>={members:true};
   compactGroup:string|null=null;
+  hoverLabel='';
+  private flyoutClose:ReturnType<typeof setTimeout>|undefined;
   flyoutTop=100;
   staffNavigation:NavItem[]=[
     {id:'members',label:'Members',icon:'members',path:'/memberlist',children:[{label:'All members',path:'/memberlist'},{label:'Overdue',path:'/overdue'},{label:'Waivers',path:'/waivers'}]},
@@ -51,17 +53,30 @@ export class AppComponent implements OnInit {
   navCurrent(item:NavItem){const url=this.router.parseUrl(this.router.url),path=this.router.url.split(/[?#]/)[0];if(item.path==='/memberlist'&&path.startsWith('/member/'))return true;if(item.path!==path)return false;return item.fragment?url.fragment===item.fragment:item.path!=='/automation'||url.fragment!=='backups';}
   groupCurrent(item:NavItem){return item.children?.some(child=>this.navCurrent(child))||false;}
   groupExpanded(id:string){return this.compactNavigation?this.compactGroup===id:!!this.expandedGroups[id];}
+  previewNavigation(item:NavItem,event:Event){
+    if(!this.compactNavigation)return;
+    clearTimeout(this.flyoutClose);this.hoverLabel=item.children?'':item.label;this.compactGroup=item.id||null;
+    const top=(event.currentTarget as HTMLElement).getBoundingClientRect().top;
+    this.flyoutTop=Math.max(12,Math.min(top,window.innerHeight-((item.children?.length||0)*44+62)));
+  }
+  leaveNavigation(){clearTimeout(this.flyoutClose);this.flyoutClose=setTimeout(()=>{this.compactGroup=null;this.hoverLabel='';},150);}
+  keepNavigation(){clearTimeout(this.flyoutClose);}
+  previewPortal(event:Event){
+    const link=(event.target as HTMLElement).closest('a');if(!link||!this.compactNavigation)return;
+    this.previewNavigation({label:link.textContent.trim()},event);
+    this.flyoutTop=Math.max(12,Math.min(link.getBoundingClientRect().top,window.innerHeight-62));
+  }
   toggleGroup(id:string,event:Event){
     if(this.compactNavigation){this.compactGroup=this.compactGroup===id?null:id;const top=(event.currentTarget as HTMLElement).getBoundingClientRect().top;const count=this.staffNavigation.find(item=>item.id===id)?.children.length||0;this.flyoutTop=Math.max(12,Math.min(top,window.innerHeight-(count*44+62)));}
     else {this.expandedGroups[id]=!this.expandedGroups[id];this.saveNavigation();}
   }
-  toggleSidebar(){this.sidebarCollapsed=!this.sidebarCollapsed;this.compactGroup=null;this.saveNavigation();}
+  toggleSidebar(){clearTimeout(this.flyoutClose);this.sidebarCollapsed=!this.sidebarCollapsed;this.compactGroup=null;this.hoverLabel='';this.saveNavigation();}
   openGroupHome(item:NavItem){this.expandedGroups[item.id]=true;this.menuOpen=false;this.compactGroup=null;this.saveNavigation();if(this.router.url.split('?')[0]===item.path)requestAnimationFrame(()=>window.scrollTo(0,0));}
   scrollToNavItem(item:NavItem){if(item.fragment&&this.router.url.split(/[?#]/)[0]===item.path){this.menuOpen=false;this.compactGroup=null;requestAnimationFrame(()=>document.getElementById(item.fragment)?.scrollIntoView());}}
   private saveNavigation(){try{localStorage.setItem('cubit.navigation',JSON.stringify({compact:this.sidebarCollapsed,groups:this.expandedGroups}));}catch{}}
   leaveGroup(event:FocusEvent){if(this.compactNavigation&&!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node))this.compactGroup=null;}
   @HostListener('document:pointerdown',['$event']) closeOutside(event:PointerEvent){if(!(event.target as Element).closest('.nav-group'))this.compactGroup=null;}
-  @HostListener('window:resize') closeOnResize(){this.compactGroup=null;}
+  @HostListener('window:resize') closeOnResize(){this.compactGroup=null;this.hoverLabel='';}
   @HostListener('document:keydown.escape',['$event']) closeOnEscape(event:KeyboardEvent){if(this.compactGroup){const button=document.querySelector('.nav-group-button[aria-controls="nav-'+this.compactGroup+'"]') as HTMLElement;this.compactGroup=null;button?.focus();event.preventDefault();}else if(this.menuOpen){this.menuOpen=false;(document.querySelector('.mobile-menu') as HTMLElement)?.focus();}}
   get sectionName(){const p=this.router.url.split(/[?#]/)[0];if(p==='/member/New')return 'Add Member';if(p.startsWith('/account/access/'))return 'Sign-in Access';return ({'/memberlist':'Members','/overdue':'Overdue Memberships','/accessLog':'Access Log','/reports':'Reports','/automation':'Settings & Automation','/audit':'Audit Log','/staff/settings':'Notification Settings','/account/security':'Account Security','/payments':'Payment Matching','/plans':'Plan Catalog','/waivers':'Waivers','/portal':'My Membership','/portal/profile':'My Details','/portal/billing':'Billing History','/portal/waivers':'My Waivers'})[p]||(p.startsWith('/member/')?'Member Profile':'Cubit');}
   get headerBack(){

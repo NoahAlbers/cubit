@@ -2,19 +2,19 @@
 <div class="workspace" [class.signed-out]="!isAuthenticated" [class.sidebar-compact]="sidebarCollapsed">
   @if (isAuthenticated) {
     <aside class="sidebar" [class.menu-open]="menuOpen">
-      <a class="brand" [routerLink]="portalView ? '/portal' : '/memberlist'" aria-label="Cubit home"><span class="compact-brand" aria-hidden="true">C</span><img class="cubit-wordmark" src="assets/cubit-logo.png" alt="Cubit CRM Software"></a>
+      <a class="brand" [routerLink]="portalView ? '/portal' : '/memberlist'" aria-label="Cubit home"><img class="compact-brand" src="assets/cubit-icon-192.png" alt=""><img class="cubit-wordmark" src="assets/cubit-logo.png" alt="Cubit CRM Software"></a>
       <button class="secondary mobile-menu" (click)="menuOpen=!menuOpen" [attr.aria-expanded]="menuOpen" aria-controls="main-navigation">{{sectionName}} · {{menuOpen?'Close menu':'Menu'}}</button><div class="nav-label">{{portalView ? 'MY MEMBERSHIP' : 'WORKSPACE'}}</div>
       @if (!portalView) {
         <nav id="main-navigation" aria-label="Main navigation">
           @for (item of staffNavigation; track item) {
             @if (item.children) {
-              <div class="nav-group" [class.group-current]="groupCurrent(item)" (focusout)="leaveGroup($event)">
+              <div class="nav-group" [class.group-current]="groupCurrent(item)" (mouseenter)="previewNavigation(item,$event)" (mouseleave)="leaveNavigation()" (focusin)="previewNavigation(item,$event)" (focusout)="leaveGroup($event)">
                 <div class="nav-group-header" [class.group-current]="groupCurrent(item)">
                   <a class="nav-group-home" (click)="openGroupHome(item)" [routerLink]="item.path" [queryParams]="navigation.query(item.path)" [attr.aria-current]="navCurrent(item)?'page':null" [attr.title]="compactNavigation?item.label:null"><img class="nav-icon" [src]="'assets/icons/'+item.icon+'.svg'" alt=""><span class="nav-text">{{item.label}}</span></a>
                   <button class="nav-group-button" [attr.aria-label]="(groupExpanded(item.id)?'Collapse ':'Expand ')+item.label+' menu'" [attr.aria-expanded]="groupExpanded(item.id)" [attr.aria-controls]="'nav-'+item.id" (click)="toggleGroup(item.id,$event)"><app-arrow class="group-chevron" name="chevron-right" [class.expanded]="groupExpanded(item.id)"></app-arrow></button>
                 </div>
                 @if (groupExpanded(item.id)) {
-                  <div class="nav-children" [id]="'nav-'+item.id" [class.nav-flyout]="compactNavigation" [style.top.px]="compactNavigation?flyoutTop:null">
+                  <div class="nav-children" [id]="'nav-'+item.id" [class.nav-flyout]="compactNavigation" [style.top.px]="compactNavigation?flyoutTop:null" (mouseenter)="keepNavigation()">
                     @if (compactNavigation) {
                       <div class="flyout-title">{{item.label}}</div>
                     }
@@ -25,13 +25,13 @@
                 }
               </div>
             } @else {
-              <a class="nav-direct" [routerLink]="item.path" [queryParams]="navigation.query(item.path)" [class.selected]="navCurrent(item)" [attr.aria-current]="navCurrent(item)?'page':null" [attr.title]="compactNavigation?item.label:null"><img class="nav-icon" [src]="'assets/icons/'+item.icon+'.svg'" alt=""><span class="nav-text">{{item.label}}</span></a>
+              <a class="nav-direct" [routerLink]="item.path" [queryParams]="navigation.query(item.path)" [class.selected]="navCurrent(item)" [attr.aria-current]="navCurrent(item)?'page':null" (mouseenter)="previewNavigation(item,$event)" (mouseleave)="leaveNavigation()" (focus)="previewNavigation(item,$event)" (blur)="leaveNavigation()"><img class="nav-icon" [src]="'assets/icons/'+item.icon+'.svg'" alt=""><span class="nav-text">{{item.label}}</span></a>
             }
           }
         </nav>
       }
       @if (portalView) {
-        <nav id="main-navigation" aria-label="Member navigation">
+        <nav id="main-navigation" aria-label="Member navigation" (pointerover)="previewPortal($event)" (focusin)="previewPortal($event)" (mouseleave)="leaveNavigation()" (focusout)="leaveNavigation()">
           <a title="Overview" routerLink="/portal" routerLinkActive="selected" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{exact:true}"><img class="nav-icon" src="assets/icons/members.svg" alt=""> <span class="nav-text">Overview</span></a>
           <a title="Billing history" routerLink="/portal/billing" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/reports.svg" alt=""> <span class="nav-text">Billing history</span></a>
           <a title="My waivers" routerLink="/portal/waivers" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/waiver.svg" alt=""> <span class="nav-text">My waivers</span></a>
@@ -41,6 +41,7 @@
           }
         </nav>
       }
+      @if(compactNavigation&&hoverLabel){<div class="nav-hover-label" role="tooltip" [style.top.px]="flyoutTop" (mouseenter)="keepNavigation()" (mouseleave)="leaveNavigation()">{{hoverLabel}}</div>}
       <button class="sidebar-toggle" (click)="toggleSidebar()" [attr.aria-label]="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'" [attr.title]="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"><app-arrow [name]="sidebarCollapsed ? 'chevron-right' : 'chevron-left'"></app-arrow><span>Collapse sidebar</span></button>
       @if (workspaceLabel) {
         <div class="sidebar-bottom"><span class="environment-label"><span class="demo-dot"></span>{{workspaceLabel}}</span></div>
