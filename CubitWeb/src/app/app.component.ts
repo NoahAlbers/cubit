@@ -64,7 +64,7 @@ export class AppComponent implements OnInit {
   keepNavigation(){clearTimeout(this.flyoutClose);}
   previewPortal(event:Event){
     const link=(event.target as HTMLElement).closest('a');if(!link||!this.compactNavigation)return;
-    this.previewNavigation({label:link.textContent.trim()},event);
+    this.previewNavigation({label:link.getAttribute('title')||link.textContent.trim()},event);
     this.flyoutTop=Math.max(12,Math.min(link.getBoundingClientRect().top,window.innerHeight-62));
   }
   toggleGroup(id:string,event:Event){

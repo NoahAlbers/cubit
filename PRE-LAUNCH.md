@@ -39,6 +39,14 @@ by the makerspace; target dates and sign-off dates must not be invented.
 
 These are implementation checks, not independent security or operational approval.
 
+Staff-workflow follow-up verified by Codex on 2026-09-24: compact profile totals,
+member-specific waiver records, key status styling, guided plan changes, reversible
+grace rules, organization/staff permissions, separate portal navigation and combined
+staff security/settings. Local verification passed 19 frontend tests, the isolated
+database/browser suite, fresh/existing-schema migration checks, responsive login
+checks, lint/format checks and 11 backup-worker tests. Full dependency audits found
+no known vulnerabilities. These results do not clear the launch gates below.
+
 ## 1. Accounts and access
 
 Owner: **Unassigned — account administrator**. Target: **Unassigned**. Sign-off: **Pending**.

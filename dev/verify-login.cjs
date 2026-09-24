@@ -9,6 +9,7 @@ const app = express()
 app.use(express.json())
 let greetingCalls = 0, loginCalls = 0, greetingDelay = 0, greetingName = 'Noah', greetingError = false
 app.get('/health', (req, res) => res.json({mode: 'test', dataMode: 'demo'}))
+app.get('/api/organization/public', (req, res) => res.json({name: 'Example Makerspace', supportEmail: 'help@example.test'}))
 app.post('/login/greeting', (req, res) => {
   greetingCalls++
   setTimeout(() => res.status(greetingError ? 503 : 200).json({firstName: greetingName}), greetingDelay)
@@ -40,7 +41,7 @@ async function main() {
     assert.equal(await submit.evaluate(el => getComputedStyle(el).cursor), 'not-allowed')
     assert.equal(await page.locator('.signing-spinner').count(), 0)
     assert.equal(await page.locator('.help').innerText(), 'Need access or a password reset? Contact staff here.')
-    assert.equal(await page.locator('.help a').getAttribute('href'), 'mailto:webmaster@melbournemakerspace.org?subject=Cubit%20sign-in%20help')
+    assert.equal(await page.locator('.help a').getAttribute('href'), 'mailto:help@example.test?subject=Cubit%20account%20help')
     await page.screenshot({path: path.join(out, 'desktop-empty.png')})
     await email.fill('not-an-email')
     await password.fill('fictional-password')

@@ -129,6 +129,7 @@ describe('Core workflow rendering and submissions', () => {
     c.submitCutoff(false);http.expectOne('/api/cubit/plans/old/cutoff').flush({saved:true});
     expect(c.planStep).toBe('assign');expect(plans).toHaveBeenCalled();
     http.expectOne('/plan?available=true').flush([{id:'new',name:'New plan',monthlyCost:90,revision:4}]);
+    expect(c.pendingPlanDraft).toBe(false);c.newPlanDate='2026-11-01';expect(c.pendingPlanDraft).toBe(true);expect(c.canSaveDraft()).toBe(false);
     c.newPlanId='new';c.newPlanDate='2026-09-30';c.planConfirmed=true;expect(c.validNewPlan).toBe(false);
     c.newPlanDate='2026-10-01';c.planConfirmed=false;expect(c.validNewPlan).toBe(false);c.planConfirmed=true;
     const save=vi.spyOn(TestBed.inject(MemberService),'savePlan').mockRejectedValueOnce({error:{message:'Plan changed. Reload.'}}).mockResolvedValueOnce({});

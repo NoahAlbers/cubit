@@ -66,16 +66,16 @@ export class MemberComponent implements OnInit, OnDestroy {
   historyFrom='';historyTo='';historyType='';historyPage=1;historySize=20;
   cutoffOriginal=''; changingPlan=false;
   planGoal:'change'|'cancel'|'activate'='change'; planStep:'cutoff'|'assign'|'done'='cutoff';
-  availablePlans:any[]=[]; newPlanId=''; newPlanDate=''; planConfirmed=false; planError=''; planBusy=false;
+  availablePlans:any[]=[]; newPlanId=''; newPlanDate=''; initialPlanDate=''; planConfirmed=false; planError=''; planBusy=false;
   get selectedPlan(){return this.availablePlans.find(p=>p.id===this.newPlanId);}
   get lastPlanCutoff(){return this.memberPlans.data.map(p=>String(p.finalBillingDate||p.endDate||'').slice(0,10)).filter(Boolean).sort().pop()||'';}
   get earliestPlanStart(){if(!this.lastPlanCutoff)return '';const d=new Date(this.lastPlanCutoff+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+1);return d.toISOString().slice(0,10);}
   get validNewPlan(){return !!(this.selectedPlan&&this.newPlanDate&&(!this.earliestPlanStart||this.newPlanDate>=this.earliestPlanStart)&&this.planConfirmed);}
-  get pendingPlanDraft(){return this.changingPlan&&this.planStep==='assign'&&!!(this.newPlanId||this.planConfirmed);}
+  get pendingPlanDraft(){return this.changingPlan&&this.planStep==='assign'&&!!(this.newPlanId||this.planConfirmed||this.newPlanDate!==this.initialPlanDate);}
   loadCatalog(){this.http.get<any[]>('/plan?available=true').subscribe({next:plans=>{this.availablePlans=plans;this.planError='';},error:()=>this.planError='Could not load available plans. Close and try again.'});}
   async closePlanWorkflow(){if(this.planBusy||this.cutoffBusy)return;if((this.pendingPlanDraft||(this.cutoffPlan&&this.cutoffOriginal!==JSON.stringify([this.cutoffDate,this.cutoffReason])))&&!await this.drafts.confirmDiscard())return;this.changingPlan=false;this.cutoffPlan=null;}
   setPlanGoal(goal:'change'|'cancel'){this.planGoal=goal;}
-  prepareAssignment(){this.planStep='assign';this.cutoffPlan=null;this.newPlanId='';this.planConfirmed=false;const d=new Date();const today=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');this.newPlanDate=this.earliestPlanStart>today?this.earliestPlanStart:today;this.loadCatalog();}
+  prepareAssignment(){this.planStep='assign';this.cutoffPlan=null;this.newPlanId='';this.planConfirmed=false;const d=new Date();const today=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');this.newPlanDate=this.earliestPlanStart>today?this.earliestPlanStart:today;this.initialPlanDate=this.newPlanDate;this.loadCatalog();}
   async saveWorkflowPlan(){if(!this.validNewPlan||this.planBusy)return;this.planBusy=true;this.planError='';try{await this.memberService.savePlan({id:'New',memberId:this.memberId,planId:this.newPlanId,startDate:this.newPlanDate,catalogRevision:this.selectedPlan.revision});this.planStep='done';this.cutoffSaved='Membership plan saved. Review the member’s access status and enabled keys below.';this.loadPlans();}catch(e){this.planError=e.error?.message||'Could not save the plan. Your earlier cutoff remains saved.';}finally{this.planBusy=false;}}
 
   get filteredHistory(){return this.historyRows.filter(r=>(!this.historyFrom||r.date>=this.historyFrom)&&(!this.historyTo||r.date<=this.historyTo)&&(!this.historyType||r.kind===this.historyType));}
@@ -91,7 +91,7 @@ export class MemberComponent implements OnInit, OnDestroy {
   }
   hasContactChanges(){return this.memberId==='New'?this.form.dirty:Object.keys(this.form.controls).some(name=>this.contactFieldChanged(name));}
   hasUnsavedChanges(){return this.pendingPlanDraft||this.hasContactChanges()||!!this.staffTools?.hasUnsavedChanges()||!!(this.cutoffPlan&&this.cutoffOriginal!==JSON.stringify([this.cutoffDate,this.cutoffReason]));}
-  canSaveDraft(){return this.hasContactChanges()&&this.form.valid&&!this.saving&&!this.contactLoading&&!this.staffTools?.hasUnsavedChanges()&&!this.cutoffPlan;}
+  canSaveDraft(){return !this.pendingPlanDraft&&this.hasContactChanges()&&this.form.valid&&!this.saving&&!this.contactLoading&&!this.staffTools?.hasUnsavedChanges()&&!this.cutoffPlan;}
   discardDraft(){this.form.reset(this.originalContact||this.emptyContact());this.staffTools?.discardDraft();this.cutoffPlan=null;this.changingPlan=false;}
   saveDraft(){return this.save(false);}
   revertContact(){this.form.reset(this.originalContact||this.emptyContact());this.saveError='';}
