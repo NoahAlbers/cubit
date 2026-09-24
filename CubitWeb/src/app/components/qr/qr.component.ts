@@ -1,11 +1,13 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, ChangeDetectionStrategy } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 // import * as qr from 'qr-image';
 
 @Component({
-  selector: 'app-qr',
-  templateUrl: './qr.component.html',
-  styles: []
+    selector: 'app-qr',
+    templateUrl: './qr.component.html',
+    styles: [],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class QrComponent implements OnInit {
   @Input()

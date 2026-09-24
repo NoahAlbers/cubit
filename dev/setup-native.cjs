@@ -52,8 +52,8 @@ async function main() {
     console.log('Extracting portable MySQL...')
     await run('tar.exe', ['-xf', mysqlArchive, '-C', path.dirname(mysqlArchive)])
   }
-  const node22 = path.join(tools, 'node22/node.exe')
-  await verifiedDownload('https://nodejs.org/dist/v22.16.0/win-x64/node.exe', node22, 'c5ff4c736112dd483c750fd4149d30c8a116db1a49b8b3ec88be4b65e6c86c19')
+  const node22 = path.join(tools, 'node22-22.23.3/node.exe')
+  await verifiedDownload('https://nodejs.org/dist/v22.23.3/win-x64/node.exe', node22, '9c9245166b4a8e182e0b797da9c20136117ff24368eaff1fec8343a123c8db0e')
   const pnpmArchive = path.join(tools, 'pnpm9/pnpm-9.15.9.tgz')
   const pnpmHash = Buffer.from('aARhQYk8ZvrQHAeSMRKOmvuJ74fiaR1p5NQO7iKJiClf1GghgbrlW1hBjDolO95lpQXsfF+UA+zlzDzTfc8lMQ==', 'base64').toString('hex')
   await verifiedDownload('https://registry.npmjs.org/pnpm/-/pnpm-9.15.9.tgz', pnpmArchive, pnpmHash, 'sha512')

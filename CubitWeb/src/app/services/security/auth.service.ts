@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { Router, CanActivate, ActivatedRouteSnapshot } from '@angular/router';
+import { Router, ActivatedRouteSnapshot } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 
 @Injectable()
-export class AuthService implements CanActivate {
+export class AuthService  {
   authToken = sessionStorage.getItem('cubit-token') || '';
   isAuthenticated$ = new BehaviorSubject<boolean>(this.validToken());
   constructor(private router: Router, private http: HttpClient) {}

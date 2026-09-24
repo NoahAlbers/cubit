@@ -1,9 +1,13 @@
-import {Component,OnInit,OnDestroy} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {Component, OnInit, OnDestroy, ChangeDetectionStrategy} from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import {ActivatedRoute,Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 import {ListNavigationService} from '../../services/list-navigation.service';
-@Component({selector:'app-audit-log',templateUrl:'./audit-log.component.html'})
+@Component({
+    selector: 'app-audit-log', templateUrl: './audit-log.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
+})
 export class AuditLogComponent implements OnInit,OnDestroy {
   data:any;error='';loading=false;q='';from='';to='';author='';kind='';actor='staff';memberId='';memberReturnTo='';sort='date';order='desc';page=1;pageSize=20;expanded='';private version=0;private sub:Subscription;
   constructor(private http:HttpClient,private route:ActivatedRoute,private router:Router,public navigation:ListNavigationService){}

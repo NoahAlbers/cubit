@@ -27,11 +27,14 @@ runuser -u ubuntu -- bash -c '
   set -euo pipefail
   cd "$1"
   export CI=true NG_CLI_ANALYTICS=false
+  export PATH="/opt/cubit/tools/node-v22.23.3-linux-x64/bin:$PATH"
+  node dev/check-web-runtime.cjs
   # Copy rather than hardlink dependencies: sealing release ownership must not
   # change ownership/permissions of the shared pnpm build cache.
   pnpm --dir CubitServices install --frozen-lockfile --package-import-method=copy
   pnpm --dir CubitWeb install --frozen-lockfile --package-import-method=copy
   node dev/build-web.cjs
+  pnpm --dir CubitWeb test
   pnpm --dir CubitServices build
   cd CubitServices
   node tests/local-safety.cjs

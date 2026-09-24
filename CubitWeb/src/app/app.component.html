@@ -1,38 +1,65 @@
 <a class="skip-link" href="#main" (click)="skip($event)">Skip to content</a>
 <div class="workspace" [class.signed-out]="!isAuthenticated" [class.sidebar-compact]="sidebarCollapsed">
-  <aside class="sidebar" [class.menu-open]="menuOpen" *ngIf="isAuthenticated">
-    <a class="brand" [routerLink]="portalView ? '/portal' : '/memberlist'" aria-label="Cubit home"><span class="compact-brand" aria-hidden="true">C</span><img class="cubit-wordmark" src="assets/cubit-logo.png" alt="Cubit CRM Software"></a>
-    <button class="secondary mobile-menu" (click)="menuOpen=!menuOpen" [attr.aria-expanded]="menuOpen" aria-controls="main-navigation">{{sectionName}} · {{menuOpen?'Close menu':'Menu'}}</button><div class="nav-label">{{portalView ? 'MY MEMBERSHIP' : 'WORKSPACE'}}</div>
-    <nav id="main-navigation" aria-label="Main navigation" *ngIf="!portalView">
-      <ng-container *ngFor="let item of staffNavigation">
-        <div *ngIf="item.children; else directLink" class="nav-group" [class.group-current]="groupCurrent(item)" (focusout)="leaveGroup($event)">
-          <div class="nav-group-header" [class.group-current]="groupCurrent(item)">
-            <a class="nav-group-home" (click)="openGroupHome(item)" [routerLink]="item.path" [queryParams]="navigation.query(item.path)" [attr.aria-current]="navCurrent(item)?'page':null" [attr.title]="compactNavigation?item.label:null"><img class="nav-icon" [src]="'assets/icons/'+item.icon+'.svg'" alt=""><span class="nav-text">{{item.label}}</span></a>
-            <button class="nav-group-button" [attr.aria-label]="(groupExpanded(item.id)?'Collapse ':'Expand ')+item.label+' menu'" [attr.aria-expanded]="groupExpanded(item.id)" [attr.aria-controls]="'nav-'+item.id" (click)="toggleGroup(item.id,$event)"><app-arrow class="group-chevron" name="chevron-right" [class.expanded]="groupExpanded(item.id)"></app-arrow></button>
-          </div>
-          <div class="nav-children" *ngIf="groupExpanded(item.id)" [id]="'nav-'+item.id" [class.nav-flyout]="compactNavigation" [style.top.px]="compactNavigation?flyoutTop:null">
-            <div class="flyout-title" *ngIf="compactNavigation">{{item.label}}</div>
-            <a *ngFor="let child of item.children" [routerLink]="child.path" [queryParams]="navigation.query(child.path)" [fragment]="child.fragment" (click)="scrollToNavItem(child)" [class.selected]="navCurrent(child)" [attr.aria-current]="navCurrent(child)?'page':null"><span class="nav-text">{{child.label}}</span></a>
-          </div>
-        </div>
-        <ng-template #directLink><a class="nav-direct" [routerLink]="item.path" [queryParams]="navigation.query(item.path)" [class.selected]="navCurrent(item)" [attr.aria-current]="navCurrent(item)?'page':null" [attr.title]="compactNavigation?item.label:null"><img class="nav-icon" [src]="'assets/icons/'+item.icon+'.svg'" alt=""><span class="nav-text">{{item.label}}</span></a></ng-template>
-      </ng-container>
-    </nav>
-    <nav id="main-navigation" aria-label="Member navigation" *ngIf="portalView">
-      <a title="Overview" routerLink="/portal" routerLinkActive="selected" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{exact:true}"><img class="nav-icon" src="assets/icons/members.svg" alt=""> <span class="nav-text">Overview</span></a>
-      <a title="Billing history" routerLink="/portal/billing" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/reports.svg" alt=""> <span class="nav-text">Billing history</span></a>
-      <a title="My waivers" routerLink="/portal/waivers" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/waiver.svg" alt=""> <span class="nav-text">My waivers</span></a>
-      <a title="My details" routerLink="/portal/profile" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/settings.svg" alt=""> <span class="nav-text">My details</span></a>
-      <a title="Staff workspace" *ngIf="auth.isAdmin" [routerLink]="navigation.target('/memberlist')" [queryParams]="navigation.query('/memberlist')"><app-arrow name="arrow-left"></app-arrow> <span class="nav-text">Staff workspace</span></a>
-    </nav>
-    <button class="sidebar-toggle" (click)="toggleSidebar()" [attr.aria-label]="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'" [attr.title]="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"><app-arrow [name]="sidebarCollapsed ? 'chevron-right' : 'chevron-left'"></app-arrow><span>Collapse sidebar</span></button>
-    <div class="sidebar-bottom" *ngIf="workspaceLabel"><span class="environment-label"><span class="demo-dot"></span>{{workspaceLabel}}</span></div>
-  </aside>
+  @if (isAuthenticated) {
+    <aside class="sidebar" [class.menu-open]="menuOpen">
+      <a class="brand" [routerLink]="portalView ? '/portal' : '/memberlist'" aria-label="Cubit home"><span class="compact-brand" aria-hidden="true">C</span><img class="cubit-wordmark" src="assets/cubit-logo.png" alt="Cubit CRM Software"></a>
+      <button class="secondary mobile-menu" (click)="menuOpen=!menuOpen" [attr.aria-expanded]="menuOpen" aria-controls="main-navigation">{{sectionName}} · {{menuOpen?'Close menu':'Menu'}}</button><div class="nav-label">{{portalView ? 'MY MEMBERSHIP' : 'WORKSPACE'}}</div>
+      @if (!portalView) {
+        <nav id="main-navigation" aria-label="Main navigation">
+          @for (item of staffNavigation; track item) {
+            @if (item.children) {
+              <div class="nav-group" [class.group-current]="groupCurrent(item)" (focusout)="leaveGroup($event)">
+                <div class="nav-group-header" [class.group-current]="groupCurrent(item)">
+                  <a class="nav-group-home" (click)="openGroupHome(item)" [routerLink]="item.path" [queryParams]="navigation.query(item.path)" [attr.aria-current]="navCurrent(item)?'page':null" [attr.title]="compactNavigation?item.label:null"><img class="nav-icon" [src]="'assets/icons/'+item.icon+'.svg'" alt=""><span class="nav-text">{{item.label}}</span></a>
+                  <button class="nav-group-button" [attr.aria-label]="(groupExpanded(item.id)?'Collapse ':'Expand ')+item.label+' menu'" [attr.aria-expanded]="groupExpanded(item.id)" [attr.aria-controls]="'nav-'+item.id" (click)="toggleGroup(item.id,$event)"><app-arrow class="group-chevron" name="chevron-right" [class.expanded]="groupExpanded(item.id)"></app-arrow></button>
+                </div>
+                @if (groupExpanded(item.id)) {
+                  <div class="nav-children" [id]="'nav-'+item.id" [class.nav-flyout]="compactNavigation" [style.top.px]="compactNavigation?flyoutTop:null">
+                    @if (compactNavigation) {
+                      <div class="flyout-title">{{item.label}}</div>
+                    }
+                    @for (child of item.children; track child) {
+                      <a [routerLink]="child.path" [queryParams]="navigation.query(child.path)" [fragment]="child.fragment" (click)="scrollToNavItem(child)" [class.selected]="navCurrent(child)" [attr.aria-current]="navCurrent(child)?'page':null"><span class="nav-text">{{child.label}}</span></a>
+                    }
+                  </div>
+                }
+              </div>
+            } @else {
+              <a class="nav-direct" [routerLink]="item.path" [queryParams]="navigation.query(item.path)" [class.selected]="navCurrent(item)" [attr.aria-current]="navCurrent(item)?'page':null" [attr.title]="compactNavigation?item.label:null"><img class="nav-icon" [src]="'assets/icons/'+item.icon+'.svg'" alt=""><span class="nav-text">{{item.label}}</span></a>
+            }
+          }
+        </nav>
+      }
+      @if (portalView) {
+        <nav id="main-navigation" aria-label="Member navigation">
+          <a title="Overview" routerLink="/portal" routerLinkActive="selected" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{exact:true}"><img class="nav-icon" src="assets/icons/members.svg" alt=""> <span class="nav-text">Overview</span></a>
+          <a title="Billing history" routerLink="/portal/billing" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/reports.svg" alt=""> <span class="nav-text">Billing history</span></a>
+          <a title="My waivers" routerLink="/portal/waivers" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/waiver.svg" alt=""> <span class="nav-text">My waivers</span></a>
+          <a title="My details" routerLink="/portal/profile" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/settings.svg" alt=""> <span class="nav-text">My details</span></a>
+          @if (auth.isAdmin) {
+            <a title="Staff workspace" [routerLink]="navigation.target('/memberlist')" [queryParams]="navigation.query('/memberlist')"><app-arrow name="arrow-left"></app-arrow> <span class="nav-text">Staff workspace</span></a>
+          }
+        </nav>
+      }
+      <button class="sidebar-toggle" (click)="toggleSidebar()" [attr.aria-label]="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'" [attr.title]="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"><app-arrow [name]="sidebarCollapsed ? 'chevron-right' : 'chevron-left'"></app-arrow><span>Collapse sidebar</span></button>
+      @if (workspaceLabel) {
+        <div class="sidebar-bottom"><span class="environment-label"><span class="demo-dot"></span>{{workspaceLabel}}</span></div>
+      }
+    </aside>
+  }
   <div class="workspace-body">
-    <header class="topbar" *ngIf="isAuthenticated">
-      <div class="page-location"><a *ngIf="headerBackTarget" class="button secondary header-back" [routerLink]="headerBackTarget" [queryParams]="headerBackQuery" [attr.aria-label]="'Back to '+headerBackLabel" [attr.title]="'Back to '+headerBackLabel"><app-arrow name="arrow-left"></app-arrow><span>{{headerBackLabel}}</span></a><h1 class="page-title">{{sectionName}}</h1></div>
-      <div class="account-controls"><div class="account-identity"><span>{{auth.accountLabel}}</span><small>{{auth.isDemo?'Demo administrator':auth.isAdmin?'Staff administrator':'Member'}}</small></div><a class="button notification-button" *ngIf="auth.isAdmin" routerLink="/staff/settings" routerLinkActive="current" aria-label="Notification settings" title="Notification settings"><img src="assets/icons/notification.svg" alt="" width="24" height="24"></a><button class="secondary sign-out-button" (click)="logout()">Sign out</button></div>
-    </header>
-    <div class="synthetic-demo-banner" *ngIf="isAuthenticated && auth.isDemo"><strong>Synthetic demo</strong> Fictional members, payments and visits. Changes affect the shared demo only; use fictional details.</div><main id="main" tabindex="-1"><router-outlet></router-outlet></main>
-  </div>
-</div>
+    @if (isAuthenticated) {
+      <header class="topbar">
+        <div class="page-location">@if (headerBackTarget) {
+          <a class="button secondary header-back" [routerLink]="headerBackTarget" [queryParams]="headerBackQuery" [attr.aria-label]="'Back to '+headerBackLabel" [attr.title]="'Back to '+headerBackLabel"><app-arrow name="arrow-left"></app-arrow><span>{{headerBackLabel}}</span></a>
+          }<h1 class="page-title">{{sectionName}}</h1></div>
+          <div class="account-controls"><div class="account-identity"><span>{{auth.accountLabel}}</span><small>{{auth.isDemo?'Demo administrator':auth.isAdmin?'Staff administrator':'Member'}}</small></div>@if (auth.isAdmin) {
+          <a class="button notification-button" routerLink="/staff/settings" routerLinkActive="current" aria-label="Notification settings" title="Notification settings"><img src="assets/icons/notification.svg" alt="" width="24" height="24"></a>
+          }<button class="secondary sign-out-button" (click)="logout()">Sign out</button></div>
+        </header>
+      }
+      @if (isAuthenticated && auth.isDemo) {
+        <div class="synthetic-demo-banner"><strong>Synthetic demo</strong> Fictional members, payments and visits. Changes affect the shared demo only; use fictional details.</div>
+        }<main id="main" tabindex="-1"><router-outlet></router-outlet></main>
+      </div>
+    </div>

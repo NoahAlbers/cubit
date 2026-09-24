@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const { execFileSync } = require('child_process')
+require('./check-web-runtime.cjs')
 const root = path.resolve(__dirname, '..')
 const web = path.join(root, 'CubitWeb')
 if (!fs.existsSync(path.join(web, 'node_modules/@angular/cli/bin/ng.js'))) {

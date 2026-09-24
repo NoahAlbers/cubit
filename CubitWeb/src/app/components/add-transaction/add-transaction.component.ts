@@ -1,10 +1,14 @@
 import { DraftGuard } from '../../services/draft-guard';
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, OnInit, Inject, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA, MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { TransactionService } from '../../services/transaction.service';
-@Component({selector:'app-add-transaction',templateUrl:'./add-transaction.component.html'})
+@Component({
+    selector: 'app-add-transaction', templateUrl: './add-transaction.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
+})
 export class AddTransactionComponent implements OnInit {
   transactionForm:UntypedFormGroup;error='';busy=false;loading=false;requestKey=crypto.randomUUID();
   methods=['Cash','Paypal','Credit Card','Check'];today=this.dateInput(new Date());
@@ -12,7 +16,7 @@ export class AddTransactionComponent implements OnInit {
     private transactionService:TransactionService,private http:HttpClient,private fb:UntypedFormBuilder){
     this.transactionForm=this.fb.group({id:[data.id],memberId:[data.memberId],kind:['payment'],transactionDate:[this.today,Validators.required],
       amount:[null,[Validators.required,Validators.min(data.id==='New'?0.01:0),Validators.max(99999999)]],description:[''],method:[''],confirmation:[''],correctionReason:['']});
-    this.transactionForm.controls.kind.valueChanges.subscribe(()=>this.validateKind());
+    this.transactionForm.controls.kind.valueChanges.subscribe(kind=>this.validateKind(kind));
     this.validateKind();
     if(data.id!=='New')this.loadTransaction(data.id);
   }
@@ -20,8 +24,8 @@ export class AddTransactionComponent implements OnInit {
   get actionLabel(){return this.kind==='charge'?'Record charge':this.kind==='refund'?'Record refund':'Record payment';}
   get missingFields(){return Object.entries({transactionDate:'date',amount:'amount',description:this.kind==='refund'?'refund reason':'description',correctionReason:'reason for change'}).filter(([key])=>this.transactionForm.controls[key].hasError('required')).map(([,label])=>label);}
   removeEntry(){this.transactionForm.controls.amount.setValue(0);this.transactionForm.markAsDirty();}
-  validateKind(){
-    this.transactionForm.controls.description.setValidators(this.kind==='charge'||this.kind==='refund'?[Validators.required,Validators.maxLength(255)]:Validators.maxLength(255));
+  validateKind(kind=this.kind){
+    this.transactionForm.controls.description.setValidators(kind==='charge'||kind==='refund'?[Validators.required,Validators.maxLength(255)]:Validators.maxLength(255));
     this.transactionForm.controls.description.updateValueAndValidity();
     this.transactionForm.controls.correctionReason.setValidators(this.data.id!=='New'?[Validators.required,Validators.maxLength(255)]:[]);
     this.transactionForm.controls.correctionReason.updateValueAndValidity();

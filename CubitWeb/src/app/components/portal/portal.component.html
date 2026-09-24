@@ -1,34 +1,96 @@
 <section class="page portal-page" [appDraft]="hasUnsavedChanges()">
 
-  <p *ngIf="error" role="alert" class="error">{{error}}</p><p *ngIf="saved" role="status" class="success-message">{{saved}}</p>
-  <app-loading *ngIf="!data&&!error" label="Loading your membership…"></app-loading>
-  <ng-container *ngIf="data">
-    <ng-container *ngIf="section==='overview'">
-      <section class="panel detail-panel portal-welcome"><div><h2>{{data.profile.firstName}} {{data.profile.lastName}}</h2><span class="badge" [appMemberStatus]="data.status">{{data.status}}</span><p><strong>{{data.entryAllowed?'Entry allowed':'Entry blocked'}}</strong><span *ngIf="data.status==='Active'&&!data.enabledKeys"> — Contact staff to arrange an enabled access key.</span></p><p class="muted access-message">{{data.accessMessage==='Current'?'Your membership is current.':data.accessMessage}}</p></div></section>
-      <div class="stats"><a class="stat stat-link" routerLink="/portal/billing"><span>ACCOUNT BALANCE</span><strong>{{data.billing.balance | currency}}</strong><small *ngIf="data.billing.balance<0">Credit available</small></a><a class="stat stat-link" routerLink="/portal/billing"><span>PAST DUE</span><strong>{{data.billing.pastDue | currency}}</strong></a><a class="stat stat-link" routerLink="/portal/waivers"><span>WAIVERS TO SIGN</span><strong>{{data.waivers.missing}}</strong></a></div>
-      <div class="notice-strip" *ngIf="data.waivers.missing"><b>{{data.waivers.missing}} required waiver{{data.waivers.missing===1?'':'s'}} to review.</b> <a routerLink="/portal/waivers">View waivers <app-arrow name="arrow-right"></app-arrow></a></div>
-      <section class="panel detail-panel"><h2>Current plan</h2><div class="portal-plan" *ngFor="let p of currentPlans"><div><h3>{{p.name}}</h3><p class="muted">Since {{p.startDate | date:'MMM d, y':'UTC'}}<span *ngIf="p.finalBillingDate"> · Ends {{p.finalBillingDate | date:'MMM d, y':'UTC'}}</span></p></div><b>{{p.monthlyRate | currency}} / month</b></div><p class="muted" *ngIf="!currentPlans.length">You do not have a current plan. <a href="mailto:webmaster@melbournemakerspace.org">Contact staff</a> to get set up.</p><p class="muted">For plan, payment or sign-in help, <a href="mailto:webmaster@melbournemakerspace.org">contact staff</a>.</p></section>
+  @if (error) {
+    <p role="alert" class="error">{{error}}</p>
+    }@if (saved) {
+    <p role="status" class="success-message">{{saved}}</p>
+  }
+  @if (!data&&!error) {
+    <app-loading label="Loading your membership…"></app-loading>
+  }
+  @if (data) {
+    @if (section==='overview') {
+      <section class="panel detail-panel portal-welcome"><div><h2>{{data.profile.firstName}} {{data.profile.lastName}}</h2><span class="badge" [appMemberStatus]="data.status">{{data.status}}</span><p><strong>{{data.entryAllowed?'Entry allowed':'Entry blocked'}}</strong>@if (data.status==='Active'&&!data.enabledKeys) {
+      <span> — Contact staff to arrange an enabled access key.</span>
+      }</p><p class="muted access-message">{{data.accessMessage==='Current'?'Your membership is current.':data.accessMessage}}</p></div></section>
+      <div class="stats"><a class="stat stat-link" routerLink="/portal/billing"><span>ACCOUNT BALANCE</span><strong>{{data.billing.balance | currency}}</strong>@if (data.billing.balance<0) {
+      <small>Credit available</small>
+      }</a><a class="stat stat-link" routerLink="/portal/billing"><span>PAST DUE</span><strong>{{data.billing.pastDue | currency}}</strong></a><a class="stat stat-link" routerLink="/portal/waivers"><span>WAIVERS TO SIGN</span><strong>{{data.waivers.missing}}</strong></a></div>
+      @if (data.waivers.missing) {
+        <div class="notice-strip"><b>{{data.waivers.missing}} required waiver{{data.waivers.missing===1?'':'s'}} to review.</b> <a routerLink="/portal/waivers">View waivers <app-arrow name="arrow-right"></app-arrow></a></div>
+      }
+      <section class="panel detail-panel"><h2>Current plan</h2>@for (p of currentPlans; track p) {
+      <div class="portal-plan"><div><h3>{{p.name}}</h3><p class="muted">Since {{p.startDate | date:'MMM d, y':'UTC'}}@if (p.finalBillingDate) {
+      <span> · Ends {{p.finalBillingDate | date:'MMM d, y':'UTC'}}</span>
+      }</p></div><b>{{p.monthlyRate | currency}} / month</b></div>
+      }@if (!currentPlans.length) {
+      <p class="muted">You do not have a current plan. <a href="mailto:webmaster@melbournemakerspace.org">Contact staff</a> to get set up.</p>
+      }<p class="muted">For plan, payment or sign-in help, <a href="mailto:webmaster@melbournemakerspace.org">contact staff</a>.</p></section>
       <section class="panel detail-panel"><h2>Your details</h2><p>{{data.profile.email}}</p><p class="muted">Emergency contact: {{data.profile.emergencyContact || 'Not added yet'}}</p><a class="button secondary" routerLink="/portal/profile">Update my details</a></section>
-    </ng-container>
-    <ng-container *ngIf="section==='billing'">
-      <section class="panel detail-panel billing-history"><div class="section-heading"><h2>Charges & payments</h2><button *ngIf="rows.length>1" class="secondary" (click)="order=order==='desc'?'asc':'desc';sort()">{{order==='desc'?'Newest first':'Oldest first'}} <app-arrow [name]="order==='desc'?'sort-descending':'sort-ascending'"></app-arrow></button></div>
-        <div class="table-scroll" *ngIf="rows.length"><table class="record-table"><thead><tr><th>Date</th><th>Entry</th><th class="number">Amount</th><th>Status</th></tr></thead><tbody><tr *ngFor="let row of visibleRows"><td data-label="Date">{{row.date | date:'MMM d, y':'UTC'}}</td><td class="billing-entry" data-label="Entry"><b>{{row.kind}}</b><small>{{row.description}}</small></td><td data-label="Amount" class="number" [class.payment-amount]="row.amount<0">{{row.amount>0?'+':row.amount<0?'−':''}}{{abs(row.amount)|currency}}</td><td data-label="Status"><span class="badge" [class.canceled]="row.status==='Past due'">{{row.status}}</span><small *ngIf="row.status==='Part-paid'">{{row.charge.outstanding|currency}} unpaid</small></td></tr></tbody></table></div><p class="empty-small" *ngIf="!rows.length">No charges or payments have been recorded yet.</p><div class="actions ledger-paging" *ngIf="pages>1"><button class="secondary" [disabled]="page===1" (click)="page=page-1">Previous entries</button><span>{{rows.length}} entries · Page {{page}} of {{pages}}</span><button class="secondary" [disabled]="page===pages" (click)="page=page+1">Next entries</button></div>
-      </section>
-    </ng-container>
-    <ng-container *ngIf="section==='waivers'">
-      <div class="notice-strip" *ngIf="hasDemoWaivers">Demo waivers are practice only. They are not legal agreements.</div>
-      <section id="waiver-review" tabindex="-1" class="panel detail-panel" *ngIf="signing" aria-label="Review waiver">
-        <div class="section-heading"><div><h2>{{signing.version.name}}</h2><small>Version {{signing.version.number}}</small></div><button class="quiet" (click)="closeSigning()" [disabled]="busy">Close</button></div>
-        <ng-container *ngIf="signing.version.provider==='demo'&&signing.signature.status!=='Signed'"><pre class="waiver-document">{{signing.version.demoText}}</pre><label>Your full name<input [(ngModel)]="signName" maxlength="150" autocomplete="name"></label><label class="checkbox-line"><input type="checkbox" [(ngModel)]="acknowledged">I understand this is a demo signature, not a legal agreement.</label><button class="primary" [disabled]="busy||!signName.trim()||!acknowledged" (click)="completeDemo()">{{busy?'Saving…':'Complete demo signing'}}</button></ng-container>
-        <ng-container *ngIf="signing.version.provider==='docuseal'"><p>Review and sign your document securely in DocuSeal, then return here to check its status.</p><div class="actions"><a *ngIf="signing.signature.signingUrl" class="button primary" [href]="signing.signature.signingUrl" target="_blank" rel="noopener noreferrer">Open DocuSeal signing <app-arrow name="external-link"></app-arrow></a><button class="secondary" [disabled]="busy" (click)="sync(signing.signature)">Check signing status</button></div></ng-container>
-      </section>
-      <section class="panel detail-panel"><h2>Current waivers</h2><article class="waiver-card" *ngFor="let w of data.waivers.current"><div><h3>{{w.version.name}}</h3><p>{{w.version.description}}</p><small>Version {{w.version.number}} · {{w.required?'Required':'Optional'}} · {{w.version.provider==='demo'?'Local demo':w.version.provider==='paper'?'Upload signed copy':'DocuSeal'}}</small><span class="badge" [class.active]="w.complete">{{w.signature?.status==='Signed'?(w.version.provider==='demo'?'Signed · demo':'Signed'):w.complete?'Accepted upload':'Needs signature'}}</span></div><button *ngIf="!w.complete&&w.version.provider!=='paper'" class="primary" [disabled]="busy" (click)="start(w)">{{w.signature?'Continue':'Review & sign'}}</button><span *ngIf="w.signature?.status==='Signed'" class="muted">{{w.signature.completedAt|date:'MMM d, y'}}</span></article><p class="muted" *ngIf="!data.waivers.current.length">No waivers are currently assigned.</p></section>
-      <section class="panel detail-panel"><h2>Signed waivers</h2><article class="waiver-card" *ngFor="let s of data.waivers.history"><div><h3>{{s.version.name}}</h3><p>Version {{s.version.number}} · {{s.completedAt|date:'MMM d, y'}}</p><small>{{s.signerName}} · {{s.provider==='demo'?'Demo signature':'Verified by DocuSeal'}}</small><details *ngIf="s.provider==='demo'"><summary>View signed demo version</summary><pre class="waiver-document">{{s.version.demoText}}</pre></details></div><a *ngIf="s.documentUrl" class="button secondary" [href]="s.documentUrl" target="_blank" rel="noopener noreferrer">Signed document <app-arrow name="external-link"></app-arrow></a></article><p class="muted" *ngIf="!data.waivers.history.length">You haven’t signed any waivers yet.</p></section>
-    </ng-container>
-    <section class="panel detail-panel" *ngIf="section==='waivers'"><h2>Waiver documents</h2><app-waiver-documents [waivers]="data.waivers.current" [documents]="data.waivers.documents" (changed)="load()"></app-waiver-documents></section>
-    <ng-container *ngIf="section==='profile'">
-      <form #details="ngForm" (ngSubmit)="saveProfile()"><section class="panel detail-panel"><h2>Contact information</h2><p>Changes are saved only when you select Save contact details.</p><p *ngIf="hasUnsavedChanges()" class="draft-indicator">Unsaved contact changes</p><div class="form-grid"><label>First name (required)<input name="firstName" [(ngModel)]="profile.firstName" required maxlength="150" autocomplete="given-name"></label><label>Last name (required)<input name="lastName" [(ngModel)]="profile.lastName" required maxlength="150" autocomplete="family-name"></label><label>Email (required)<input name="email" [(ngModel)]="profile.email" required email type="email" maxlength="150" autocomplete="email"></label><label>Phone<input name="phone" [(ngModel)]="profile.phone" type="tel" maxlength="50" autocomplete="tel"></label></div><small>Your email is also your sign-in address. PayPal billing details are managed by staff.</small></section>
-      <section class="panel detail-panel"><h2>Emergency contact</h2><div class="form-grid"><label>Contact name<input name="emergencyContact" [(ngModel)]="profile.emergencyContact" maxlength="150"></label><label>Contact phone<input name="emergencyPhone" [(ngModel)]="profile.emergencyPhone" type="tel" maxlength="50"></label><label>Contact email<input name="emergencyEmail" [(ngModel)]="profile.emergencyEmail" type="email" email maxlength="150"></label></div><p *ngIf="details.invalid" class="muted">Complete the required names and correct any invalid email addresses or phone numbers.</p><div class="actions"><button type="button" class="secondary" (click)="discardDraft()" [disabled]="busy||!hasUnsavedChanges()">Cancel changes</button><button class="primary" [disabled]="busy||details.invalid||!hasUnsavedChanges()">{{busy?'Saving…':'Save contact details'}}</button></div></section></form>
-    </ng-container>
-  </ng-container>
+    }
+    @if (section==='billing') {
+      <section class="panel detail-panel billing-history"><div class="section-heading"><h2>Charges & payments</h2>@if (rows.length>1) {
+      <button class="secondary" (click)="order=order==='desc'?'asc':'desc';sort()">{{order==='desc'?'Newest first':'Oldest first'}} <app-arrow [name]="order==='desc'?'sort-descending':'sort-ascending'"></app-arrow></button>
+    }</div>
+    @if (rows.length) {
+      <div class="table-scroll"><table class="record-table"><thead><tr><th>Date</th><th>Entry</th><th class="number">Amount</th><th>Status</th></tr></thead><tbody>@for (row of visibleRows; track row) {
+      <tr><td data-label="Date">{{row.date | date:'MMM d, y':'UTC'}}</td><td class="billing-entry" data-label="Entry"><b>{{row.kind}}</b><small>{{row.description}}</small></td><td data-label="Amount" class="number" [class.payment-amount]="row.amount<0">{{row.amount>0?'+':row.amount<0?'−':''}}{{abs(row.amount)|currency}}</td><td data-label="Status"><span class="badge" [class.canceled]="row.status==='Past due'">{{row.status}}</span>@if (row.status==='Part-paid') {
+      <small>{{row.charge.outstanding|currency}} unpaid</small>
+    }</td></tr>
+  }</tbody></table></div>
+  }@if (!rows.length) {
+  <p class="empty-small">No charges or payments have been recorded yet.</p>
+  }@if (pages>1) {
+  <div class="actions ledger-paging"><button class="secondary" [disabled]="page===1" (click)="page=page-1">Previous entries</button><span>{{rows.length}} entries · Page {{page}} of {{pages}}</span><button class="secondary" [disabled]="page===pages" (click)="page=page+1">Next entries</button></div>
+}
+</section>
+}
+@if (section==='waivers') {
+  @if (hasDemoWaivers) {
+    <div class="notice-strip">Demo waivers are practice only. They are not legal agreements.</div>
+  }
+  @if (signing) {
+    <section id="waiver-review" tabindex="-1" class="panel detail-panel" aria-label="Review waiver">
+      <div class="section-heading"><div><h2>{{signing.version.name}}</h2><small>Version {{signing.version.number}}</small></div><button class="quiet" (click)="closeSigning()" [disabled]="busy">Close</button></div>
+      @if (signing.version.provider==='demo'&&signing.signature.status!=='Signed') {
+        <pre class="waiver-document">{{signing.version.demoText}}</pre><label>Your full name<input [(ngModel)]="signName" maxlength="150" autocomplete="name"></label><label class="checkbox-line"><input type="checkbox" [(ngModel)]="acknowledged">I understand this is a demo signature, not a legal agreement.</label><button class="primary" [disabled]="busy||!signName.trim()||!acknowledged" (click)="completeDemo()">{{busy?'Saving…':'Complete demo signing'}}</button>
+      }
+      @if (signing.version.provider==='docuseal') {
+        <p>Review and sign your document securely in DocuSeal, then return here to check its status.</p><div class="actions">@if (signing.signature.signingUrl) {
+        <a class="button primary" [href]="signing.signature.signingUrl" target="_blank" rel="noopener noreferrer">Open DocuSeal signing <app-arrow name="external-link"></app-arrow></a>
+        }<button class="secondary" [disabled]="busy" (click)="sync(signing.signature)">Check signing status</button></div>
+      }
+    </section>
+  }
+  <section class="panel detail-panel"><h2>Current waivers</h2>@for (w of data.waivers.current; track w) {
+  <article class="waiver-card"><div><h3>{{w.version.name}}</h3><p>{{w.version.description}}</p><small>Version {{w.version.number}} · {{w.required?'Required':'Optional'}} · {{w.version.provider==='demo'?'Local demo':w.version.provider==='paper'?'Upload signed copy':'DocuSeal'}}</small><span class="badge" [class.active]="w.complete">{{w.signature?.status==='Signed'?(w.version.provider==='demo'?'Signed · demo':'Signed'):w.complete?'Accepted upload':'Needs signature'}}</span></div>@if (!w.complete&&w.version.provider!=='paper') {
+  <button class="primary" [disabled]="busy" (click)="start(w)">{{w.signature?'Continue':'Review & sign'}}</button>
+  }@if (w.signature?.status==='Signed') {
+  <span class="muted">{{w.signature.completedAt|date:'MMM d, y'}}</span>
+}</article>
+}@if (!data.waivers.current.length) {
+<p class="muted">No waivers are currently assigned.</p>
+}</section>
+<section class="panel detail-panel"><h2>Signed waivers</h2>@for (s of data.waivers.history; track s) {
+<article class="waiver-card"><div><h3>{{s.version.name}}</h3><p>Version {{s.version.number}} · {{s.completedAt|date:'MMM d, y'}}</p><small>{{s.signerName}} · {{s.provider==='demo'?'Demo signature':'Verified by DocuSeal'}}</small>@if (s.provider==='demo') {
+<details><summary>View signed demo version</summary><pre class="waiver-document">{{s.version.demoText}}</pre></details>
+}</div>@if (s.documentUrl) {
+<a class="button secondary" [href]="s.documentUrl" target="_blank" rel="noopener noreferrer">Signed document <app-arrow name="external-link"></app-arrow></a>
+}</article>
+}@if (!data.waivers.history.length) {
+<p class="muted">You haven’t signed any waivers yet.</p>
+}</section>
+}
+@if (section==='waivers') {
+  <section class="panel detail-panel"><h2>Waiver documents</h2><app-waiver-documents [waivers]="data.waivers.current" [documents]="data.waivers.documents" (changed)="load()"></app-waiver-documents></section>
+}
+@if (section==='profile') {
+  <form #details="ngForm" (ngSubmit)="saveProfile()"><section class="panel detail-panel"><h2>Contact information</h2><p>Changes are saved only when you select Save contact details.</p>@if (hasUnsavedChanges()) {
+  <p class="draft-indicator">Unsaved contact changes</p>
+  }<div class="form-grid"><label>First name (required)<input name="firstName" [(ngModel)]="profile.firstName" required maxlength="150" autocomplete="given-name"></label><label>Last name (required)<input name="lastName" [(ngModel)]="profile.lastName" required maxlength="150" autocomplete="family-name"></label><label>Email (required)<input name="email" [(ngModel)]="profile.email" required email type="email" maxlength="150" autocomplete="email"></label><label>Phone<input name="phone" [(ngModel)]="profile.phone" type="tel" maxlength="50" autocomplete="tel"></label></div><small>Your email is also your sign-in address. PayPal billing details are managed by staff.</small></section>
+  <section class="panel detail-panel"><h2>Emergency contact</h2><div class="form-grid"><label>Contact name<input name="emergencyContact" [(ngModel)]="profile.emergencyContact" maxlength="150"></label><label>Contact phone<input name="emergencyPhone" [(ngModel)]="profile.emergencyPhone" type="tel" maxlength="50"></label><label>Contact email<input name="emergencyEmail" [(ngModel)]="profile.emergencyEmail" type="email" email maxlength="150"></label></div>@if (details.invalid) {
+  <p class="muted">Complete the required names and correct any invalid email addresses or phone numbers.</p>
+  }<div class="actions"><button type="button" class="secondary" (click)="discardDraft()" [disabled]="busy||!hasUnsavedChanges()">Cancel changes</button><button class="primary" [disabled]="busy||details.invalid||!hasUnsavedChanges()">{{busy?'Saving…':'Save contact details'}}</button></div></section></form>
+}
+}
 </section>

@@ -1,6 +1,6 @@
 import { DraftGuard } from '../../services/draft-guard';
-import { Component, OnInit, Inject, Input } from '@angular/core';
-import { MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA, MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
+import { Component, OnInit, Inject, Input, ChangeDetectionStrategy } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MemberService } from '../../services/member.service';
 import { PlanService } from '../../services/plan.service';
@@ -9,9 +9,11 @@ import { tap } from 'rxjs/operators';
 import { Plan } from '../../entities/plan';
 
 @Component({
-  selector: 'app-add-edit-member-plan',
-  templateUrl: './add-edit-member-plan.component.html',
-  styles: [],
+    selector: 'app-add-edit-member-plan',
+    templateUrl: './add-edit-member-plan.component.html',
+    styles: [],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class AddEditMemberPlanComponent implements OnInit {
   @Input()

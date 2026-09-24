@@ -1,13 +1,17 @@
 import { formatPhone } from '../../services/contact-format';
 import { DraftGuard } from '../../services/draft-guard';
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { billingRows } from '../member/billing-history';
 
-@Component({selector:'app-portal',templateUrl:'./portal.component.html'})
+@Component({
+    selector: 'app-portal', templateUrl: './portal.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
+})
 export class PortalComponent implements OnInit, OnDestroy {
   @ViewChild('details') details?:NgForm;
   private originalProfile='';page=1;size=20;

@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../environments/environment';
 import { AuthService } from './services/security/auth.service';
@@ -10,11 +10,13 @@ import { of } from 'rxjs';
 interface NavItem {id?:string;label:string;icon?:string;path?:string;fragment?:string;children?:NavItem[];}
 
 @Component({
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styles: [
-    '.mainContainer{ max-width:1000px; margin-left: auto; margin-right:auto;}',
-  ],
+    selector: 'app-root',
+    templateUrl: './app.component.html',
+    styles: [
+        '.mainContainer{ max-width:1000px; margin-left: auto; margin-right:auto;}',
+    ],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class AppComponent implements OnInit {
   isAuthenticated = false;

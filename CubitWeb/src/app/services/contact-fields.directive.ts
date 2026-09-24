@@ -2,7 +2,10 @@ import {Directive,ElementRef,HostListener,forwardRef,Pipe,PipeTransform} from '@
 import {AbstractControl,NG_VALIDATORS,Validator} from '@angular/forms';
 import {formatPhone,validEmail} from './contact-format';
 
-@Directive({selector:'input[type=email],input[type=tel]',providers:[{provide:NG_VALIDATORS,useExisting:forwardRef(()=>ContactFieldsDirective),multi:true}]})
+@Directive({
+    selector: 'input[type=email],input[type=tel]', providers: [{ provide: NG_VALIDATORS, useExisting: forwardRef(() => ContactFieldsDirective), multi: true }],
+    standalone: false
+})
 export class ContactFieldsDirective implements Validator {
   constructor(private element:ElementRef<HTMLInputElement>){}
   validate(control:AbstractControl){
@@ -16,7 +19,10 @@ export class ContactFieldsDirective implements Validator {
     if(value!==null&&value!==input.value){input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));}
   }
 }
-@Pipe({name:'phone'})
+@Pipe({
+    name: 'phone',
+    standalone: false
+})
 export class PhonePipe implements PipeTransform {
   transform(value:unknown){return formatPhone(value)??value;}
 }

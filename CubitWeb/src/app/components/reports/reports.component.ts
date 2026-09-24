@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ChangeDetectionStrategy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -6,7 +6,11 @@ import { ListNavigationService } from '../../services/list-navigation.service';
 import { reportPeriod } from './report-period';
 import { membershipChart } from './membership-chart';
 import { barComparison, ComparisonField } from './bar-comparison';
-@Component({selector:'app-reports',templateUrl:'./reports.component.html'})
+@Component({
+    selector: 'app-reports', templateUrl: './reports.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
+})
 export class ReportsComponent implements OnInit, OnDestroy {
   private request?:Subscription;
   ngOnDestroy(){this.request?.unsubscribe();this.clearComparison();}

@@ -1,11 +1,15 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, Subscription, of, timer } from 'rxjs';
 import { switchMap, catchError } from 'rxjs/operators';
 import { ListNavigationService } from '../../services/list-navigation.service';
 
-@Component({ selector: 'app-directory', templateUrl: './directory.component.html' })
+@Component({
+    selector: 'app-directory', templateUrl: './directory.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
+})
 export class DirectoryComponent implements OnInit, OnDestroy {
   overdue = false; loading = true; error = ''; data: any; plans: any[] = [];
   filters: any = { q: '', field: 'all', status: '', plan: '', activity: '', sort: 'name', order: 'asc', minDays: '', access: '', includeEnded: false, page: 1, pageSize: 20 };

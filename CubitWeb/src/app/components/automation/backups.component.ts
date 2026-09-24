@@ -1,6 +1,10 @@
-import {Component,EventEmitter,Output,OnInit,OnDestroy} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-@Component({selector:'app-backups',templateUrl:'./backups.component.html'})
+import {Component, EventEmitter, Output, OnInit, OnDestroy, ChangeDetectionStrategy} from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+@Component({
+    selector: 'app-backups', templateUrl: './backups.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
+})
 export class BackupsComponent implements OnInit,OnDestroy {
  @Output() ready=new EventEmitter<void>();
  data:any;form:any;revision=0;error='';message='';busy=false;dirty=false;private timer:any;

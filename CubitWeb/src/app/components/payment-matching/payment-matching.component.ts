@@ -1,9 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ListNavigationService } from '../../services/list-navigation.service';
 import { DraftGuard } from '../../services/draft-guard';
-@Component({selector:'app-payment-matching',templateUrl:'./payment-matching.component.html'})
+@Component({
+    selector: 'app-payment-matching', templateUrl: './payment-matching.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
+})
 export class PaymentMatchingComponent implements OnInit {
   data:any;detail:any;error='';message='';busy=false;loading=false;state='pending';q='';page=1;selectedId='';selectedMember:any;search='';results:any[]=[];searched=false;
   create=false;newMember:any={firstName:'',lastName:'',email:'',confirmCreate:false};simulation:any;showTest=false;private loadVersion=0;private searchVersion=0;

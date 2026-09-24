@@ -1,10 +1,14 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AccessLogService } from '../../services/access-log.service';
 import { ListNavigationService } from '../../services/list-navigation.service';
 
-@Component({selector:'app-access-log',templateUrl:'./access-log.component.html'})
+@Component({
+    selector: 'app-access-log', templateUrl: './access-log.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
+})
 export class AccessLogComponent implements OnInit, OnDestroy {
   private request?:Subscription;
   private searchTimer?:ReturnType<typeof setTimeout>;

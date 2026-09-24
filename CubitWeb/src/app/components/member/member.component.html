@@ -1,49 +1,145 @@
 <section class="page member-page" [appDraft]="hasUnsavedChanges()">
-  <div class="member-sticky" *ngIf="memberId!=='New'">
-    <div class="profile-title-row">
-      <div class="profile-identity"><svg *ngIf="memberId!=='New'" class="member-identicon profile-identicon" width="42" height="42" [appMemberIcon]="memberId" aria-hidden="true" focusable="false"></svg><div class="profile-name-line"><h2>{{headerText || 'Member'}}</h2><span *ngIf="memberId!=='New'" class="badge last-entry-badge" [attr.title]="lastEntry ? 'Last successful entry: ' + (lastEntry|date:'MMM d, y, h:mm a') : null">{{lastEntryLabel}}</span></div></div>
-      <span class="draft-indicator" *ngIf="hasUnsavedChanges()">Unsaved changes</span>
+  @if (memberId!=='New') {
+    <div class="member-sticky">
+      <div class="profile-title-row">
+        <div class="profile-identity">@if (memberId!=='New') {
+          <svg class="member-identicon profile-identicon" width="42" height="42" [appMemberIcon]="memberId" aria-hidden="true" focusable="false"></svg>
+          }<div class="profile-name-line"><h2>{{headerText || 'Member'}}</h2>@if (memberId!=='New') {
+          <span class="badge last-entry-badge" [attr.title]="lastEntry ? 'Last successful entry: ' + (lastEntry|date:'MMM d, y, h:mm a') : null">{{lastEntryLabel}}</span>
+        }</div></div>
+        @if (hasUnsavedChanges()) {
+          <span class="draft-indicator">Unsaved changes</span>
+        }
+      </div>
+      @if (memberId!=='New') {
+        <div class="profile-meta">
+          <span class="badge" [appMemberStatus]="memberStatus">{{memberStatus}}</span>
+          @if (billing) {
+            <small>{{enabledKeys}} enabled key{{enabledKeys===1?'':'s'}}</small>
+          }
+          @if (billing?.oldestUnpaidDate) {
+            <small>Oldest unpaid: {{billing.oldestUnpaidDate|date:'MMM d, y':'UTC'}}</small>
+          }
+        </div>
+      }
+      @if (billing) {
+        <div class="eligibility"><strong>{{entryAllowed?'Entry allowed':'Entry blocked'}} — {{entryReason}}</strong></div>
+      }
+      @if (memberId!=='New') {
+        <div class="profile-toolbar">
+          <div class="actions profile-quick-actions"><button class="primary" [disabled]="contactLoading" (click)="addEditTransaction('New')">Record payment</button><button class="secondary" (click)="jump('access-keys')">Manage access</button><button class="secondary" (click)="addEditPlan('New')">{{openPlan?'Change plan':'Add plan'}}</button><a class="button secondary" routerLink="/audit" [queryParams]="auditQuery" [attr.aria-label]="'Audit log for '+headerText">Audit log</a></div>
+          <nav class="section-nav" aria-label="Member sections"><button class="secondary" (click)="jump('member-overview')">Overview</button><button class="secondary" (click)="jump('membership-billing')">Membership & billing</button><button class="secondary" (click)="jump('access-keys')">Access & waivers</button><button class="secondary" (click)="jump('staff-history')">Notes & history</button></nav>
+        </div>
+      }
     </div>
-    <div class="profile-meta" *ngIf="memberId!=='New'">
-      <span class="badge" [appMemberStatus]="memberStatus">{{memberStatus}}</span>
-      <small *ngIf="billing">{{enabledKeys}} enabled key{{enabledKeys===1?'':'s'}}</small>
-      <small *ngIf="billing?.oldestUnpaidDate">Oldest unpaid: {{billing.oldestUnpaidDate|date:'MMM d, y':'UTC'}}</small>
-    </div>
-    <div *ngIf="billing" class="eligibility"><strong>{{entryAllowed?'Entry allowed':'Entry blocked'}} — {{entryReason}}</strong></div>
-    <div class="profile-toolbar" *ngIf="memberId!=='New'">
-      <div class="actions profile-quick-actions"><button class="primary" [disabled]="contactLoading" (click)="addEditTransaction('New')">Record payment</button><button class="secondary" (click)="jump('access-keys')">Manage access</button><button class="secondary" (click)="addEditPlan('New')">{{openPlan?'Change plan':'Add plan'}}</button><a class="button secondary" routerLink="/audit" [queryParams]="auditQuery" [attr.aria-label]="'Audit log for '+headerText">Audit log</a></div>
-      <nav class="section-nav" aria-label="Member sections"><button class="secondary" (click)="jump('member-overview')">Overview</button><button class="secondary" (click)="jump('membership-billing')">Membership & billing</button><button class="secondary" (click)="jump('access-keys')">Access & waivers</button><button class="secondary" (click)="jump('staff-history')">Notes & history</button></nav>
-    </div>
-  </div>
-  <p *ngIf="memberId==='New'" class="muted">Create the contact first, then assign a plan and access key. Waivers are managed separately and do not control entry.</p>
-  <div class="notice-strip" *ngIf="created"><h2>Member created · next steps</h2><ul><li><button class="quiet" (click)="jump('membership-billing')">{{memberPlans.data.length?'Review assigned plan':'Assign a membership plan'}}</button></li><li><button class="quiet" (click)="jump('access-keys')">{{enabledKeys?'Review enabled keys':'Add an access key'}}</button></li><li>Review waivers independently of membership access.</li><li>Portal access: ask <a href="mailto:webmaster@melbournemakerspace.org">webmaster@melbournemakerspace.org</a> to arrange sign-in access. No automatic email is sent.</li></ul></div>
-  <div *ngIf="billingError" class="error" role="alert">{{billingError}}</div>
-  <div class="stats" *ngIf="billing"><div class="stat"><span>ACCOUNT BALANCE</span><strong>{{billing.balance | currency}}</strong><small>{{billing.balance < 0 ? 'Credit available' : 'Posted charges less credits and payments'}}</small></div><div class="stat"><span>PAST DUE</span><strong [class.debt]="billing.pastDue > 0">{{billing.pastDue | currency}}</strong><small>{{billing.daysPastDue ? billing.daysPastDue + ' days since oldest unpaid charge' : 'No past due charges'}}</small></div><div class="stat"><span>TOTAL PAID</span><strong>{{billing.totalPaid | currency}}</strong><small>Recorded payments through today</small></div></div>
-  <div id="member-overview" tabindex="-1"><app-loading *ngIf="contactLoading&&!saveError" [compact]="true" label="Loading contact details…"></app-loading><form [formGroup]="form" class="profile-grid" [attr.aria-busy]="contactLoading"><section class="panel form-panel"><div class="section-heading"><h2>Contact details</h2><div class="actions contact-actions"><a *ngIf="memberId!=='New'&&form.value.email&&form.controls.email.valid" [href]="'mailto:' + form.value.email">Email</a><a *ngIf="memberId!=='New'&&form.value.phone&&form.controls.phone.valid" [href]="'tel:' + form.value.phone">Call</a></div></div><div class="form-grid"><label appCopy [copyEnabled]="memberId!=='New'" copyLabel="first name">First name (required)<input formControlName="firstName" required></label><label appCopy [copyEnabled]="memberId!=='New'" copyLabel="last name">Last name (required)<input formControlName="lastName" required></label><label appCopy [copyEnabled]="memberId!=='New'" copyLabel="email">Email (required)<input formControlName="email" type="email" required></label><label appCopy [copyEnabled]="memberId!=='New'" copyLabel="PayPal email">PayPal email<input formControlName="paypalEmail" type="email"></label><label appCopy [copyEnabled]="memberId!=='New'" copyLabel="phone number">Phone number<input formControlName="phone" type="tel"></label></div><details class="account-permissions"><summary>Staff permissions (optional)</summary><label>Cubit Role<select formControlName="role"><option value="member">Member</option><option value="admin">Staff administrator</option></select><small>Staff administrators can manage members, billing, keys and waivers.</small></label></details></section><section class="panel form-panel"><h2>Emergency contact</h2><label appCopy [copyEnabled]="memberId!=='New'" copyLabel="emergency contact name">Contact name<input formControlName="emergencyContact"></label><label appCopy [copyEnabled]="memberId!=='New'" copyLabel="emergency email">Contact email<input formControlName="emergencyEmail" type="email"></label><label appCopy [copyEnabled]="memberId!=='New'" copyLabel="emergency phone">Contact phone<input formControlName="emergencyPhone" type="tel"></label></section></form><p class="error" role="alert" *ngIf="saveError">{{saveError}}</p><div class="contact-save actions"><span class="save-explanation">Changes are saved only when you select {{memberId==='New'?'Create member':'Save contact details'}}.</span><span *ngIf="form.invalid" class="muted">Complete the required names and correct any invalid email addresses or phone numbers.</span><button *ngIf="memberId==='New'" class="secondary" (click)="back()" [disabled]="saving">Cancel</button><button *ngIf="memberId!=='New'" class="secondary" (click)="revertContact()" [disabled]="saving||!form.dirty">Cancel changes</button><button class="primary" [disabled]="saving||contactLoading||form.invalid||(memberId!=='New'&&!form.dirty)" (click)="save()">{{saving?'Saving…':memberId==='New'?'Create member':'Save contact details'}}</button></div></div>
-  <ng-container *ngIf="memberId !== 'New'"><div id="staff-history" tabindex="-1"><app-staff-tools [memberId]="memberId" [returnTo]="returnUrl" (changed)="loadBilling()" (ready)="sectionLoaded('staff')"></app-staff-tools></div>
-    <div class="profile-grid access-waiver-grid">
-      <section tabindex="-1" id="access-keys" class="panel detail-panel"><div class="section-heading"><h2>Access keys</h2><button class="secondary" (click)="addKey()">＋ Add key</button></div><app-loading *ngIf="activityLoading" [compact]="true" label="Loading access keys…"></app-loading><p *ngIf="activityError" class="error" role="alert">{{activityError}}</p><div class="key-row" *ngFor="let key of memberKeys.data" [appCopy]="key.serialNumber" copyLabel="access key"><div class="key-details"><code>{{key.serialNumber}}</code><small [attr.title]="key.lastUsed ? 'Last successful entry with this key' : 'No key-specific successful entry recorded; imported history does not identify individual keys.'">Last used: {{key.lastUsed ? (key.lastUsed | date:'MMM d, y, h:mm a') : 'Not recorded'}}</small></div><span class="badge">{{key.status==='Active'?'Enabled key':'Disabled key'}}</span><div class="actions key-actions"><button class="quiet" (click)="setKeyStatus(key)">{{key.status === 'Active' ? 'Disable key' : 'Enable key'}}</button><button class="quiet debt" (click)="deleteKey(key)">Remove</button></div></div><p *ngIf="!activityLoading&&!activityError&&!memberKeys.data.length" class="muted">No access keys.</p><p class="muted">An enabled key only grants entry when the membership is eligible.</p></section>
-      <app-member-waivers [memberId]="memberId" (ready)="sectionLoaded('waivers')"></app-member-waivers>
-    </div>
-    <section id="membership-billing" tabindex="-1" class="panel detail-panel"><div class="section-heading"><div><h2>Membership plans</h2><p class="muted">Monthly charges stop after the final billing date.</p></div><button class="secondary" (click)="addEditPlan('New')">{{openPlan?'Change membership plan':'＋ Add plan'}}</button></div>
-      <div class="notice-strip" *ngIf="changingPlan"><b>Change plan</b><p>1. Set and preview the current plan’s final billing date. 2. Save the cutoff. 3. Add the new plan with a start date after that cutoff and review its monthly rate. Update the PayPal subscription separately.</p><button class="secondary" *ngIf="!openPlan" (click)="addEditPlan('New')">Continue: add replacement plan</button></div><div class="table-scroll"><table class="record-table"><thead><tr><th>Plan</th><th>Monthly rate</th><th>Starts</th><th>Final billing date</th><th></th></tr></thead><tbody><tr *ngFor="let plan of memberPlans.data"><td data-label="Plan"><b>{{plan.billingName || plan.plan.name}}</b></td><td data-label="Monthly rate">{{(plan.billingRate ?? plan.plan.monthlyCost) | currency}}</td><td data-label="Starts">{{plan.startDate | date:'MMM d, y'}}</td><td data-label="Final billing date">{{(plan.finalBillingDate || plan.endDate) ? ((plan.finalBillingDate || plan.endDate) | date:'MMM d, y':'UTC') : 'Ongoing'}}</td><td><button class="secondary" (click)="openCutoff(plan)">{{(plan.finalBillingDate || plan.endDate) ? 'Review cutoff' : 'End billing'}}</button></td></tr></tbody></table></div><p *ngIf="!memberPlans.data.length" class="empty-small">No membership plans yet.</p>
-      <p class="success-message" *ngIf="cutoffSaved" role="status">{{cutoffSaved}}</p>
-      <div class="cutoff-box" *ngIf="cutoffPlan"><div class="section-heading"><h3>Set final billing date · {{cutoffPlan.billingName || cutoffPlan.plan.name}}</h3><button class="quiet" (click)="closeCutoff()" [disabled]="cutoffBusy">Close</button></div><dl class="cutoff-context"><div><dt>Last payment</dt><dd>{{billingError ? 'Payment history unavailable' : !billing ? 'Loading…' : lastPaymentDate ? (lastPaymentDate | date:'MMM d, y':'UTC') : 'No recorded payment'}}</dd></div><div><dt>Last entry</dt><dd>{{activityError ? 'Entry history unavailable' : activityLoading ? 'Loading…' : lastEntry ? (lastEntry | date:'MMM d, y') : 'No recorded entry'}}</dd></div></dl><p>Include monthly charges scheduled on or before this date. No proration. Membership access ends after this date. This records a local cutoff; it does not cancel a PayPal subscription.</p><div class="form-grid"><label>Final billing date (required)<input type="date" [(ngModel)]="cutoffDate" (ngModelChange)="changeCutoff()" [disabled]="cutoffBusy"></label><label>Reason (required)<input [(ngModel)]="cutoffReason" (ngModelChange)="changeCutoff()" maxlength="255" placeholder="e.g. Member canceled via PayPal" [disabled]="cutoffBusy"></label></div><p class="error" *ngIf="cutoffError" role="alert">{{cutoffError}}</p><div class="cutoff-preview" *ngIf="cutoffPreview"><b>Review this change</b><p>Balance: {{cutoffPreview.before.balance | currency}} <span class="sr-only">to</span> <app-arrow name="arrow-right"></app-arrow> <strong>{{cutoffPreview.after.balance | currency}}</strong><br>Past due: {{cutoffPreview.before.pastDue | currency}} <span class="sr-only">to</span> <app-arrow name="arrow-right"></app-arrow> {{cutoffPreview.after.pastDue | currency}}<br>Last billing date: {{cutoffDate | date:'MMM d, y':'UTC'}}</p><small>Payments stay intact. The date, reason, and staff account are recorded in the change history.</small></div><div class="actions"><button class="secondary" (click)="submitCutoff(true)" [disabled]="cutoffBusy || !cutoffDate || !cutoffReason.trim()">Preview balance</button><button class="primary" *ngIf="cutoffPreview" (click)="submitCutoff(false)" [disabled]="cutoffBusy">Save final billing date</button></div></div>
-    </section>
-    <section id="billing-history" tabindex="-1" class="panel detail-panel billing-history" *ngIf="billing">
-      <div class="section-heading"><h2>Billing history</h2><button class="primary" [disabled]="contactLoading" (click)="addEditTransaction('New')">Record payment / entry</button></div>
-      <p *ngIf="billing.unallocatedDebit" class="error">Refunds exceed recorded payments by {{billing.unallocatedDebit | currency}}. Review the entries below.</p>
-      <div class="filter-row ledger-filters"><label>From<input type="date" [(ngModel)]="historyFrom" (ngModelChange)="historyPage=1"></label><label>To<input type="date" [(ngModel)]="historyTo" (ngModelChange)="historyPage=1"></label><label>Entry type<select [(ngModel)]="historyType" (ngModelChange)="historyPage=1"><option value="">All entries</option><option>Charge</option><option>Payment</option><option>Refund</option></select></label><button class="quiet" (click)="historyFrom='';historyTo='';historyType='';historyPage=1">Clear filters</button></div><p class="error" *ngIf="historyFrom&&historyTo&&historyFrom>historyTo">The start date must be on or before the end date.</p>
-      <div class="table-scroll" *ngIf="filteredHistory.length"><table class="record-table"><thead><tr><th [attr.aria-sort]="historyOrder==='desc'?'descending':'ascending'"><button class="quiet charge-date-sort" (click)="historyOrder=historyOrder==='desc'?'asc':'desc';sortHistory()" [attr.aria-label]="historyOrder==='desc'?'Sort billing oldest first':'Sort billing newest first'">Date <app-arrow [name]="historyOrder==='desc'?'sort-descending':'sort-ascending'"></app-arrow></button></th><th>Entry</th><th class="number">Amount</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody>
-        <tr *ngFor="let row of visibleHistory"><td data-label="Date">{{row.date | date:'MMM d, y':'UTC'}}</td><td class="billing-entry" data-label="Entry"><b>{{row.kind}}</b><small>{{row.description}}</small></td><td data-label="Amount" class="number" [class.payment-amount]="row.amount < 0">{{row.amount > 0 ? '+' : row.amount < 0 ? '−' : ''}}{{abs(row.amount) | currency}}</td><td data-label="Status"><span class="badge" [class.canceled]="row.status==='Past due'">{{row.status}}</span><small *ngIf="row.status==='Part-paid'">{{row.charge.outstanding | currency}} unpaid</small></td><td><button class="quiet" *ngIf="row.editable" (click)="editBillingEntry(row)" [attr.aria-label]="'Edit '+row.kind.toLowerCase()+' from '+row.date">Edit</button></td></tr>
-      </tbody></table></div><p class="empty-small" *ngIf="!historyRows.length">No billing entries yet.</p><p class="empty-small" *ngIf="historyRows.length&&!filteredHistory.length">No entries match these filters.</p><div class="actions ledger-paging" *ngIf="historyPages>1"><button class="secondary" [disabled]="historyPage===1" (click)="historyPage=historyPage-1">Previous entries</button><span>{{filteredHistory.length}} entries · Page {{historyPage}} of {{historyPages}}</span><button class="secondary" [disabled]="historyPage===historyPages" (click)="historyPage=historyPage+1">Next entries</button></div>
-      <details class="billing-audit" *ngIf="billing.adjustments.length || billing.history.length || billing.voidedCharges.length || paymentChanges.length"><summary>Change history</summary>
-        <div class="note-entry" *ngFor="let a of billing.adjustments"><b>Charge {{a.credit >= 0 ? 'reduced' : 'increased'}} by {{abs(a.credit) | currency}}</b><p>{{a.reason}}</p><small>{{a.author}} · {{a.createdAt | date:'medium'}}</small></div>
-        <div class="note-entry" *ngFor="let p of paymentChanges"><b>{{p.correctedBy ? 'Original entry' : p.reversalOf ? 'Reversed entry' : p.amount == 0 ? 'Entry removed' : 'Updated entry'}} · {{p.amount | currency}}</b><p>{{p.correctionReason || p.description}}</p><small>{{p.recordedBy || 'Imported history'}} · {{p.createdAt | date:'medium'}}</small></div>
-        <div class="note-entry" *ngFor="let event of billing.history"><b>Final billing date: {{event.finalBillingDate | date:'MMM d, y':'UTC'}}</b><p>{{event.reason}}</p><small>{{event.changedBy}} · {{event.changedAt | date:'medium'}} · Previous: {{event.previousDate || 'Ongoing'}}</small></div>
-        <div class="note-entry" *ngFor="let c of billing.voidedCharges"><b>Charge stopped by final billing date</b><p>{{c.dueDate | date:'MMM d, y':'UTC'}} · {{c.planName}} · {{c.amount | currency}}</p></div>
-      </details>
-    </section>
-
-  </ng-container>
+  }
+  @if (memberId==='New') {
+    <p class="muted">Create the contact first, then assign a plan and access key. Waivers are managed separately and do not control entry.</p>
+  }
+  @if (created) {
+    <div class="notice-strip"><h2>Member created · next steps</h2><ul><li><button class="quiet" (click)="jump('membership-billing')">{{memberPlans.data.length?'Review assigned plan':'Assign a membership plan'}}</button></li><li><button class="quiet" (click)="jump('access-keys')">{{enabledKeys?'Review enabled keys':'Add an access key'}}</button></li><li>Review waivers independently of membership access.</li><li>Portal access: ask <a href="mailto:webmaster@melbournemakerspace.org">webmaster&#64;melbournemakerspace.org</a> to arrange sign-in access. No automatic email is sent.</li></ul></div>
+  }
+  @if (billingError) {
+    <div class="error" role="alert">{{billingError}}</div>
+  }
+  @if (billing) {
+    <div class="stats"><div class="stat"><span>ACCOUNT BALANCE</span><strong>{{billing.balance | currency}}</strong><small>{{billing.balance < 0 ? 'Credit available' : 'Posted charges less credits and payments'}}</small></div><div class="stat"><span>PAST DUE</span><strong [class.debt]="billing.pastDue > 0">{{billing.pastDue | currency}}</strong><small>{{billing.daysPastDue ? billing.daysPastDue + ' days since oldest unpaid charge' : 'No past due charges'}}</small></div><div class="stat"><span>TOTAL PAID</span><strong>{{billing.totalPaid | currency}}</strong><small>Recorded payments through today</small></div></div>
+  }
+  <div id="member-overview" tabindex="-1">@if (contactLoading&&!saveError) {
+    <app-loading [compact]="true" label="Loading contact details…"></app-loading>
+    }<form [formGroup]="form" class="profile-grid" [attr.aria-busy]="contactLoading"><section class="panel form-panel"><div class="section-heading"><h2>Contact details</h2><div class="actions contact-actions">@if (memberId!=='New'&&form.value.email&&form.controls.email.valid) {
+    <a [href]="'mailto:' + form.value.email">Email</a>
+    }@if (memberId!=='New'&&form.value.phone&&form.controls.phone.valid) {
+    <a [href]="'tel:' + form.value.phone">Call</a>
+    }</div></div><div class="form-grid"><label appCopy [copyEnabled]="memberId!=='New'" copyLabel="first name">First name (required)<input formControlName="firstName" required></label><label appCopy [copyEnabled]="memberId!=='New'" copyLabel="last name">Last name (required)<input formControlName="lastName" required></label><label appCopy [copyEnabled]="memberId!=='New'" copyLabel="email">Email (required)<input formControlName="email" type="email" required></label><label appCopy [copyEnabled]="memberId!=='New'" copyLabel="PayPal email">PayPal email<input formControlName="paypalEmail" type="email"></label><label appCopy [copyEnabled]="memberId!=='New'" copyLabel="phone number">Phone number<input formControlName="phone" type="tel"></label></div><details class="account-permissions"><summary>Staff permissions (optional)</summary><label>Cubit Role<select formControlName="role"><option value="member">Member</option><option value="admin">Staff administrator</option></select><small>Staff administrators can manage members, billing, keys and waivers.</small></label></details></section><section class="panel form-panel"><h2>Emergency contact</h2><label appCopy [copyEnabled]="memberId!=='New'" copyLabel="emergency contact name">Contact name<input formControlName="emergencyContact"></label><label appCopy [copyEnabled]="memberId!=='New'" copyLabel="emergency email">Contact email<input formControlName="emergencyEmail" type="email"></label><label appCopy [copyEnabled]="memberId!=='New'" copyLabel="emergency phone">Contact phone<input formControlName="emergencyPhone" type="tel"></label></section></form>@if (saveError) {
+    <p class="error" role="alert">{{saveError}}</p>
+    }<div class="contact-save actions"><span class="save-explanation">Changes are saved only when you select {{memberId==='New'?'Create member':'Save contact details'}}.</span>@if (form.invalid) {
+    <span class="muted">Complete the required names and correct any invalid email addresses or phone numbers.</span>
+    }@if (memberId==='New') {
+    <button class="secondary" (click)="back()" [disabled]="saving">Cancel</button>
+    }@if (memberId!=='New') {
+    <button class="secondary" (click)="revertContact()" [disabled]="saving||!form.dirty">Cancel changes</button>
+    }<button class="primary" [disabled]="saving||contactLoading||form.invalid||(memberId!=='New'&&!form.dirty)" (click)="save()">{{saving?'Saving…':memberId==='New'?'Create member':'Save contact details'}}</button></div></div>
+    @if (memberId !== 'New') {
+      <div id="staff-history" tabindex="-1"><app-staff-tools [memberId]="memberId" [returnTo]="returnUrl" (changed)="loadBilling()" (ready)="sectionLoaded('staff')"></app-staff-tools></div>
+      <div class="profile-grid access-waiver-grid">
+        <section tabindex="-1" id="access-keys" class="panel detail-panel"><div class="section-heading"><h2>Access keys</h2><button class="secondary" (click)="addKey()">＋ Add key</button></div>@if (activityLoading) {
+        <app-loading [compact]="true" label="Loading access keys…"></app-loading>
+        }@if (activityError) {
+        <p class="error" role="alert">{{activityError}}</p>
+        }@for (key of memberKeys.data; track key) {
+        <div class="key-row" [appCopy]="key.serialNumber" copyLabel="access key"><div class="key-details"><code>{{key.serialNumber}}</code><small [attr.title]="key.lastUsed ? 'Last successful entry with this key' : 'No key-specific successful entry recorded; imported history does not identify individual keys.'">Last used: {{key.lastUsed ? (key.lastUsed | date:'MMM d, y, h:mm a') : 'Not recorded'}}</small></div><span class="badge">{{key.status==='Active'?'Enabled key':'Disabled key'}}</span><div class="actions key-actions"><button class="quiet" (click)="setKeyStatus(key)">{{key.status === 'Active' ? 'Disable key' : 'Enable key'}}</button><button class="quiet debt" (click)="deleteKey(key)">Remove</button></div></div>
+        }@if (!activityLoading&&!activityError&&!memberKeys.data.length) {
+        <p class="muted">No access keys.</p>
+        }<p class="muted">An enabled key only grants entry when the membership is eligible.</p></section>
+        <app-member-waivers [memberId]="memberId" (ready)="sectionLoaded('waivers')"></app-member-waivers>
+      </div>
+      <section id="membership-billing" tabindex="-1" class="panel detail-panel"><div class="section-heading"><div><h2>Membership plans</h2><p class="muted">Monthly charges stop after the final billing date.</p></div><button class="secondary" (click)="addEditPlan('New')">{{openPlan?'Change membership plan':'＋ Add plan'}}</button></div>
+      @if (changingPlan) {
+        <div class="notice-strip"><b>Change plan</b><p>1. Set and preview the current plan’s final billing date. 2. Save the cutoff. 3. Add the new plan with a start date after that cutoff and review its monthly rate. Update the PayPal subscription separately.</p>@if (!openPlan) {
+        <button class="secondary" (click)="addEditPlan('New')">Continue: add replacement plan</button>
+      }</div>
+      }<div class="table-scroll"><table class="record-table"><thead><tr><th>Plan</th><th>Monthly rate</th><th>Starts</th><th>Final billing date</th><th></th></tr></thead><tbody>@for (plan of memberPlans.data; track plan) {
+      <tr><td data-label="Plan"><b>{{plan.billingName || plan.plan.name}}</b></td><td data-label="Monthly rate">{{(plan.billingRate ?? plan.plan.monthlyCost) | currency}}</td><td data-label="Starts">{{plan.startDate | date:'MMM d, y'}}</td><td data-label="Final billing date">{{(plan.finalBillingDate || plan.endDate) ? ((plan.finalBillingDate || plan.endDate) | date:'MMM d, y':'UTC') : 'Ongoing'}}</td><td><button class="secondary" (click)="openCutoff(plan)">{{(plan.finalBillingDate || plan.endDate) ? 'Review cutoff' : 'End billing'}}</button></td></tr>
+    }</tbody></table></div>@if (!memberPlans.data.length) {
+    <p class="empty-small">No membership plans yet.</p>
+  }
+  @if (cutoffSaved) {
+    <p class="success-message" role="status">{{cutoffSaved}}</p>
+  }
+  @if (cutoffPlan) {
+    <div class="cutoff-box"><div class="section-heading"><h3>Set final billing date · {{cutoffPlan.billingName || cutoffPlan.plan.name}}</h3><button class="quiet" (click)="closeCutoff()" [disabled]="cutoffBusy">Close</button></div><dl class="cutoff-context"><div><dt>Last payment</dt><dd>{{billingError ? 'Payment history unavailable' : !billing ? 'Loading…' : lastPaymentDate ? (lastPaymentDate | date:'MMM d, y':'UTC') : 'No recorded payment'}}</dd></div><div><dt>Last entry</dt><dd>{{activityError ? 'Entry history unavailable' : activityLoading ? 'Loading…' : lastEntry ? (lastEntry | date:'MMM d, y') : 'No recorded entry'}}</dd></div></dl><p>Include monthly charges scheduled on or before this date. No proration. Membership access ends after this date. This records a local cutoff; it does not cancel a PayPal subscription.</p><div class="form-grid"><label>Final billing date (required)<input type="date" [(ngModel)]="cutoffDate" (ngModelChange)="changeCutoff()" [disabled]="cutoffBusy"></label><label>Reason (required)<input [(ngModel)]="cutoffReason" (ngModelChange)="changeCutoff()" maxlength="255" placeholder="e.g. Member canceled via PayPal" [disabled]="cutoffBusy"></label></div>@if (cutoffError) {
+    <p class="error" role="alert">{{cutoffError}}</p>
+    }@if (cutoffPreview) {
+    <div class="cutoff-preview"><b>Review this change</b><p>Balance: {{cutoffPreview.before.balance | currency}} <span class="sr-only">to</span> <app-arrow name="arrow-right"></app-arrow> <strong>{{cutoffPreview.after.balance | currency}}</strong><br>Past due: {{cutoffPreview.before.pastDue | currency}} <span class="sr-only">to</span> <app-arrow name="arrow-right"></app-arrow> {{cutoffPreview.after.pastDue | currency}}<br>Last billing date: {{cutoffDate | date:'MMM d, y':'UTC'}}</p><small>Payments stay intact. The date, reason, and staff account are recorded in the change history.</small></div>
+    }<div class="actions"><button class="secondary" (click)="submitCutoff(true)" [disabled]="cutoffBusy || !cutoffDate || !cutoffReason.trim()">Preview balance</button>@if (cutoffPreview) {
+    <button class="primary" (click)="submitCutoff(false)" [disabled]="cutoffBusy">Save final billing date</button>
+  }</div></div>
+}
+</section>
+@if (billing) {
+  <section id="billing-history" tabindex="-1" class="panel detail-panel billing-history">
+    <div class="section-heading"><h2>Billing history</h2><button class="primary" [disabled]="contactLoading" (click)="addEditTransaction('New')">Record payment / entry</button></div>
+    @if (billing.unallocatedDebit) {
+      <p class="error">Refunds exceed recorded payments by {{billing.unallocatedDebit | currency}}. Review the entries below.</p>
+    }
+    <div class="filter-row ledger-filters"><label>From<input type="date" [(ngModel)]="historyFrom" (ngModelChange)="historyPage=1"></label><label>To<input type="date" [(ngModel)]="historyTo" (ngModelChange)="historyPage=1"></label><label>Entry type<select [(ngModel)]="historyType" (ngModelChange)="historyPage=1"><option value="">All entries</option><option>Charge</option><option>Payment</option><option>Refund</option></select></label><button class="quiet" (click)="historyFrom='';historyTo='';historyType='';historyPage=1">Clear filters</button></div>@if (historyFrom&&historyTo&&historyFrom>historyTo) {
+    <p class="error">The start date must be on or before the end date.</p>
+  }
+  @if (filteredHistory.length) {
+    <div class="table-scroll"><table class="record-table"><thead><tr><th [attr.aria-sort]="historyOrder==='desc'?'descending':'ascending'"><button class="quiet charge-date-sort" (click)="historyOrder=historyOrder==='desc'?'asc':'desc';sortHistory()" [attr.aria-label]="historyOrder==='desc'?'Sort billing oldest first':'Sort billing newest first'">Date <app-arrow [name]="historyOrder==='desc'?'sort-descending':'sort-ascending'"></app-arrow></button></th><th>Entry</th><th class="number">Amount</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody>
+    @for (row of visibleHistory; track row) {
+      <tr><td data-label="Date">{{row.date | date:'MMM d, y':'UTC'}}</td><td class="billing-entry" data-label="Entry"><b>{{row.kind}}</b><small>{{row.description}}</small></td><td data-label="Amount" class="number" [class.payment-amount]="row.amount < 0">{{row.amount > 0 ? '+' : row.amount < 0 ? '−' : ''}}{{abs(row.amount) | currency}}</td><td data-label="Status"><span class="badge" [class.canceled]="row.status==='Past due'">{{row.status}}</span>@if (row.status==='Part-paid') {
+      <small>{{row.charge.outstanding | currency}} unpaid</small>
+    }</td><td>@if (row.editable) {
+    <button class="quiet" (click)="editBillingEntry(row)" [attr.aria-label]="'Edit '+row.kind.toLowerCase()+' from '+row.date">Edit</button>
+  }</td></tr>
+}
+</tbody></table></div>
+}@if (!historyRows.length) {
+<p class="empty-small">No billing entries yet.</p>
+}@if (historyRows.length&&!filteredHistory.length) {
+<p class="empty-small">No entries match these filters.</p>
+}@if (historyPages>1) {
+<div class="actions ledger-paging"><button class="secondary" [disabled]="historyPage===1" (click)="historyPage=historyPage-1">Previous entries</button><span>{{filteredHistory.length}} entries · Page {{historyPage}} of {{historyPages}}</span><button class="secondary" [disabled]="historyPage===historyPages" (click)="historyPage=historyPage+1">Next entries</button></div>
+}
+@if (billing.adjustments.length || billing.history.length || billing.voidedCharges.length || paymentChanges.length) {
+  <details class="billing-audit"><summary>Change history</summary>
+  @for (a of billing.adjustments; track a) {
+    <div class="note-entry"><b>Charge {{a.credit >= 0 ? 'reduced' : 'increased'}} by {{abs(a.credit) | currency}}</b><p>{{a.reason}}</p><small>{{a.author}} · {{a.createdAt | date:'medium'}}</small></div>
+  }
+  @for (p of paymentChanges; track p) {
+    <div class="note-entry"><b>{{p.correctedBy ? 'Original entry' : p.reversalOf ? 'Reversed entry' : p.amount == 0 ? 'Entry removed' : 'Updated entry'}} · {{p.amount | currency}}</b><p>{{p.correctionReason || p.description}}</p><small>{{p.recordedBy || 'Imported history'}} · {{p.createdAt | date:'medium'}}</small></div>
+  }
+  @for (event of billing.history; track event) {
+    <div class="note-entry"><b>Final billing date: {{event.finalBillingDate | date:'MMM d, y':'UTC'}}</b><p>{{event.reason}}</p><small>{{event.changedBy}} · {{event.changedAt | date:'medium'}} · Previous: {{event.previousDate || 'Ongoing'}}</small></div>
+  }
+  @for (c of billing.voidedCharges; track c) {
+    <div class="note-entry"><b>Charge stopped by final billing date</b><p>{{c.dueDate | date:'MMM d, y':'UTC'}} · {{c.planName}} · {{c.amount | currency}}</p></div>
+  }
+</details>
+}
+</section>
+}
+}
 </section>

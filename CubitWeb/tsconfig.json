@@ -4,22 +4,22 @@
     "outDir": "./dist/out-tsc",
     "sourceMap": true,
     "declaration": false,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "experimentalDecorators": true,
     "target": "ES2022",
     "typeRoots": [
       "node_modules/@types"
     ],
+    "module": "ES2022",
+    "useDefineForClassFields": false,
     "lib": [
-      "es2017",
-      "dom"
+      "ES2022",
+      "DOM"
     ],
-    "module": "es2020",
-    "baseUrl": "./",
-    "useDefineForClassFields": false
+    "strict": false,
+    "esModuleInterop": true
   },
   "angularCompilerOptions": {
-    "fullTemplateTypeCheck": true,
-    "strictTeplates": true
+    "strictTemplates": false
   }
 }

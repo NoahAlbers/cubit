@@ -1,6 +1,10 @@
-import {Component,OnInit} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
-@Component({selector:'app-staff-settings',templateUrl:'./staff-settings.component.html'})
+import {Component, OnInit, ChangeDetectionStrategy} from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+@Component({
+    selector: 'app-staff-settings', templateUrl: './staff-settings.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
+})
 export class StaffSettingsComponent implements OnInit {
   preferences:any;email='';baseline='';error='';message='';busy=false;preview:any[]=[];
   constructor(private http:HttpClient){}

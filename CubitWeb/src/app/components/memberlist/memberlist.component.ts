@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Observable, BehaviorSubject, Subject } from 'rxjs';
 import { MemberService } from '../../services/member.service';
 import {
@@ -11,24 +11,26 @@ import {
 import { Router } from '@angular/router';
 import { Member } from '../../entities/member';
 import { MatSort } from '@angular/material/sort';
-import { MatLegacyTableDataSource as MatTableDataSource } from '@angular/material/legacy-table';
+import { MatTableDataSource } from '@angular/material/table';
 @Component({
-  selector: 'app-memberlist',
-  templateUrl: './memberlist.component.html',
-  styles: [
-    `
-      .mat-column-firstname {
-        width: 15ch;
-      }
-      .mat-column-Status {
-        width: 15ch;
-      }
-      .mat-column-Balance {
-        width: 15ch;
-        text-align: right;
-      }
-    `,
-  ],
+    selector: 'app-memberlist',
+    templateUrl: './memberlist.component.html',
+    styles: [
+        `
+           .mat-column-firstname {
+             width: 15ch;
+           }
+           .mat-column-Status {
+             width: 15ch;
+           }
+           .mat-column-Balance {
+             width: 15ch;
+             text-align: right;
+           }
+         `,
+    ],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class MemberlistComponent implements OnInit, AfterViewInit {
   public memberList = [];

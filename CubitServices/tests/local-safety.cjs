@@ -67,7 +67,9 @@ async function main() {
       assert.match(navigation.body, /Cubit/)
     }
     const scripts = [...home.body.matchAll(/<script src="([^"]+)"/g)].map(match => match[1])
-    assert.ok(scripts.length >= 3)
+    // The application builder emits main/polyfills without a separate webpack runtime.
+    assert.ok(scripts.some(script => /^main[-.].*\.js$/.test(script)))
+    assert.ok(scripts.some(script => /^polyfills[-.].*\.js$/.test(script)))
     for (const script of scripts) {
       const result = await request(port, '/' + script)
       assert.equal(result.status, 200)

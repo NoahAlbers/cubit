@@ -1,14 +1,16 @@
 import { DraftGuard } from '../../services/draft-guard';
-import { Component, OnInit, Inject } from '@angular/core';
-import { MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA, MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
+import { Component, OnInit, Inject, ChangeDetectionStrategy } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { MemberService } from '../../services/member.service';
 import { KeyService } from '../../services/key.service';
 
 @Component({
-  selector: 'app-add-key',
-  templateUrl: './add-key.component.html',
-  styles: [],
+    selector: 'app-add-key',
+    templateUrl: './add-key.component.html',
+    styles: [],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class AddKeyComponent implements OnInit {
   keyForm: UntypedFormGroup;

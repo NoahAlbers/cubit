@@ -124,7 +124,7 @@ Application source, assets, tests, and development tools belong in Git. Database
 
 | Area | Implementation |
 | --- | --- |
-| Staff interface and member portal | Angular 15 and TypeScript |
+| Staff interface and member portal | Angular 22, Angular Material 22 and TypeScript 6 |
 | API | Express and TypeScript |
 | Persistence | MySQL with TypeORM |
 | Authentication | Password hashing, signed sessions, and staff/member API permission checks |
@@ -160,7 +160,7 @@ Open [localhost:5001](http://localhost:5001). A fresh setup creates synthetic de
 .\dev\stop-local.cmd # Stop the app and database, preserving local data
 ```
 
-Setup downloads verified portable tools into `.private/tools/`. The Windows compatibility setup uses Node 17 for the API and Node 22 for frontend builds; the hosted review uses Node 22. Never point local development at an operational database: development setup can initialize or update its own schema.
+Setup downloads verified portable tools into `.private/tools/`. The Windows compatibility setup uses Node 17 for the API and Node 22.23.3 for frontend builds; the hosted review uses Node 22. Angular 22 builds require Node 22.22.3 or newer in the 22.x line, or Node 24.15 or newer in the 24.x line. Existing Windows installations should rerun setup before using `build-web.cmd` to obtain the updated build runtime. Never point local development at an operational database: development setup can initialize or update its own schema.
 
 `compose.yaml` provides an optional isolated Docker configuration. The native Windows workflow is the verified development path. Docker requires building the frontend first; Docker startup has not been verified in the current Windows environment.
 
@@ -174,7 +174,7 @@ Setup downloads verified portable tools into `.private/tools/`. The Windows comp
 
 ## Checks and deployment
 
-GitHub Actions installs frozen dependencies, builds both projects, validates deployment shell syntax, and runs database-free safety and billing tests. Coverage includes billing-date boundaries, grace periods, payment allocation, staff blocks, review isolation, calendar averages, and the waiver preview gate. Additional tests cover reports, directory behavior, and member isolation.
+GitHub Actions installs frozen dependencies, builds both projects, validates deployment shell syntax, and runs frontend, safety and billing tests. Angular's Vitest checks cover billing form validation, duplicate-submit prevention, refunds, draft cancellation, SVG rendering and authentication headers. Business-rule coverage includes billing-date boundaries, grace periods, payment allocation, staff blocks, review isolation, calendar averages, and the waiver preview gate. Additional tests cover reports, directory behavior, and member isolation.
 
 For a checkout with Node and pnpm available:
 
@@ -182,6 +182,7 @@ For a checkout with Node and pnpm available:
 pnpm --dir CubitServices install --frozen-lockfile
 pnpm --dir CubitWeb install --frozen-lockfile
 node dev/build-web.cjs
+pnpm --dir CubitWeb test
 pnpm --dir CubitServices build
 cd CubitServices
 node tests/local-safety.cjs
@@ -195,7 +196,7 @@ Integration tests require an appropriate local dataset and may create or modify 
 
 ### Hosted review configuration
 
-The reference service is `deploy/cubit-review.service`; the release updater is `deploy/update-review.sh`. The service runs the compiled API from `/opt/cubit/current/CubitServices`, behind Caddy, with private settings in `/etc/cubit/review.env`.
+The reference service is `deploy/cubit-review.service`; the release updater is `deploy/update-review.sh`. The service runs the compiled API from `/opt/cubit/current/CubitServices`, behind Caddy, with private settings in `/etc/cubit/review.env`. On an x86_64 VPS, run `sudo bash deploy/install-build-node.sh` once before the Angular 22 deployment. It installs a checksum-verified Node 22.23.3 build runtime under `/opt/cubit/tools/`; the updater uses it without replacing Ubuntu's API runtime.
 
 Use `CUBIT_MODE=hosted-review`, `HOST=127.0.0.1`, a loopback MySQL connection, a separately validated review schema, and strong independently generated credentials. Hosted mode requires `DATABASE_NAME=cubit_review`, `DATABASE_USERNAME=cubit_app`, and a JWT secret of at least 48 characters. Set `WAIVER_PREVIEW_PASSWORD` privately for the staff preview. Do not enable local development mode on the VPS. Disable copied login passwords before exposing a review database.
 

@@ -1,9 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DraftGuard } from '../../services/draft-guard';
 import { ListNavigationService } from '../../services/list-navigation.service';
-@Component({selector:'app-plan-catalog',templateUrl:'./plan-catalog.component.html'})
+@Component({
+    selector: 'app-plan-catalog', templateUrl: './plan-catalog.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
+})
 export class PlanCatalogComponent implements OnInit {
   data:any;error='';message='';busy=false;filter='available';draft:any;baseline='';creating=false;
   constructor(private http:HttpClient,private route:ActivatedRoute,private router:Router,private guard:DraftGuard,public navigation:ListNavigationService){}

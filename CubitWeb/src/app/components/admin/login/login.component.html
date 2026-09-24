@@ -1,40 +1,48 @@
-  <main>
-    <section class="splash" aria-label="Cubit">
-      <svg class="art" preserveAspectRatio="xMaxYMax meet" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="1000" height="960" viewBox="0 0 1000 960" fill="none" role="img" aria-labelledby="title desc">
-  <title id="title">Cubit rocket splash</title>
-  <desc id="desc">The Makerspace rocket with red measurement bars and ticks aligned to its nose-to-tail length and fin-to-fin width. The sweeping trail is excluded.</desc>
-  <g id="rocket" transform="translate(-360 -25) scale(6.6)" fill="#78B8EB">
-    <path d="M186 40 C180 61 172 80 158 94 C151 101 145 105 139 105 L137 103 C137 91 148 75 161 62 C169 54 178 46 186 40Z"/>
-    <path d="M137 91 C134 97 134 101 134 105 L123 104Z"/>
-    <path d="M152 102 C149 109 145 115 142 119 L139 107 C144 107 148 105 152 102Z"/>
-    <path id="extended-swoop" d="M-2000 124 H40 C70 124 97 126 121 107 L133 107 L137 111 C114 133 86 147 65 147 H-2000Z"/>
-  </g>
-  <!-- Rocket axis: base (138,104) to nose (186,40), unit (0.6,-0.8). Width and its centered tick use the perpendicular axis (0.8,0.6). -->
-  <g id="dimensions" transform="translate(-360 -25) scale(6.6)" stroke="#FF3B4B" stroke-linecap="square">
-    <path id="length-and-width" d="M113.040 97.280L166.800 25.600M111.440 96.080L114.640 98.480M165.200 24.400L168.400 26.800M126.480 79.360L125.280 78.460M139.920 61.440L138.320 60.240M153.360 43.520L152.160 42.620M181.200 26.400L200.560 40.920M180.000 28.000L182.400 24.800M199.360 42.520L201.760 39.320M190.880 33.660L192.080 32.060" stroke-width=".7"/>
-  </g>
-</svg>
+<main>
+  <section class="splash" aria-label="Cubit">
+    <svg class="art" preserveAspectRatio="xMaxYMax meet" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="1000" height="960" viewBox="0 0 1000 960" fill="none" role="img" aria-labelledby="title desc">
+      <title id="title">Cubit rocket splash</title>
+      <desc id="desc">The Makerspace rocket with red measurement bars and ticks aligned to its nose-to-tail length and fin-to-fin width. The sweeping trail is excluded.</desc>
+      <g id="rocket" transform="translate(-360 -25) scale(6.6)" fill="#78B8EB">
+        <path d="M186 40 C180 61 172 80 158 94 C151 101 145 105 139 105 L137 103 C137 91 148 75 161 62 C169 54 178 46 186 40Z"/>
+        <path d="M137 91 C134 97 134 101 134 105 L123 104Z"/>
+        <path d="M152 102 C149 109 145 115 142 119 L139 107 C144 107 148 105 152 102Z"/>
+        <path id="extended-swoop" d="M-2000 124 H40 C70 124 97 126 121 107 L133 107 L137 111 C114 133 86 147 65 147 H-2000Z"/>
+      </g>
+      <!-- Rocket axis: base (138,104) to nose (186,40), unit (0.6,-0.8). Width and its centered tick use the perpendicular axis (0.8,0.6). -->
+      <g id="dimensions" transform="translate(-360 -25) scale(6.6)" stroke="#FF3B4B" stroke-linecap="square">
+        <path id="length-and-width" d="M113.040 97.280L166.800 25.600M111.440 96.080L114.640 98.480M165.200 24.400L168.400 26.800M126.480 79.360L125.280 78.460M139.920 61.440L138.320 60.240M153.360 43.520L152.160 42.620M181.200 26.400L200.560 40.920M180.000 28.000L182.400 24.800M199.360 42.520L201.760 39.320M190.880 33.660L192.080 32.060" stroke-width=".7"/>
+      </g>
+    </svg>
 
-      <div class="login-brand"><img class="logo" src="assets/login/cubit-logo-concept.png" alt="Cubit CRM Software"></div>
-      <div class="story"><h2><span class="sr-only">A place for people who make things.</span><span aria-hidden="true">A place for people<br>who <span class="story-word" [class.fading]="storyFading">{{storyWord}}</span> things.</span></h2><p>Members, access, billing, and the details that keep the Melbourne Makerspace moving.</p></div>
-    </section>
-    <section class="sign-in" aria-labelledby="welcome">
-      <img class="watermark" src="assets/login/cubit-gear-watermark.svg" #gear alt="" aria-hidden="true">
-      <div class="form-wrap">
-        <h1 id="welcome" aria-live="polite" aria-atomic="true">{{firstName ? 'Welcome back, ' + firstName + '.' : 'Welcome back.'}}</h1>
-        <form id="login" [formGroup]="form" (ngSubmit)="login()" [attr.aria-busy]="pending" (input)="onInput($event)">
-          <div class="field"><label for="email">Email</label><input id="email" name="email" formControlName="email" type="email" autocomplete="username" placeholder="you@example.com" (blur)="recognizeBrowser()" [readOnly]="pending" required></div>
-          <div class="field"><label for="password">Password</label><div class="password"><input id="password" name="password" formControlName="password" [type]="showPassword ? 'text' : 'password'" autocomplete="current-password" required><button class="reveal" type="button" [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'" [attr.aria-pressed]="showPassword" (click)="showPassword = !showPassword"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
-          <button class="submit" type="submit" [class.ready]="form.valid && !pending" [class.pending]="pending" [disabled]="pending || form.invalid">
-            <span *ngIf="pending" class="signing-spinner" aria-hidden="true"></span>
-            <span>{{pending ? 'Signing in…' : 'Sign in'}}</span>
-            <app-arrow *ngIf="form.valid && !pending" name="arrow-right" aria-hidden="true"></app-arrow>
-          </button>
-          <span class="sr-only" role="status">{{pending ? 'Signing in. Please wait.' : ''}}</span>
-          <p *ngIf="loginError" class="notice error" role="alert">{{loginError}}</p>
-        </form>
-        <p class="help">Need access or a password reset? <a href="mailto:webmaster@melbournemakerspace.org?subject=Cubit%20sign-in%20help">Contact staff</a> here.</p>
-<details class="demo-access" *ngIf="demoAvailable"><summary>Try the local demo</summary><div class="actions"><button type="button" class="secondary" [disabled]="pending" (click)="demo(true)">Demo member</button><button type="button" class="secondary" [disabled]="pending" (click)="demo(false)">Demo staff</button></div><small>Uses synthetic accounts only.</small></details>
-      </div>
-    </section>
-  </main>
+    <div class="login-brand"><img class="logo" src="assets/login/cubit-logo-concept.png" alt="Cubit CRM Software"></div>
+    <div class="story"><h2><span class="sr-only">A place for people who make things.</span><span aria-hidden="true">A place for people<br>who <span class="story-word" [class.fading]="storyFading">{{storyWord}}</span> things.</span></h2><p>Members, access, billing, and the details that keep the Melbourne Makerspace moving.</p></div>
+  </section>
+  <section class="sign-in" aria-labelledby="welcome">
+    <img class="watermark" src="assets/login/cubit-gear-watermark.svg" #gear alt="" aria-hidden="true">
+    <div class="form-wrap">
+      <h1 id="welcome" aria-live="polite" aria-atomic="true">{{firstName ? 'Welcome back, ' + firstName + '.' : 'Welcome back.'}}</h1>
+      <form id="login" [formGroup]="form" (ngSubmit)="login()" [attr.aria-busy]="pending" (input)="onInput($event)">
+        <div class="field"><label for="email">Email</label><input id="email" name="email" formControlName="email" type="email" autocomplete="username" placeholder="you@example.com" (blur)="recognizeBrowser()" [readOnly]="pending" required></div>
+        <div class="field"><label for="password">Password</label><div class="password"><input id="password" name="password" formControlName="password" [type]="showPassword ? 'text' : 'password'" autocomplete="current-password" required><button class="reveal" type="button" [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'" [attr.aria-pressed]="showPassword" (click)="showPassword = !showPassword"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+        <button class="submit" type="submit" [class.ready]="form.valid && !pending" [class.pending]="pending" [disabled]="pending || form.invalid">
+          @if (pending) {
+            <span class="signing-spinner" aria-hidden="true"></span>
+          }
+          <span>{{pending ? 'Signing in…' : 'Sign in'}}</span>
+          @if (form.valid && !pending) {
+            <app-arrow name="arrow-right" aria-hidden="true"></app-arrow>
+          }
+        </button>
+        <span class="sr-only" role="status">{{pending ? 'Signing in. Please wait.' : ''}}</span>
+        @if (loginError) {
+          <p class="notice error" role="alert">{{loginError}}</p>
+        }
+      </form>
+      <p class="help">Need access or a password reset? <a href="mailto:webmaster@melbournemakerspace.org?subject=Cubit%20sign-in%20help">Contact staff</a> here.</p>
+      @if (demoAvailable) {
+        <details class="demo-access"><summary>Try the local demo</summary><div class="actions"><button type="button" class="secondary" [disabled]="pending" (click)="demo(true)">Demo member</button><button type="button" class="secondary" [disabled]="pending" (click)="demo(false)">Demo staff</button></div><small>Uses synthetic accounts only.</small></details>
+      }
+    </div>
+  </section>
+</main>

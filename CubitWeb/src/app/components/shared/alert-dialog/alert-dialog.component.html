@@ -1,1 +1,5 @@
-<div class="cubit-dialog"><h2 mat-dialog-title>{{header}}</h2><p>{{message}}</p><label *ngIf="data.requireReason">Reason<textarea [(ngModel)]="reason" maxlength="500" rows="3" required></textarea></label><div class="actions"><button class="secondary" (click)="cancel()" *ngIf="OkCancel">Cancel</button><button class="primary" (click)="OkCancel?ok():close()" [disabled]="data.requireReason&&!reason.trim()">{{OkCancel?'Confirm':'Close'}}</button></div></div>
+<div class="cubit-dialog"><h2 mat-dialog-title>{{header}}</h2><p>{{message}}</p>@if (data.requireReason) {
+<label>Reason<textarea [(ngModel)]="reason" maxlength="500" rows="3" required></textarea></label>
+}<div class="actions">@if (OkCancel) {
+<button class="secondary" (click)="cancel()">Cancel</button>
+}<button class="primary" (click)="OkCancel?ok():close()" [disabled]="data.requireReason&&!reason.trim()">{{OkCancel?'Confirm':'Close'}}</button></div></div>

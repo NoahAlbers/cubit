@@ -15,7 +15,6 @@ import { WaiverDocumentsComponent } from './components/waivers/waiver-documents.
 import { NgModule } from '@angular/core';
 import { AppMaterialModule } from './/app-material.module';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { FlexLayoutModule } from '@angular/flex-layout';
 
 import { AppRoutingModule } from './app-routing.module';
 import { RouterModule } from '@angular/router';
@@ -47,7 +46,7 @@ import { AlertDialogComponent } from './components/shared/alert-dialog/alert-dia
 import { AddKeyComponent } from './components/add-key/add-key.component';
 import { AddTransactionComponent } from './components/add-transaction/add-transaction.component';
 
-import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import { AuthInterceptor } from './services/AuthInterceptor';
 import { UploadFileService } from './services/upload-service.service';
 import { QrComponent } from './components/qr/qr.component';
@@ -58,8 +57,7 @@ import { TransactionService } from './services/transaction.service';
 import { AccessLogComponent } from './components/access-log/access-log.component';
 import { AccessLogService } from './services/access-log.service';
 
-@NgModule({
-    declarations: [
+@NgModule({ declarations: [
         LoadingComponent, ContactFieldsDirective, PhonePipe, CopyFieldDirective, MemberStatusDirective, DraftDialogComponent, DraftExitDirective, FieldFeedbackDirective, MemberIconDirective, ArrowComponent, InfoComponent, WaiverLockComponent, WaiverDocumentsComponent,
         DirectoryComponent,
         PaymentMatchingComponent, PlanCatalogComponent, AuditLogComponent, StaffSettingsComponent,
@@ -76,19 +74,14 @@ import { AccessLogService } from './services/access-log.service';
         AccessLogComponent,
         // QrComponent
     ],
-    imports: [
-        AppRoutingModule,
-        HttpClientModule,
+    bootstrap: [AppComponent], imports: [AppRoutingModule,
         AppMaterialModule,
         BrowserModule,
         BrowserAnimationsModule,
-        FlexLayoutModule,
         AppRoutingModule,
         AppMaterialModule,
         ReactiveFormsModule,
-        FormsModule,
-    ],
-    providers: [
+        FormsModule], providers: [
         AuthService,
         AccessLogService,
         MemberService,
@@ -101,7 +94,6 @@ import { AccessLogService } from './services/access-log.service';
             useClass: AuthInterceptor,
             multi: true,
         },
-    ],
-    bootstrap: [AppComponent]
-})
+        provideHttpClient(withXhr(), withInterceptorsFromDi()),
+    ] })
 export class AppModule {}

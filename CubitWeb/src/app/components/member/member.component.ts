@@ -1,5 +1,5 @@
 import { formatPhone } from '../../services/contact-format';
-import { Component, OnInit, OnDestroy, NgZone, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone, ElementRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import {
   UntypedFormGroup,
@@ -9,21 +9,21 @@ import {
 import { MemberService } from '../../services/member.service';
 import { Observable, Subscription } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { MatLegacyDialog as MatDialog } from '@angular/material/legacy-dialog';
-import { MatLegacyTableDataSource as MatTableDataSource } from '@angular/material/legacy-table';
+import { MatDialog } from '@angular/material/dialog';
+import { MatTableDataSource } from '@angular/material/table';
 import { AddEditMemberPlanComponent } from '../add-edit-member-plan/add-edit-member-plan.component';
 import { AlertDialogComponent } from '../shared/alert-dialog/alert-dialog.component';
 import { AddKeyComponent } from '../add-key/add-key.component';
 import { AddTransactionComponent } from '../add-transaction/add-transaction.component';
 import { UploadFileService } from '../../services/upload-service.service';
-import { MatLegacySlideToggle as MatSlideToggle } from '@angular/material/legacy-slide-toggle';
-import * as qr from 'qrcode-generator';
+import { MatSlideToggle } from '@angular/material/slide-toggle';
+import qr from 'qrcode-generator';
 import { Key } from '../../entities/memberKey';
 import { HttpErrorResponse, HttpClient } from '@angular/common/http';
 import { Member } from '../../entities/member';
 import { MemberPlan } from '../../entities/memberPlan';
 import { KeyService } from '../../services/key.service';
-import { MatLegacySnackBar as MatSnackBar } from '@angular/material/legacy-snack-bar';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { TransactionService } from '../../services/transaction.service';
 import { Transaction } from '../../entities/transaction';
 import { billingRows, BillingRow } from './billing-history';
@@ -33,28 +33,30 @@ import { StaffToolsComponent } from './staff-tools.component';
 import { DraftGuard } from '../../services/draft-guard';
 
 @Component({
-  selector: 'app-member',
-  templateUrl: './member.component.html',
-  styles: [
-    `
-      .mediumField {
-        width: 200px;
-      }
+    selector: 'app-member',
+    templateUrl: './member.component.html',
+    styles: [
+        `
+           .mediumField {
+             width: 200px;
+           }
 
-      .mat-column-serialNumber {
-        width: 50%;
-        flex: none;
-      }
+           .mat-column-serialNumber {
+             width: 50%;
+             flex: none;
+           }
 
-      .subheaderText {
-        margin-left: 1em;
-      }
+           .subheaderText {
+             margin-left: 1em;
+           }
 
-      .Inactive {
-        color: red;
-      }
-    `,
-  ],
+           .Inactive {
+             color: red;
+           }
+         `,
+    ],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
 })
 export class MemberComponent implements OnInit, OnDestroy {
   @ViewChild(StaffToolsComponent) staffTools?:StaffToolsComponent;

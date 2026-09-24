@@ -1,12 +1,16 @@
 import { WaiverDocumentsService } from '../../services/waiver-documents.service';
 import { DraftGuard } from '../../services/draft-guard';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ListNavigationService } from '../../services/list-navigation.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { WaiverPreviewService } from '../../services/waiver-preview.service';
 
-@Component({selector:'app-waivers',templateUrl:'./waivers.component.html'})
+@Component({
+    selector: 'app-waivers', templateUrl: './waivers.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
+})
 export class WaiversComponent implements OnInit {
   tab='compliance';private original='';
   hasUnsavedChanges(){return !!this.form&&(this.confirmed||JSON.stringify(this.form)!==this.original);}

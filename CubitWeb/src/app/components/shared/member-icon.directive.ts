@@ -7,7 +7,10 @@ const MEMBER_ICON_STYLE: JdenticonConfig = {
   backColor: '#0000',
 };
 
-@Directive({ selector: 'svg[appMemberIcon]' })
+@Directive({
+    selector: 'svg[appMemberIcon]',
+    standalone: false
+})
 export class MemberIconDirective implements OnChanges {
   @Input() appMemberIcon = '';
 

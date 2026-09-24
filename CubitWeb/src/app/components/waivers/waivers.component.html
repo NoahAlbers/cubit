@@ -1,29 +1,84 @@
-<section class="page" *ngIf="!gate.unlocked"><div class="panel detail-panel waiver-lock-panel"><app-waiver-lock (unlocked)="load()"></app-waiver-lock></div></section>
-<ng-container *ngIf="gate.unlocked"><section class="page waivers-page" [appDraft]="hasUnsavedChanges()"><div class="page-heading"><button class="primary" (click)="edit()" [disabled]="busy">＋ New waiver</button></div>
-  <p class="error" role="alert" *ngIf="error">{{error}}</p><p role="status" class="success-message" *ngIf="saved">{{saved}}</p><app-loading *ngIf="!data&&!error" label="Loading waivers…"></app-loading>
-  <ng-container *ngIf="data">
+@if (!gate.unlocked) {
+  <section class="page"><div class="panel detail-panel waiver-lock-panel"><app-waiver-lock (unlocked)="load()"></app-waiver-lock></div></section>
+}
+@if (gate.unlocked) {
+  <section class="page waivers-page" [appDraft]="hasUnsavedChanges()"><div class="page-heading"><button class="primary" (click)="edit()" [disabled]="busy">＋ New waiver</button></div>
+  @if (error) {
+    <p class="error" role="alert">{{error}}</p>
+    }@if (saved) {
+    <p role="status" class="success-message">{{saved}}</p>
+    }@if (!data&&!error) {
+    <app-loading label="Loading waivers…"></app-loading>
+  }
+  @if (data) {
     <div class="notice-strip">{{data.docusealConnected ? 'DocuSeal is connected. Local demo signatures are labeled separately.' : 'Local waiver demo · DocuSeal is not connected. Demo signatures are not legal agreements.'}}</div>
     <div class="stats"><div class="stat"><span>ACTIVE MEMBERS</span><strong>{{data.summary.active}}</strong></div><div class="stat"><span>MISSING REQUIRED WAIVERS</span><strong class="debt">{{data.summary.required?data.summary.missing:'—'}}</strong></div><div class="stat"><span>UP TO DATE</span><strong>{{data.summary.required?data.summary.complete:'—'}}</strong></div></div>
-    <div class="notice-strip" *ngIf="!data.summary.required"><h2>No required waivers configured</h2><p>Compliance is not configured. Publish a required waiver before tracking signatures.</p><button class="secondary" (click)="edit()">Set up a required waiver</button></div><nav class="section-nav" aria-label="Waiver sections"><button [class.primary]="tab==='compliance'" [class.secondary]="tab!=='compliance'" [attr.aria-pressed]="tab==='compliance'" (click)="tab='compliance'">Member compliance</button><button [class.primary]="tab==='templates'" [class.secondary]="tab!=='templates'" [attr.aria-pressed]="tab==='templates'" (click)="tab='templates'">Templates & versions</button><button [class.primary]="tab==='uploads'" [class.secondary]="tab!=='uploads'" (click)="tab='uploads'">Upload review ({{pendingDocuments.length}})</button></nav>
-    <section class="panel detail-panel" *ngIf="tab==='uploads'"><h2>Uploaded waivers awaiting review</h2><app-waiver-documents [staff]="true" [allowUpload]="false" emptyMessage="No uploads awaiting review." [documents]="pendingDocuments" (changed)="load()"></app-waiver-documents></section><section id="waiver-editor" tabindex="-1" class="panel detail-panel" *ngIf="form">
-      <div class="section-heading"><h2>{{editing?'Publish new version':'New waiver'}}</h2><button class="quiet" (click)="cancelEdit()" [disabled]="busy">Cancel</button></div>
-      <p class="draft-indicator" *ngIf="hasUnsavedChanges()">Unpublished changes</p><p>Waiver name, description and document details are required. Confirm publication before saving.</p><form #waiverForm="ngForm" (ngSubmit)="publish()"><div class="form-grid"><label>Waiver name<input name="name" [(ngModel)]="form.name" required maxlength="150"></label><label>Signing method<select name="provider" [(ngModel)]="form.provider"><option value="paper">Upload signed paper waiver</option><option value="demo">Local demo</option><option value="docuseal" [disabled]="!data.docusealConnected">DocuSeal{{data.docusealConnected?'':' (not connected)'}}</option></select></label></div>
-      <label *ngIf="form.provider!=='demo'">Original waiver PDF<input type="file" accept="application/pdf" (change)="uploadTemplate($event)" [disabled]="busy"></label><p class="muted" *ngIf="form.provider!=='demo'">Upload a fresh PDF for this version. Previous versions and completed documents remain on file.</p><label>Description<textarea name="description" [(ngModel)]="form.description" rows="2" required maxlength="2000"></textarea></label>
-      <label class="checkbox-line"><input type="checkbox" name="required" [(ngModel)]="form.required">Required for all members, including new members</label>
-      <label *ngIf="form.provider==='demo'">Demo document text<textarea name="demoText" [(ngModel)]="form.demoText" rows="7" required maxlength="20000"></textarea></label>
-      <div *ngIf="form.provider==='docuseal'"><p class="muted">Create the document and signature fields in DocuSeal first. Use a new or cloned template for every version.</p><div class="form-grid"><label>DocuSeal template ID<input type="number" name="templateId" [(ngModel)]="form.docusealTemplateId" min="1" step="1" required></label><label>Signer role<input name="signerRole" [(ngModel)]="form.signerRole" required maxlength="100"></label></div><a [href]="data.docusealUrl+'/templates'" target="_blank" rel="noopener noreferrer">Manage documents in DocuSeal <app-arrow name="external-link"></app-arrow></a></div>
-      <label class="checkbox-line"><input type="checkbox" name="confirmed" [(ngModel)]="confirmed">{{editing?'Publish a new version. Previous signatures remain on record; required waivers must be signed again.':'Publish this waiver to the member portal.'}}</label><button class="primary" [disabled]="busy||waiverForm.invalid||!confirmed||(form.provider!=='demo'&&!form.sourceDocumentId)">{{busy?'Publishing…':'Publish waiver'}}</button></form>
-    </section>
-    <section class="panel detail-panel" [hidden]="tab!=='templates'"><div class="section-heading"><h2>Waiver templates</h2><div class="actions"><a *ngIf="data.docusealConnected" class="button secondary" [href]="data.docusealUrl" target="_blank" rel="noopener noreferrer">Open DocuSeal <app-arrow name="external-link"></app-arrow></a><label class="checkbox-line"><input type="checkbox" [(ngModel)]="showArchived" (ngModelChange)="remember()">Show archived</label></div></div>
-      <article class="waiver-template" *ngFor="let w of visibleWaivers"><div class="section-heading"><div><h3>{{w.name}}</h3><p class="muted">{{w.version.description}}</p><span class="badge">Version {{w.version.number}}</span> <span class="badge">{{w.archived?'Archived':w.required?'Required':'Optional'}}</span> <span class="badge">{{w.version.provider==='demo'?'Local demo':w.version.provider==='paper'?'Paper upload':'DocuSeal'}}</span></div><div class="actions"><button class="secondary" *ngIf="!w.archived" (click)="edit(w)" [disabled]="busy">New version</button><button class="quiet" (click)="archive(w)" [disabled]="busy">{{w.archived?'Restore':'Archive'}}</button></div></div>
-        <details><summary>Versions & document</summary><div class="note-entry" *ngFor="let v of w.versions"><b>Version {{v.number}} · {{v.signedCount}} signed</b><small>{{v.createdAt|date:'medium'}} · {{v.author}}</small><pre class="waiver-document" *ngIf="v.provider==='demo'">{{v.demoText}}</pre><p *ngIf="v.provider==='docuseal'">DocuSeal template {{v.docusealTemplateId}}</p></div></details>
-      </article><p *ngIf="!visibleWaivers.length" class="muted">No published waivers.</p>
-    </section>
-    <section class="panel detail-panel" *ngIf="tab==='compliance'&&data.summary.required"><div class="section-heading"><h2>Member compliance</h2><span class="muted">{{data.summary.required}} required waiver{{data.summary.required===1?'':'s'}}</span></div><div class="waiver-filters"><label>Search members<input [(ngModel)]="search" (ngModelChange)="remember()" placeholder="Name or email"></label><label>Membership<select [(ngModel)]="scope" (ngModelChange)="remember()"><option value="active">Active members</option><option value="all">All members</option></select></label><label>Waiver status<select [(ngModel)]="completion" (ngModelChange)="remember()"><option value="missing">Missing signatures</option><option value="complete">Up to date</option><option value="all">All</option></select></label></div>
-      <p class="muted">{{members.length}} members · Checks the current version of each required waiver.</p><div class="table-scroll"><table class="compliance-table"><thead><tr><th>Member</th><th>Membership</th><th>Missing waivers</th><th>Contact</th></tr></thead><tbody><tr *ngFor="let m of members"><td><a [routerLink]="['/member',m.id]" [queryParams]="navigation.memberQuery">{{m.name}}</a><small>{{m.email}}</small></td><td><span class="badge" [appMemberStatus]="m.status">{{m.status}}</span></td><td>{{missingNames(m)||'Up to date'}}</td><td><a [href]="'mailto:'+m.email">Email</a></td></tr></tbody></table></div><p *ngIf="!members.length" class="empty-small">{{!search&&completion==='missing'?'All members in this membership group have completed the required waivers.':'No members match these filters.'}}</p>
-    </section>
-    <details class="panel detail-panel"><summary>Signing history</summary><div class="table-scroll"><table><thead><tr><th>Member</th><th>Waiver</th><th>Status</th><th>Date</th><th></th></tr></thead><tbody><tr *ngFor="let s of data.signatures"><td><a [routerLink]="['/member',s.memberId]" [queryParams]="navigation.memberQuery">{{s.memberName}}</a></td><td>{{s.version.name}}<small>Version {{s.version.number}} · {{s.provider==='demo'?'Demo':'DocuSeal'}}</small></td><td>{{s.status}}</td><td>{{(s.completedAt||s.createdAt)|date:'MMM d, y'}}</td><td><a *ngIf="s.documentUrl" [href]="s.documentUrl" target="_blank" rel="noopener noreferrer">Signed document <app-arrow name="external-link"></app-arrow></a><button class="quiet" *ngIf="s.provider==='docuseal'&&s.status!=='Signed'" (click)="sync(s)" [disabled]="busy">Check status</button></td></tr></tbody></table></div><p *ngIf="!data.signatures.length">No signing requests yet.</p></details>
-    <details class="panel detail-panel"><summary>DocuSeal connection</summary><p>Documents and signature fields are designed in DocuSeal. Cubit publishes versions, opens individual signing requests, and verifies completion with the DocuSeal API.</p><p *ngIf="!data.docusealConnected">The local demo works without an account. To test DocuSeal, configure a sandbox key on the server, restart Cubit, and publish a waiver with a DocuSeal template ID. Keep API keys out of waiver text.</p><a href="https://www.docuseal.com/docs/api" target="_blank" rel="noopener noreferrer">DocuSeal documentation <app-arrow name="external-link"></app-arrow></a></details>
-  </ng-container>
+    @if (!data.summary.required) {
+      <div class="notice-strip"><h2>No required waivers configured</h2><p>Compliance is not configured. Publish a required waiver before tracking signatures.</p><button class="secondary" (click)="edit()">Set up a required waiver</button></div>
+      }<nav class="section-nav" aria-label="Waiver sections"><button [class.primary]="tab==='compliance'" [class.secondary]="tab!=='compliance'" [attr.aria-pressed]="tab==='compliance'" (click)="tab='compliance'">Member compliance</button><button [class.primary]="tab==='templates'" [class.secondary]="tab!=='templates'" [attr.aria-pressed]="tab==='templates'" (click)="tab='templates'">Templates & versions</button><button [class.primary]="tab==='uploads'" [class.secondary]="tab!=='uploads'" (click)="tab='uploads'">Upload review ({{pendingDocuments.length}})</button></nav>
+      @if (tab==='uploads') {
+        <section class="panel detail-panel"><h2>Uploaded waivers awaiting review</h2><app-waiver-documents [staff]="true" [allowUpload]="false" emptyMessage="No uploads awaiting review." [documents]="pendingDocuments" (changed)="load()"></app-waiver-documents></section>
+        }@if (form) {
+        <section id="waiver-editor" tabindex="-1" class="panel detail-panel">
+          <div class="section-heading"><h2>{{editing?'Publish new version':'New waiver'}}</h2><button class="quiet" (click)="cancelEdit()" [disabled]="busy">Cancel</button></div>
+          @if (hasUnsavedChanges()) {
+            <p class="draft-indicator">Unpublished changes</p>
+            }<p>Waiver name, description and document details are required. Confirm publication before saving.</p><form #waiverForm="ngForm" (ngSubmit)="publish()"><div class="form-grid"><label>Waiver name<input name="name" [(ngModel)]="form.name" required maxlength="150"></label><label>Signing method<select name="provider" [(ngModel)]="form.provider"><option value="paper">Upload signed paper waiver</option><option value="demo">Local demo</option><option value="docuseal" [disabled]="!data.docusealConnected">DocuSeal{{data.docusealConnected?'':' (not connected)'}}</option></select></label></div>
+            @if (form.provider!=='demo') {
+              <label>Original waiver PDF<input type="file" accept="application/pdf" (change)="uploadTemplate($event)" [disabled]="busy"></label>
+              }@if (form.provider!=='demo') {
+              <p class="muted">Upload a fresh PDF for this version. Previous versions and completed documents remain on file.</p>
+              }<label>Description<textarea name="description" [(ngModel)]="form.description" rows="2" required maxlength="2000"></textarea></label>
+              <label class="checkbox-line"><input type="checkbox" name="required" [(ngModel)]="form.required">Required for all members, including new members</label>
+              @if (form.provider==='demo') {
+                <label>Demo document text<textarea name="demoText" [(ngModel)]="form.demoText" rows="7" required maxlength="20000"></textarea></label>
+              }
+              @if (form.provider==='docuseal') {
+                <div><p class="muted">Create the document and signature fields in DocuSeal first. Use a new or cloned template for every version.</p><div class="form-grid"><label>DocuSeal template ID<input type="number" name="templateId" [(ngModel)]="form.docusealTemplateId" min="1" step="1" required></label><label>Signer role<input name="signerRole" [(ngModel)]="form.signerRole" required maxlength="100"></label></div><a [href]="data.docusealUrl+'/templates'" target="_blank" rel="noopener noreferrer">Manage documents in DocuSeal <app-arrow name="external-link"></app-arrow></a></div>
+              }
+              <label class="checkbox-line"><input type="checkbox" name="confirmed" [(ngModel)]="confirmed">{{editing?'Publish a new version. Previous signatures remain on record; required waivers must be signed again.':'Publish this waiver to the member portal.'}}</label><button class="primary" [disabled]="busy||waiverForm.invalid||!confirmed||(form.provider!=='demo'&&!form.sourceDocumentId)">{{busy?'Publishing…':'Publish waiver'}}</button></form>
+            </section>
+          }
+          <section class="panel detail-panel" [hidden]="tab!=='templates'"><div class="section-heading"><h2>Waiver templates</h2><div class="actions">@if (data.docusealConnected) {
+          <a class="button secondary" [href]="data.docusealUrl" target="_blank" rel="noopener noreferrer">Open DocuSeal <app-arrow name="external-link"></app-arrow></a>
+          }<label class="checkbox-line"><input type="checkbox" [(ngModel)]="showArchived" (ngModelChange)="remember()">Show archived</label></div></div>
+          @for (w of visibleWaivers; track w) {
+            <article class="waiver-template"><div class="section-heading"><div><h3>{{w.name}}</h3><p class="muted">{{w.version.description}}</p><span class="badge">Version {{w.version.number}}</span> <span class="badge">{{w.archived?'Archived':w.required?'Required':'Optional'}}</span> <span class="badge">{{w.version.provider==='demo'?'Local demo':w.version.provider==='paper'?'Paper upload':'DocuSeal'}}</span></div><div class="actions">@if (!w.archived) {
+            <button class="secondary" (click)="edit(w)" [disabled]="busy">New version</button>
+            }<button class="quiet" (click)="archive(w)" [disabled]="busy">{{w.archived?'Restore':'Archive'}}</button></div></div>
+            <details><summary>Versions & document</summary>@for (v of w.versions; track v) {
+            <div class="note-entry"><b>Version {{v.number}} · {{v.signedCount}} signed</b><small>{{v.createdAt|date:'medium'}} · {{v.author}}</small>@if (v.provider==='demo') {
+            <pre class="waiver-document">{{v.demoText}}</pre>
+            }@if (v.provider==='docuseal') {
+            <p>DocuSeal template {{v.docusealTemplateId}}</p>
+          }</div>
+        }</details>
+      </article>
+      }@if (!visibleWaivers.length) {
+      <p class="muted">No published waivers.</p>
+    }
+  </section>
+  @if (tab==='compliance'&&data.summary.required) {
+    <section class="panel detail-panel"><div class="section-heading"><h2>Member compliance</h2><span class="muted">{{data.summary.required}} required waiver{{data.summary.required===1?'':'s'}}</span></div><div class="waiver-filters"><label>Search members<input [(ngModel)]="search" (ngModelChange)="remember()" placeholder="Name or email"></label><label>Membership<select [(ngModel)]="scope" (ngModelChange)="remember()"><option value="active">Active members</option><option value="all">All members</option></select></label><label>Waiver status<select [(ngModel)]="completion" (ngModelChange)="remember()"><option value="missing">Missing signatures</option><option value="complete">Up to date</option><option value="all">All</option></select></label></div>
+    <p class="muted">{{members.length}} members · Checks the current version of each required waiver.</p><div class="table-scroll"><table class="compliance-table"><thead><tr><th>Member</th><th>Membership</th><th>Missing waivers</th><th>Contact</th></tr></thead><tbody>@for (m of members; track m) {
+    <tr><td><a [routerLink]="['/member',m.id]" [queryParams]="navigation.memberQuery">{{m.name}}</a><small>{{m.email}}</small></td><td><span class="badge" [appMemberStatus]="m.status">{{m.status}}</span></td><td>{{missingNames(m)||'Up to date'}}</td><td><a [href]="'mailto:'+m.email">Email</a></td></tr>
+  }</tbody></table></div>@if (!members.length) {
+  <p class="empty-small">{{!search&&completion==='missing'?'All members in this membership group have completed the required waivers.':'No members match these filters.'}}</p>
+}
 </section>
-</ng-container>
+}
+<details class="panel detail-panel"><summary>Signing history</summary><div class="table-scroll"><table><thead><tr><th>Member</th><th>Waiver</th><th>Status</th><th>Date</th><th></th></tr></thead><tbody>@for (s of data.signatures; track s) {
+<tr><td><a [routerLink]="['/member',s.memberId]" [queryParams]="navigation.memberQuery">{{s.memberName}}</a></td><td>{{s.version.name}}<small>Version {{s.version.number}} · {{s.provider==='demo'?'Demo':'DocuSeal'}}</small></td><td>{{s.status}}</td><td>{{(s.completedAt||s.createdAt)|date:'MMM d, y'}}</td><td>@if (s.documentUrl) {
+<a [href]="s.documentUrl" target="_blank" rel="noopener noreferrer">Signed document <app-arrow name="external-link"></app-arrow></a>
+}@if (s.provider==='docuseal'&&s.status!=='Signed') {
+<button class="quiet" (click)="sync(s)" [disabled]="busy">Check status</button>
+}</td></tr>
+}</tbody></table></div>@if (!data.signatures.length) {
+<p>No signing requests yet.</p>
+}</details>
+<details class="panel detail-panel"><summary>DocuSeal connection</summary><p>Documents and signature fields are designed in DocuSeal. Cubit publishes versions, opens individual signing requests, and verifies completion with the DocuSeal API.</p>@if (!data.docusealConnected) {
+<p>The local demo works without an account. To test DocuSeal, configure a sandbox key on the server, restart Cubit, and publish a waiver with a DocuSeal template ID. Keep API keys out of waiver text.</p>
+}<a href="https://www.docuseal.com/docs/api" target="_blank" rel="noopener noreferrer">DocuSeal documentation <app-arrow name="external-link"></app-arrow></a></details>
+}
+</section>
+}

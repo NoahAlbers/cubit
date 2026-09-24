@@ -1,8 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ListNavigationService } from '../../services/list-navigation.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-@Component({selector:'app-automation',templateUrl:'./automation.component.html'})
+@Component({
+    selector: 'app-automation', templateUrl: './automation.component.html',
+    changeDetection: ChangeDetectionStrategy.Eager,
+    standalone: false
+})
 export class AutomationComponent implements OnInit {
   data:any; settings:any; error='';message='';busy=false;preview:any;
   graceEnabled=true; graceDays=60;

@@ -1,7 +1,10 @@
 import { Directive, DoCheck, ElementRef, OnDestroy, Optional, Renderer2, Self } from '@angular/core';
 import { NgControl } from '@angular/forms';
 let nextId=0;
-@Directive({selector:'input[formControlName],input[ngModel],select[formControlName],select[ngModel],textarea[formControlName],textarea[ngModel]'})
+@Directive({
+    selector: 'input[formControlName],input[ngModel],select[formControlName],select[ngModel],textarea[formControlName],textarea[ngModel]',
+    standalone: false
+})
 export class FieldFeedbackDirective implements DoCheck,OnDestroy {
   private message:HTMLElement; private id='field-error-'+(++nextId); private last='';
   constructor(@Optional() @Self() private control:NgControl,private el:ElementRef,private renderer:Renderer2){}

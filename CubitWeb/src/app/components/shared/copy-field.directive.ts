@@ -1,7 +1,10 @@
 import {Directive,DoCheck,ElementRef,Input,OnDestroy,OnInit,Renderer2} from '@angular/core';
-import {MatLegacySnackBar as MatSnackBar} from '@angular/material/legacy-snack-bar';
+import {MatSnackBar} from '@angular/material/snack-bar';
 
-@Directive({selector:'[appCopy]'})
+@Directive({
+    selector: '[appCopy]',
+    standalone: false
+})
 export class CopyFieldDirective implements OnInit,OnDestroy,DoCheck {
   @Input() appCopy:string|undefined;
   @Input() copyEnabled=true;

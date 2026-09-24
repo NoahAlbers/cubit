@@ -1,5 +1,8 @@
 import {Directive,HostBinding,Input} from '@angular/core';
-@Directive({selector:'[appMemberStatus]'})
+@Directive({
+    selector: '[appMemberStatus]',
+    standalone: false
+})
 export class MemberStatusDirective {
   @Input() appMemberStatus='';
   @HostBinding('class.active') get active(){return this.appMemberStatus==='Active';}
