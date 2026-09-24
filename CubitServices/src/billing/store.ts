@@ -16,7 +16,7 @@ export async function lockMember(manager: EntityManager, memberId: string) {
 
 // Every caller that posts charges holds the member row lock. The unique key is a second guard.
 export async function postCharges(manager: EntityManager, memberId: string, asOf = day(new Date())) {
-  const plans = await manager.find(MemberPlan, { where: { memberId }, relations: ['plan'] })
+  const plans = await manager.find(MemberPlan, { where: { memberId }, relations: { plan: true } })
   const existing = await manager.find(BillingCharge, { where: { memberId } })
   let count = 0
   for (const p of plans) {
@@ -41,7 +41,7 @@ export async function postCharges(manager: EntityManager, memberId: string, asOf
 
 export async function readBilling(manager: EntityManager, memberId: string, asOf = day(new Date())) {
   const [plans, payments, charges, adjustments] = await Promise.all([
-    manager.find(MemberPlan, { where: { memberId }, relations: ['plan'] }), manager.find(Transaction, { where: { memberId } }),
+    manager.find(MemberPlan, { where: { memberId }, relations: { plan: true } }), manager.find(Transaction, { where: { memberId } }),
     manager.find(BillingCharge, { where: { memberId } }), manager.find(ChargeAdjustment, { where: { memberId }, order: { createdAt: 'DESC' } }),
   ])
   return { plans, payments, records: charges, adjustments, ledger: postedLedger(charges, payments, adjustments, asOf) }
@@ -75,7 +75,7 @@ export async function initializeBilling() {
     let posted = 0
     for (const member of members) {
       await lockMember(manager, member.id)
-      const plans = await manager.find(MemberPlan, { where: { memberId: member.id }, relations: ['plan'] })
+      const plans = await manager.find(MemberPlan, { where: { memberId: member.id }, relations: { plan: true } })
       const payments = await manager.find(Transaction, { where: { memberId: member.id } })
       const before = billingLedger(plans, payments)
       posted += await postCharges(manager, member.id)

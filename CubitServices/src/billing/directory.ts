@@ -33,7 +33,7 @@ export async function directoryRows() {
       .setParameters({ since, now })
       .groupBy('log.memberId').getRawMany(),
     AppDataSource.manager.find(MemberKey, { where: { status: 'Active' } }),
-    AppDataSource.manager.find(MemberPlan, { relations: ['plan'] }),
+    AppDataSource.manager.find(MemberPlan, { relations: { plan: true } }),
     AppDataSource.manager.find(Transaction),
     AppDataSource.manager.find(BillingCharge),
     AppDataSource.manager.find(ChargeAdjustment),

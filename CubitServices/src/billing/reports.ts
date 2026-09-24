@@ -30,7 +30,7 @@ export async function reportData(query: any) {
   const roster = await directoryRows()
   const [allPayments, logs, plans, charges, adjustments, settings] = await Promise.all([
     AppDataSource.manager.find(Transaction, { order: { transactionDate: 'DESC' } }),
-    AppDataSource.manager.find(AccessLog, { relations: ['member'], order: { timestamp: 'DESC' } }),
+    AppDataSource.manager.find(AccessLog, { relations: { member: true }, order: { timestamp: 'DESC' } }),
     AppDataSource.manager.find(MemberPlan),
     AppDataSource.manager.find(BillingCharge),
     AppDataSource.manager.find(ChargeAdjustment),
