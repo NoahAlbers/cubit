@@ -16,10 +16,10 @@ import {WaiverDocumentsService} from '../../services/waiver-documents.service';
     <div><b>{{d.filename}}</b><small *ngIf="d.memberName">{{d.memberName}}</small><small>{{d.versionName}} · {{d.source}} · {{d.createdAt|date:'MMM d, y'}}</small><span class="badge" [class.active]="d.status==='Accepted'||d.status==='Stored'" [class.canceled]="d.status==='Rejected'">{{d.status}}</span><p *ngIf="d.reviewNote">{{d.reviewNote}}</p></div>
     <div class="actions"><button class="secondary" [disabled]="busy" (click)="download(d)">Download <app-arrow name="download"></app-arrow></button><button class="secondary" *ngIf="staff&&['staff upload','member upload'].includes(d.source)" [disabled]="busy" (click)="reviewing=d;reason=''">Review</button></div>
     <div class="waiver-review" *ngIf="reviewing?.id===d.id"><p>Download and check the full document, member name, signature, date and all pages before accepting.</p><label>Review note<textarea [(ngModel)]="reason" maxlength="2000" rows="2" placeholder="Record what you checked or what needs correcting"></textarea></label><div class="actions"><button class="primary" [disabled]="busy||!reason.trim()" (click)="review('Accepted')">Accept waiver</button><button class="secondary" [disabled]="busy||!reason.trim()" (click)="review('Rejected')">Needs replacement</button><button class="quiet" [disabled]="busy" (click)="reviewing=null">Cancel</button></div></div>
-  </article><p class="muted" *ngIf="!documents.length">No documents on file.</p>
+  </article><p class="muted" *ngIf="!documents.length">{{emptyMessage}}</p>
 </div>`})
 export class WaiverDocumentsComponent {
-  @Input() staff=false;@Input() allowUpload=true;@Input() memberId='';@Input() waivers:any[]=[];@Input() documents:any[]=[];@Output() changed=new EventEmitter<void>();
+  @Input() emptyMessage='No documents on file.';@Input() staff=false;@Input() allowUpload=true;@Input() memberId='';@Input() waivers:any[]=[];@Input() documents:any[]=[];@Output() changed=new EventEmitter<void>();
   files:File[]=[];versionId='';error='';saved='';busy=false;reviewing:any=null;reason='';
   constructor(private service:WaiverDocumentsService,private http:HttpClient){}
   selectFiles(event:Event){const input=event.target as HTMLInputElement;this.error='';this.saved='';const files=Array.from(input.files||[]);input.value='';if(files.length>5||files.some(f=>f.size>10*1024*1024||!['application/pdf','image/jpeg','image/png'].includes(f.type))){this.error='Choose up to 5 PDF, JPG or PNG files, each up to 10 MB.';return;}this.files=files;}

@@ -1,7 +1,7 @@
 <section class="page access-log-page">
   <section class="panel directory-panel">
     <div class="filter-row"><label>Search activity<input type="search" maxlength="200" [(ngModel)]="search" (ngModelChange)="searchChanged()" placeholder="Member, email or details"></label><label>Time period<select [(ngModel)]="period" (ngModelChange)="apply()"><option value="30">Last 30 days</option><option value="90">Last 90 days</option><option value="180">Last 6 months (180 days)</option><option value="365">Last year (365 days)</option><option value="all">All history</option></select></label><label>Result<select [(ngModel)]="result" (ngModelChange)="apply()"><option value="all">All attempts</option><option value="granted">Granted</option><option value="denied">Denied</option></select></label></div>
-    <div class="result-bar" aria-live="polite">{{loading?'Loading activity…':total+' access events'}}</div><p class="error" *ngIf="error" role="alert">{{error}}</p>
+    <app-loading *ngIf="loading" label="Loading access log…"></app-loading><div *ngIf="!loading" class="result-bar" aria-live="polite">{{total}} access events</div><p class="error" *ngIf="error" role="alert">{{error}}</p>
     <ng-container *ngTemplateOutlet="controls;context:{position:'top'}"></ng-container>
     <div class="table-scroll"><table><thead><tr>
       <th [attr.aria-sort]="ariaSort('name')"><button class="column-sort" (click)="sortBy('name')">Member <app-arrow [name]="icon('name')"></app-arrow></button></th>
@@ -12,7 +12,7 @@
     <ng-container *ngTemplateOutlet="controls;context:{position:'bottom'}"></ng-container>
   </section>
 </section>
-<ng-template #controls let-position="position"><div class="directory-pagination" *ngIf="!loading&&!error">
+<ng-template #controls let-position="position"><div class="directory-pagination" *ngIf="total&&!loading&&!error">
   <div class="page-settings"><span>{{firstRow}}–{{lastRow}} of {{total}} events · Page {{page}} of {{pages}}</span><label>Events per page<select [attr.aria-label]="'Events per page ('+position+')'" [(ngModel)]="pageSize" (ngModelChange)="apply()"><option *ngFor="let size of sizes" [ngValue]="size">{{size}}</option></select></label></div>
   <nav class="page-buttons" [attr.aria-label]="'Access log pages ('+position+')'"><button class="secondary" aria-label="First page" [disabled]="page===1" (click)="go(1)"><app-arrow name="first-page"></app-arrow> First</button><button class="secondary" aria-label="Previous page" [disabled]="page===1" (click)="go(page-1)"><app-arrow name="chevron-left"></app-arrow> Prev</button><button *ngFor="let p of pageNumbers" class="page-number" [class.primary]="p===page" [class.secondary]="p!==page" [attr.aria-label]="'Page '+p" [attr.aria-current]="p===page?'page':null" [disabled]="p===page" (click)="go(p)">{{p}}</button><button class="secondary" aria-label="Next page" [disabled]="page===pages" (click)="go(page+1)">Next <app-arrow name="chevron-right"></app-arrow></button><button class="secondary" aria-label="Last page" [disabled]="page===pages" (click)="go(pages)">Last <app-arrow name="last-page"></app-arrow></button></nav>
 </div></ng-template>

@@ -313,7 +313,8 @@ export class MemberComponent implements OnInit, OnDestroy {
     this.dialog
       .open(AddTransactionComponent, {
         disableClose: true,
-        data: { id: id, memberId: this.memberId },
+        width:'540px', maxWidth:'calc(100vw - 24px)', panelClass:'billing-entry-dialog',
+        data: { id: id, memberId: this.memberId, memberName: this.originalContact ? `${this.originalContact.firstName} ${this.originalContact.lastName}`.trim() : this.headerText },
       })
       .afterClosed()
       .subscribe((result) => {

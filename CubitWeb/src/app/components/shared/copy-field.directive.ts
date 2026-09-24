@@ -1,11 +1,13 @@
-import {Directive,ElementRef,Input,OnDestroy,OnInit,Renderer2} from '@angular/core';
+import {Directive,DoCheck,ElementRef,Input,OnDestroy,OnInit,Renderer2} from '@angular/core';
 import {MatLegacySnackBar as MatSnackBar} from '@angular/material/legacy-snack-bar';
 
 @Directive({selector:'[appCopy]'})
-export class CopyFieldDirective implements OnInit,OnDestroy {
+export class CopyFieldDirective implements OnInit,OnDestroy,DoCheck {
   @Input() appCopy:string|undefined;
+  @Input() copyEnabled=true;
   @Input() copyLabel='value';
   private button:HTMLButtonElement;private unlisten:()=>void;
+  ngDoCheck(){if(!this.button)return;const input=this.el.nativeElement.querySelector('input');const visible=this.copyEnabled&&!!(input?input.value:this.appCopy)&&(!input||(!input.classList.contains('ng-invalid')&&input.validity.valid));this.renderer.setStyle(this.button,'display',visible?'': 'none');}
   constructor(private el:ElementRef<HTMLElement>,private renderer:Renderer2,private snack:MatSnackBar){}
   ngOnInit(){
     const r=this.renderer;this.button=r.createElement('button');

@@ -6,9 +6,10 @@
     <nav id="main-navigation" aria-label="Main navigation" *ngIf="!portalView">
       <ng-container *ngFor="let item of staffNavigation">
         <div *ngIf="item.children; else directLink" class="nav-group" [class.group-current]="groupCurrent(item)" (focusout)="leaveGroup($event)">
-          <button class="nav-group-button" [class.group-current]="groupCurrent(item)" [attr.aria-expanded]="groupExpanded(item.id)" [attr.aria-controls]="'nav-'+item.id" [attr.title]="compactNavigation?item.label:null" (click)="toggleGroup(item.id,$event)">
-            <img class="nav-icon" [src]="'assets/icons/'+item.icon+'.svg'" alt=""><span class="nav-text">{{item.label}}</span><app-arrow class="group-chevron" name="chevron-right" [class.expanded]="groupExpanded(item.id)"></app-arrow>
-          </button>
+          <div class="nav-group-header" [class.group-current]="groupCurrent(item)">
+            <a class="nav-group-home" (click)="openGroupHome(item)" [routerLink]="item.path" [queryParams]="navigation.query(item.path)" [attr.aria-current]="navCurrent(item)?'page':null" [attr.title]="compactNavigation?item.label:null"><img class="nav-icon" [src]="'assets/icons/'+item.icon+'.svg'" alt=""><span class="nav-text">{{item.label}}</span></a>
+            <button class="nav-group-button" [attr.aria-label]="(groupExpanded(item.id)?'Collapse ':'Expand ')+item.label+' menu'" [attr.aria-expanded]="groupExpanded(item.id)" [attr.aria-controls]="'nav-'+item.id" (click)="toggleGroup(item.id,$event)"><app-arrow class="group-chevron" name="chevron-right" [class.expanded]="groupExpanded(item.id)"></app-arrow></button>
+          </div>
           <div class="nav-children" *ngIf="groupExpanded(item.id)" [id]="'nav-'+item.id" [class.nav-flyout]="compactNavigation" [style.top.px]="compactNavigation?flyoutTop:null">
             <div class="flyout-title" *ngIf="compactNavigation">{{item.label}}</div>
             <a *ngFor="let child of item.children" [routerLink]="child.path" [queryParams]="navigation.query(child.path)" [fragment]="child.fragment" (click)="scrollToNavItem(child)" [class.selected]="navCurrent(child)" [attr.aria-current]="navCurrent(child)?'page':null"><span class="nav-text">{{child.label}}</span></a>

@@ -17,6 +17,9 @@ export class AddTransactionComponent implements OnInit {
     if(data.id!=='New')this.loadTransaction(data.id);
   }
   get kind(){return this.transactionForm.value.kind;}
+  get actionLabel(){return this.kind==='charge'?'Record charge':this.kind==='refund'?'Record refund':'Record payment';}
+  get missingFields(){return Object.entries({transactionDate:'date',amount:'amount',description:this.kind==='refund'?'refund reason':'description',correctionReason:'reason for change'}).filter(([key])=>this.transactionForm.controls[key].hasError('required')).map(([,label])=>label);}
+  removeEntry(){this.transactionForm.controls.amount.setValue(0);this.transactionForm.markAsDirty();}
   validateKind(){
     this.transactionForm.controls.description.setValidators(this.kind==='charge'||this.kind==='refund'?[Validators.required,Validators.maxLength(255)]:Validators.maxLength(255));
     this.transactionForm.controls.description.updateValueAndValidity();
