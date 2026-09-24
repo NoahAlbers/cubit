@@ -484,3 +484,5 @@ select:not([multiple]):not([size]){appearance:none;-webkit-appearance:none;paddi
 .key-value.copyable-field{padding-left:0;padding-right:35px}.key-value.copyable-field>.copy-field-button{left:auto;right:0}
 
 .staff-settings-identity{padding-bottom:18px;border-bottom:1px solid #e2e8f0;margin-bottom:22px}app-account-security .security-subheading{margin-top:24px}app-account-security .password-reset-section{margin-top:26px;padding-top:20px;border-top:1px solid #e2e8f0}app-account-security .password-reset-section p{font-size:12px;overflow-wrap:anywhere}
+
+.authenticator-enrollment{margin:18px 0}.authenticator-qr{display:block;width:240px;height:240px;max-width:100%;object-fit:contain;background:white;image-rendering:pixelated;border:1px solid #e2e8f0;border-radius:8px}.authenticator-manual{margin:14px 0}.authenticator-enrollment .muted{font-size:12px}

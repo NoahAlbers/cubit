@@ -1,3 +1,4 @@
+import qr from 'qrcode-generator';
 import { Component, OnInit, ChangeDetectionStrategy, HostListener, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,6 +16,7 @@ export class AccountSecurityComponent implements OnInit {
   mode='security'; memberId=''; memberName=''; password=''; confirmPassword=''; code='';
   token=''; error=''; message=''; busy=false; loading=true; state:any;
   demoWorkspace=false;
+  setupQr='';
   setup:any; recoveryCodes:string[]=[]; link=''; expiresAt=''; email='';
   constructor(private route:ActivatedRoute,private http:HttpClient,public auth:AuthService){}
   hasUnsavedChanges(){return this.recoveryCodes.length>0;}
@@ -37,10 +39,10 @@ export class AccountSecurityComponent implements OnInit {
   async action(fn:()=>Promise<void>){if(this.busy||this.enrollmentBlocked)return;this.busy=true;this.error='';try{await fn();}catch(e:any){this.error=e.error?.message||'Could not complete that request. Please try again.';}finally{this.busy=false;}}
   prepare(purpose:string){return this.action(async()=>{this.link='';const r=await firstValueFrom(this.http.post<any>('/api/account/members/'+this.memberId+'/link',{purpose}));this.link=window.location.origin+r.path;this.expiresAt=r.expiresAt;this.email=r.email;});}
   requestPasswordReset(){if(!this.state?.passwordResetEmailAvailable||this.recoveryCodes.length)return;return this.action(async()=>{const r=await firstValueFrom(this.http.post<{message:string}>('/api/account/password-reset/request',{}));this.message=r.message;});}
-  startMfa(){return this.action(async()=>{this.setup=await firstValueFrom(this.http.post('/api/account/mfa/start',{password:this.password}));});}
+  startMfa(){return this.action(async()=>{this.setup=await firstValueFrom(this.http.post('/api/account/mfa/start',{password:this.password}));this.setupQr='';try{const image=qr(0,'M');image.addData(this.setup.uri);image.make();this.setupQr=image.createDataURL(5,20);}catch{this.error='The QR code could not be generated. Use the setup key below.';}});}
   confirmMfa(){return this.action(async()=>{
     const r=await firstValueFrom(this.http.post<any>('/api/account/mfa/confirm',{password:this.password,code:this.code}));
-    this.recoveryCodes=r.recoveryCodes;this.setup=null;this.password='';this.code='';this.state.mfaEnabled=true;
+    this.recoveryCodes=r.recoveryCodes;this.setup=null;this.setupQr='';this.password='';this.code='';this.state.mfaEnabled=true;
     // The response contains one-time recovery codes. Keep them visible until the
     // user explicitly leaves; the old session is already revoked on the server.
     this.message='Authenticator enabled. Save these recovery codes before signing in again.';

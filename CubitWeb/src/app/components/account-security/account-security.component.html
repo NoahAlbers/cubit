@@ -30,7 +30,7 @@
         @else {
           @if(enrollmentBlocked){<p class="muted">Save or cancel your access-alert changes before setting up an authenticator.</p>}
           <form (ngSubmit)="setup?confirmMfa():startMfa()"><label>Current password<input name="password" type="password" [(ngModel)]="password" autocomplete="current-password" required></label>
-          @if(setup){<p>Add a time-based account named Cubit in your authenticator app using this setup key:</p><code>{{setup.secret}}</code><p>Use a six-digit code with a 30-second period.</p><label>Authenticator code<input name="code" [(ngModel)]="code" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required></label>}
+          @if(setup){<div class="authenticator-enrollment">@if(setupQr){<p>Scan this QR code in your authenticator app.</p><img class="authenticator-qr" [src]="setupQr" alt="Authenticator setup QR code" width="240" height="240">}<details class="authenticator-manual" [open]="!setupQr"><summary>Enter a setup key instead</summary><p>Add a time-based account named Cubit using this key:</p><code>{{setup.secret}}</code><p>Use a six-digit code with a 30-second period.</p></details><p class="muted">Keep this QR code and key private. They provide access to your sign-in codes.</p></div><label>Authenticator code<input name="code" [(ngModel)]="code" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required></label>}
           <button class="primary" type="submit" [disabled]="busy||enrollmentBlocked||!password||(setup&&code.length!==6)">{{busy?'Working…':setup?'Confirm authenticator':'Set up authenticator'}}</button></form>
         }
       }

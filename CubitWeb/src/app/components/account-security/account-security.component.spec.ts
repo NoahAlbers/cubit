@@ -24,8 +24,10 @@ describe('Account recovery and authenticator screens',()=>{
   it('retains one-time recovery codes until the staff member explicitly confirms saving them',async()=>{
     const {component,http}=await render('security');http.expectOne('/api/account').flush({mfaEnabled:false,mfaAvailable:true,sharedDemo:false});
     await Promise.resolve();component.password='strong-fixture-pass';component.code='123456';
+    const enrollment=component.startMfa();http.expectOne('/api/account/mfa/start').flush({secret:'JBSWY3DPEHPK3PXP',uri:'otpauth://totp/Cubit:test%40example.test?secret=JBSWY3DPEHPK3PXP&issuer=Cubit'});await enrollment;
+    expect(component.setupQr.startsWith('data:image/gif;base64,')).toBe(true);expect(component.setup.secret).toBe('JBSWY3DPEHPK3PXP');
     const pending=component.confirmMfa();http.expectOne('/api/account/mfa/confirm').flush({recoveryCodes:['fixture-code']});await pending;
-    expect(component.hasUnsavedChanges()).toBe(true);expect(TestBed.inject(AuthService).logout).not.toHaveBeenCalled();
+    expect(component.setupQr).toBe('');expect(component.setup).toBeNull();expect(component.hasUnsavedChanges()).toBe(true);expect(TestBed.inject(AuthService).logout).not.toHaveBeenCalled();
     component.finishSetup();expect(component.hasUnsavedChanges()).toBe(false);expect(TestBed.inject(AuthService).logout).toHaveBeenCalled();http.verify();
   });
 });
