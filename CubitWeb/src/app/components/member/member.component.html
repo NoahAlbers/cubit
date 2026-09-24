@@ -7,10 +7,7 @@
           }<div class="profile-name-line"><h2>{{headerText || 'Member'}}</h2>@if (memberId!=='New') {
           <span class="badge last-entry-badge" [attr.title]="lastEntry ? 'Last successful entry: ' + (lastEntry|date:'MMM d, y, h:mm a') : null">{{lastEntryLabel}}</span>
         }</div></div>
-        <div class="profile-contact-actions">
-          <span class="draft-indicator" role="status">{{hasContactChanges() ? 'Unsaved contact changes' : hasUnsavedChanges() ? 'Unsaved changes below' : ''}}</span>
-          <div class="actions"><button class="secondary" (click)="revertContact()" [disabled]="saving||!hasContactChanges()">Cancel changes</button><button class="primary" [class.save-pending]="hasContactChanges()&&!saving" [disabled]="saving||contactLoading||form.invalid||!hasContactChanges()" (click)="save()">{{saving?'Saving…':'Save contact details'}}</button></div>
-        </div>
+
       </div>
       @if (memberId!=='New') {
         <div class="profile-meta">
@@ -30,6 +27,10 @@
         <div class="profile-toolbar">
           <div class="actions profile-quick-actions"><button class="primary" [disabled]="contactLoading" (click)="addEditTransaction('New')">Record payment</button><button class="secondary" (click)="jump('access-keys')">Manage access</button><button class="secondary" (click)="addEditPlan('New')">{{openPlan?'Change plan':'Add plan'}}</button><a class="button secondary" routerLink="/audit" [queryParams]="auditQuery" [attr.aria-label]="'Audit log for '+headerText">Audit log</a></div>
           <nav class="section-nav" aria-label="Member sections"><button class="secondary" (click)="jump('membership-billing')">Membership & billing</button><button class="secondary" (click)="jump('access-keys')">Access & waivers</button><button class="secondary" (click)="jump('staff-history')">Notes & history</button></nav>
+        <div class="profile-contact-actions">
+          <span class="draft-indicator" role="status">{{hasContactChanges() ? 'Unsaved contact changes' : hasUnsavedChanges() ? 'Unsaved changes below' : ''}}</span>
+          <div class="actions"><button class="secondary" (click)="revertContact()" [disabled]="saving||!hasContactChanges()">Cancel changes</button><button class="primary" [class.save-pending]="hasContactChanges()&&!saving" [disabled]="saving||contactLoading||form.invalid||!hasContactChanges()" (click)="save()">{{saving?'Saving…':'Save contact details'}}</button></div>
+        </div>
         </div>
       }
     </div>
