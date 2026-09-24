@@ -27,6 +27,7 @@ import { StaffToolsComponent } from './components/member/staff-tools.component';
 import { EditChargeComponent } from './components/member/edit-charge.component';
 import { ReportsComponent } from './components/reports/reports.component';
 import { AutomationComponent } from './components/automation/automation.component';
+import { BackupsComponent } from './components/automation/backups.component';
 import { PortalComponent } from './components/portal/portal.component';
 import { WaiversComponent } from './components/waivers/waivers.component';
 import { MemberWaiversComponent } from './components/member/member-waivers.component';
@@ -61,7 +62,7 @@ import { AccessLogService } from './services/access-log.service';
         ContactFieldsDirective, PhonePipe, CopyFieldDirective, MemberStatusDirective, DraftDialogComponent, DraftExitDirective, FieldFeedbackDirective, MemberIconDirective, ArrowComponent, InfoComponent, WaiverLockComponent, WaiverDocumentsComponent,
         DirectoryComponent,
         PaymentMatchingComponent, PlanCatalogComponent, AuditLogComponent, StaffSettingsComponent,
-        StaffToolsComponent, EditChargeComponent, ReportsComponent, AutomationComponent, PortalComponent, WaiversComponent, MemberWaiversComponent,
+        StaffToolsComponent, EditChargeComponent, ReportsComponent, AutomationComponent, BackupsComponent, PortalComponent, WaiversComponent, MemberWaiversComponent,
         AppComponent,
         LoginComponent,
         MemberlistComponent,

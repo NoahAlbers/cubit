@@ -87,7 +87,7 @@ Publishing a DocuSeal version requires the same original PDF used in its templat
 
 Self-hosted setup uses the free template builder and submission API, without paid embedding. Set `DOCUSEAL_ENABLED=true`, `DOCUSEAL_API_KEY`, `DOCUSEAL_API_URL`, and `DOCUSEAL_PUBLIC_URL` in the private service environment. Hosted review permits only `http://127.0.0.1:3000/api`; its public signing URL must use HTTPS. Keep SMTP unconfigured, submission email/SMS disabled, and DocuSeal on an internal Docker network behind the HTTPS proxy. Credentials, waiver PDFs, and signed records do not belong in Git.
 
-`deploy/backup-waivers.sh` and its systemd timer back up both Cubit databases, DocuSeal files, a consistent SQLite snapshot, and private configuration nightly. Backups are root-only and retained on the VPS. Before operational use, configure encrypted off-server backups, test a full restore, and agree on retention/access procedures. Same-server backups alone do not protect against losing the VPS.
+**Settings & Automation → Backups & recovery** controls manual, daily, weekly, or monthly encrypted backups, retention, and isolated restore tests. Snapshots include both Cubit databases, uploaded waivers, DocuSeal files and SQLite, and private service configuration. An operator connects a private S3-compatible destination separately; until then, backups remain local to the VPS. See [backup and recovery operations](deploy/BACKUPS.md) for setup, key custody, and replacement-server recovery. Same-server backups alone do not protect against losing the VPS.
 
 ## Interface and branding
 
@@ -104,7 +104,7 @@ The current hosted review runs on a separate VPS with HTTPS, a Node service, and
 - Review passwords are separate from original credentials. Demo logins do not grant access to imported or hosted review data.
 - Deployments preserve private data and credentials. They do not reimport the database or reset member records.
 
-Code updates are explicitly deployed from GitHub with a database backup and health check. Failed activation restores the previous code release; database restoration is a separate operation. Existing backups are local to the VPS, not yet the planned nightly off-server backup service.
+Code updates are explicitly deployed from GitHub with a database backup and health check. Failed activation restores the previous code release; database restoration is a separate operation. Scheduled backups use encrypted restic storage. Off-server copies require an operator-configured private destination and are not enabled merely by installing the feature.
 
 ### Synthetic demonstration workspace
 
@@ -239,9 +239,9 @@ Clearly surface scans from unknown fobs and let authorized staff assign a new fo
 
 Staff preferences and the no-send preview are available. Connect them to verified live access events and an explicitly enabled email transport, with durable per-recipient duplicate suppression, failure recovery, and delivery tests before launch. Successful entries must never generate email. The current software still sends no automatic emails.
 
-### Nightly backups and operational HTTPS
+### Recovery readiness and operational HTTPS
 
-Add nightly database backups, protected off-server storage, retention rules, and tested restoration procedures. Carry the review environment's existing HTTPS setup into operational deployment and verify recovery before launch.
+Configurable backups, retention, isolated restoration tests, and HTTPS status checks are implemented. Before launch, connect protected off-server storage, verify a restore from it, rehearse recovery on a replacement server, and approve retention. Keep the existing VPS hostname for review; the tracked Caddy configuration accepts an operator-configured hostname when the final domain is ready.
 
 ### Production digital waivers
 

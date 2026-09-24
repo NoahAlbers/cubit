@@ -25,6 +25,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: bash -n deploy/update-review.sh
       - run: bash -n deploy/migrate-billing-tools.sh
+      - run: python3 deploy/test-backups.py
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -33,7 +34,7 @@ jobs:
       - run: pnpm --dir CubitWeb install --frozen-lockfile
       - run: node dev/build-web.cjs
       - run: pnpm --dir CubitServices build
-      - run: node tests/contact-validation.cjs && node tests/local-safety.cjs && node tests/hosted-safety.cjs && node tests/hosted-demo.cjs && node tests/billing.cjs && node tests/activity-patterns.cjs && node tests/review-controls.cjs
+      - run: node tests/backup-settings.cjs && node tests/contact-validation.cjs && node tests/local-safety.cjs && node tests/hosted-safety.cjs && node tests/hosted-demo.cjs && node tests/billing.cjs && node tests/activity-patterns.cjs && node tests/review-controls.cjs
         working-directory: CubitServices
       - run: node tests/billing-tools-db.cjs
         working-directory: CubitServices

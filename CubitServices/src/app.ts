@@ -88,6 +88,7 @@ app.use((req, res, next) => {
 })
 
 //routes
+app.use('/api/backups',require('./api/routes/backups'))
 app.use('/api/portal', require('./api/routes/portal'))
 app.use('/api/waivers', require('./api/routes/waivers'))
 app.use('/api/cubit', require('./api/routes/cubit'))
@@ -139,6 +140,7 @@ app.use('*', (req, res, next) => {
 export async function startLocalApp() {
   await AppDataSource.initialize()
   await (await import('./dev/upgrade-waiver-documents')).upgradeWaiverDocuments(AppDataSource,localConfig.runtimeMode==='local')
+  await (await import('./dev/upgrade-backups')).upgradeBackups(AppDataSource,localConfig.runtimeMode==='local')
   await (await import('./dev/upgrade-billing-tools')).upgradeBillingTools(AppDataSource,localConfig.runtimeMode==='local')
   if (localConfig.runtimeMode === 'hosted-demo') {
     const rows=await AppDataSource.query("SELECT complete FROM cubit_demo_manifest WHERE id='synthetic-v1'")

@@ -11,6 +11,8 @@ dist/
 *.sql
 !CubitServices/src/dev/staff-tools.sql
 !CubitServices/src/dev/waiver-documents.sql
+!CubitServices/src/dev/backups.sql
+__pycache__/
 tmp/
 *.tgz
 *.tar

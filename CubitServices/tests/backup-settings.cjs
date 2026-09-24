@@ -1,0 +1,8 @@
+require('ts-node/register')
+const assert=require('assert/strict')
+const {defaultBackupSettings:defaults,validateBackupSettings:validate}=require('../src/backups/settings')
+assert.deepEqual(validate(defaults),defaults)
+for(const frequency of ['manual','daily','weekly','monthly'])assert.equal(validate({...defaults,frequency}).frequency,frequency)
+for(const change of [{localKeep:0},{remoteKeep:366},{verifyDays:-1},{offsiteEnabled:'true'},{frequency:'hourly'},{time:'25:00'},{timezone:'no/such/zone'},{monthday:1.5},{script:'anything'}])assert.throws(()=>validate({...defaults,...change}),e=>e.status===400)
+assert.throws(()=>validate({}),e=>e.status===400)
+console.log('PASS: bounded backup settings, schedules, time zones, and unknown-field rejection')

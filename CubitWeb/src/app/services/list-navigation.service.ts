@@ -56,7 +56,7 @@ export class ListNavigationService {
     }
     return this.last.get('/memberlist')||'/memberlist';
   }
-  label(url:string) { return ({'/memberlist':'Members','/overdue':'Overdue memberships','/accessLog':'Access log','/reports':'Reports','/waivers':'Waivers','/automation':'Billing & automation','/audit':'Audit log','/staff/settings':'My notification settings','/payments':'Payment matching','/plans':'Plans'})[this.path(url)]||'Members'; }
+  label(url:string) { return ({'/memberlist':'Members','/overdue':'Overdue memberships','/accessLog':'Access log','/reports':'Reports','/waivers':'Waivers','/automation':'Settings & automation','/audit':'Audit log','/staff/settings':'My notification settings','/payments':'Payment matching','/plans':'Plans'})[this.path(url)]||'Members'; }
   restoreScroll(position?:number) {
     const url=this.router.url, y=position===undefined?this.positions.get(url):position;
     if(y===undefined)return;

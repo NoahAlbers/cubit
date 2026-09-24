@@ -6,6 +6,7 @@ set -euo pipefail
 for schema in cubit_review cubit_demo; do
   [[ $(mysql -N -B -e "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='$schema'") == 1 ]] || continue
   mysql "$schema" < "$(dirname "$0")/../CubitServices/src/dev/waiver-documents.sql"
+  mysql "$schema" < "$(dirname "$0")/../CubitServices/src/dev/backups.sql"
   if [[ $(mysql -N -B -e "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$schema' AND TABLE_NAME='waiver_version' AND COLUMN_NAME='providerFingerprint'") == 0 ]]; then
     mysql "$schema" -e 'ALTER TABLE waiver_version ADD COLUMN providerFingerprint varchar(255) NULL'
   fi
