@@ -482,3 +482,5 @@ select:not([multiple]):not([size]){appearance:none;-webkit-appearance:none;paddi
 .member-sticky .profile-toolbar{align-items:flex-end}.member-sticky .profile-toolbar>.profile-contact-actions{margin-left:auto;align-self:flex-end}.member-sticky .profile-contact-actions .actions{margin:0}.member-sticky .profile-contact-actions button{min-height:34px}.member-sticky .profile-toolbar .draft-indicator{font-size:11px}@media(max-width:1050px){.member-sticky .profile-toolbar>.profile-contact-actions{margin-top:8px}}@media(max-width:600px){.member-sticky .profile-toolbar>.profile-contact-actions{width:100%;align-items:stretch;margin-left:0}}
 
 .key-value.copyable-field{padding-left:0;padding-right:35px}.key-value.copyable-field>.copy-field-button{left:auto;right:0}
+
+.staff-settings-identity{padding-bottom:18px;border-bottom:1px solid #e2e8f0;margin-bottom:22px}app-account-security .security-subheading{margin-top:24px}app-account-security .password-reset-section{margin-top:26px;padding-top:20px;border-top:1px solid #e2e8f0}app-account-security .password-reset-section p{font-size:12px;overflow-wrap:anywhere}

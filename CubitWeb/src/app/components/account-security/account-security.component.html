@@ -24,7 +24,7 @@
     @else {
       <p>Signing out ends your sessions on every device. For a password reset, contact staff.</p>
       @if(auth.isStaff){
-        <h3>Authenticator app</h3>
+        <h3 class="security-subheading">Authenticator app</h3>
         @if(state.mfaEnabled){<p>Enabled. Use your authenticator or an unused recovery code when signing in.</p>}
         @else if(!state.mfaAvailable){<p>The operator needs to configure the private encryption key before authenticator enrollment is available.</p>}
         @else {
@@ -34,6 +34,7 @@
           <button class="primary" type="submit" [disabled]="busy||enrollmentBlocked||!password||(setup&&code.length!==6)">{{busy?'Working…':setup?'Confirm authenticator':'Set up authenticator'}}</button></form>
         }
       }
+      @if(auth.isStaff&&!recoveryCodes.length){<section class="password-reset-section"><h3>Password</h3><p class="muted">Reset requests will go to {{state.email||auth.accountLabel}}.</p><button class="secondary" (click)="requestPasswordReset()" [disabled]="busy||enrollmentBlocked||!state.passwordResetEmailAvailable" aria-describedby="password-email-status">Email me a password reset</button>@if(!state.passwordResetEmailAvailable){<p id="password-email-status" class="muted">Email delivery is not connected yet. An administrator can prepare a private reset link in Organization Management.</p>}</section>}
       @if(recoveryCodes.length){<h3>Save your recovery codes</h3><p>Each code works once if your authenticator is unavailable. Store them in your password manager; they will not be shown again.</p><ul>@for(value of recoveryCodes;track value){<li><code>{{value}}</code></li>}</ul><button class="primary" (click)="finishSetup()">I saved my codes · Sign in again</button>}
     }
   </section>

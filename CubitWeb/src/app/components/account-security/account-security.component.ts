@@ -36,6 +36,7 @@ export class AccountSecurityComponent implements OnInit {
   }
   async action(fn:()=>Promise<void>){if(this.busy||this.enrollmentBlocked)return;this.busy=true;this.error='';try{await fn();}catch(e:any){this.error=e.error?.message||'Could not complete that request. Please try again.';}finally{this.busy=false;}}
   prepare(purpose:string){return this.action(async()=>{this.link='';const r=await firstValueFrom(this.http.post<any>('/api/account/members/'+this.memberId+'/link',{purpose}));this.link=window.location.origin+r.path;this.expiresAt=r.expiresAt;this.email=r.email;});}
+  requestPasswordReset(){if(!this.state?.passwordResetEmailAvailable||this.recoveryCodes.length)return;return this.action(async()=>{const r=await firstValueFrom(this.http.post<{message:string}>('/api/account/password-reset/request',{}));this.message=r.message;});}
   startMfa(){return this.action(async()=>{this.setup=await firstValueFrom(this.http.post('/api/account/mfa/start',{password:this.password}));});}
   confirmMfa(){return this.action(async()=>{
     const r=await firstValueFrom(this.http.post<any>('/api/account/mfa/confirm',{password:this.password,code:this.code}));

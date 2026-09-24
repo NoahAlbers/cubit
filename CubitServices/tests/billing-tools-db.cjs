@@ -118,6 +118,8 @@ async function main(){
  const filtered=await ok('/api/cubit/audit?kind='+encodeURIComponent('Fob removed')+'&author='+encodeURIComponent(staff.email));assert.equal(filtered.total,1);
  await db.manager.insert(OperationsAudit,Array.from({length:25},(_,i)=>({kind:'Pagination fixture',author:staff.email,detail:'Fixture '+i})));
  const page2=await ok('/api/cubit/audit?kind=Pagination%20fixture&page=2&pageSize=20&sort=action&order=asc');assert.equal(page2.total,25);assert.equal(page2.rows.length,5);assert.equal(page2.page,2);
+ assert.equal((await request('/api/account/password-reset/request',{},'POST')).status,503,'No email transport means no reset email or queued token');
+ assert.equal((await request('/api/account/password-reset/request',{email:'someone@example.test'},'POST')).status,400,'Recipient cannot be supplied by the browser');
  let prefs=await ok('/api/cubit/staff/preferences');assert.equal(prefs.deliveryEnabled,false);assert.equal(prefs.preferences.enabled,false);assert.equal(prefs.preferences.dedupeMinutes,15);
  const settings={enabled:true,unknownFobs:true,refusedFobs:true,dedupeMinutes:15,revision:0};prefs=await ok('/api/cubit/staff/preferences',settings,'PUT');assert.equal(prefs.deliveryEnabled,false);
  assert.equal((await request('/api/cubit/staff/preferences',settings,'PUT')).status,409,'Concurrent/stale preference edit');

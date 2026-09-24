@@ -54,9 +54,28 @@ router.get(
     const mfa = await AppDataSource.manager.findOneBy(AccountMfa, { memberId: req.member!.id });
     res.json({
       mfaEnabled: !!mfa?.secret,
+      email: req.member!.email,
+      passwordResetEmailAvailable: false,
       mfaAvailable: mfaConfigured(),
       sharedDemo: localConfig.runtimeMode === 'hosted-demo' && req.member!.id === demoMemberId,
     });
+  }),
+);
+router.post(
+  '/password-reset/request',
+  limit,
+  staffOnly,
+  route(async (req, res) => {
+    body(req, []);
+    // A future transport must verify the account email and issue a scoped,
+    // single-use link. Do not mint a token or queue mail while disconnected.
+    res
+      .status(503)
+      .json({
+        message:
+          'Password-reset email is not connected. Ask an administrator for a private reset link.',
+        deliveryEnabled: false,
+      });
   }),
 );
 router.get(
