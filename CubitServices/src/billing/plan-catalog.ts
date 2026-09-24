@@ -1,6 +1,6 @@
 import { recordAudit } from '../staff/audit'
 import { EntityManager } from 'typeorm'
-import { AppDataSource } from '../app'
+import { AppDataSource } from '../database'
 import { Plan } from '../entity/plan'
 import { MemberPlan } from '../entity/memberPlan'
 import { OperationsAudit } from '../entity/cubitOperations'

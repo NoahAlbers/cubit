@@ -1,4 +1,4 @@
-import { AppDataSource } from '../app'
+import { AppDataSource } from '../database'
 import { Plan } from '../entity/plan'
 
 // Add the staff-provided subscription menu without changing historical rates.

@@ -23,7 +23,11 @@
     "test:directory-snapshot": "node tests/directory-snapshot.cjs",
     "test:activity-patterns": "node tests/activity-patterns.cjs",
     "test:membership-chart": "node tests/membership-chart.cjs",
-    "test:bar-comparison": "node tests/bar-comparison.cjs"
+    "test:bar-comparison": "node tests/bar-comparison.cjs",
+    "migration:run": "ts-node src/operator/migrate.ts run",
+    "migration:check": "ts-node src/operator/migrate.ts check",
+    "migration:status": "ts-node src/operator/migrate.ts status",
+    "seed:local": "ts-node src/operator/seed-local.ts"
   },
   "author": "Tony Bellomo",
   "license": "ISC",

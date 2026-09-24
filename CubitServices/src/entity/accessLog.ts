@@ -1,4 +1,4 @@
-import { AppDataSource } from './../app'
+import { AppDataSource } from '../database'
 import {
   Entity,
   PrimaryGeneratedColumn,

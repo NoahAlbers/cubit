@@ -1,5 +1,5 @@
 import { recordAudit, snapshot, planFields } from '../../staff/audit'
-import { AppDataSource } from './../../app'
+import { AppDataSource } from '../../database'
 import express from 'express'
 import { randomUUID } from 'crypto'
 import { Plan } from '../../entity/plan'

@@ -1,5 +1,5 @@
 import { hash } from 'bcrypt'
-import { AppDataSource } from '../app'
+import { AppDataSource } from '../database'
 import { Member, ROLES } from '../entity/member'
 import { Plan } from '../entity/plan'
 import { MemberPlan } from '../entity/memberPlan'

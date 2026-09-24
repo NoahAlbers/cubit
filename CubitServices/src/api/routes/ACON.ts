@@ -1,5 +1,5 @@
 import { MemberKey } from './../../entity/memberKey'
-import { AppDataSource } from './../../app'
+import { AppDataSource } from '../../database'
 import express from 'express'
 import { AccessLog } from '../../entity/accessLog'
 import { Member } from '../../entity/member'

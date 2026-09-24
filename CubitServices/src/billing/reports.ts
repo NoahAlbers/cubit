@@ -1,4 +1,4 @@
-import { AppDataSource } from '../app'
+import { AppDataSource } from '../database'
 import { directoryRows } from './directory'
 import { day, validDay } from './ledger'
 import { Transaction } from '../entity/transaction'

@@ -5,7 +5,7 @@ import { fail, reasonText } from '../../billing/payments'
 import express from 'express'
 import { randomUUID } from 'crypto'
 import { MemberKey } from '../../entity/memberKey'
-import { AppDataSource } from '../../app'
+import { AppDataSource } from '../../database'
 import { memberActivity } from '../../billing/member-activity'
 
 const router = express.Router()

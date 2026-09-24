@@ -16,9 +16,9 @@ and a recovery test every 30 days. Disable either schedule using Manual only.
 
 ## Operator setup
 
-Install Python 3.12+, restic 0.18+, MySQL client, Docker, and curl. Apply
-`CubitServices/src/dev/backups.sql` to each application schema (also included in
-the deployment migration). Install the two `cubit-backup` systemd units from
+Install Python 3.12+, restic 0.18+, MySQL client, Docker, and curl. Run the
+versioned operator migrations in `deploy/migrate-billing-tools.sh` for both
+installed application schemas. Install the two `cubit-backup` systemd units from
 this directory. The timer replaces the old fixed nightly timer. Old archives
 are preserved and are outside the new retention policy.
 

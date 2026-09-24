@@ -1,7 +1,7 @@
 import { validEmail } from '../contact/validation'
 import { recordAudit, snapshot, profileFields } from '../staff/audit'
 import { createHash } from 'crypto'
-import { AppDataSource } from '../app'
+import { AppDataSource } from '../database'
 import { MemberPlan } from '../entity/memberPlan'
 import { Member, ROLES } from '../entity/member'
 import { Transaction } from '../entity/transaction'

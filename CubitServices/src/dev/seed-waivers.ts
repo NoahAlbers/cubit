@@ -1,4 +1,4 @@
-import { AppDataSource } from '../app'
+import { AppDataSource } from '../database'
 import { Waiver, WaiverVersion, WaiverSignature } from '../entity/waiver'
 import { Member } from '../entity/member'
 

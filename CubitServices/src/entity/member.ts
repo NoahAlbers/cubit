@@ -12,7 +12,7 @@ import { MemberKey } from './memberKey'
 import { MemberPlan } from './memberPlan'
 import { Plan } from './plan'
 import { Transaction } from './transaction'
-import { AppDataSource } from '../app'
+import { AppDataSource } from '../database'
 import { billingLedger, membershipStatus, day } from '../billing/ledger'
 import { ensureBilling } from '../billing/store'
 

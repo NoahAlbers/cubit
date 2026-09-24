@@ -1,31 +1,14 @@
 import { localConfig } from './dev/config'
-import { WindowsNamingStrategy } from './dev/windows-naming'
+import {AppDataSource, assertSchemaReady} from './database'
+export {AppDataSource} from './database'
 import express, { Application, Request, Response, NextFunction } from 'express'
 import 'reflect-metadata'
 import morgan from 'morgan'
 import 'reflect-metadata' //needed for typeorm
-import { DataSource } from 'typeorm'
 import path from 'path'
 import { staffOnly } from './api/common/staff-auth'
 import { loginLimit } from './api/common/login-limit'
 import { demoProxy } from './demo/proxy'
-const extension = __filename.endsWith('.js') ? 'js' : 'ts'
-
-export const AppDataSource = new DataSource({
-  type: 'mysql',
-  host: localConfig.host,
-  port: localConfig.databasePort,
-  username: localConfig.username,
-  password: localConfig.password,
-  database: localConfig.database,
-  namingStrategy: process.platform === 'win32' || localConfig.runtimeMode !== 'local' ? new WindowsNamingStrategy() : undefined,
-  synchronize: false,
-  logging: false,
-  entities: [path.join(__dirname, `entity/**/*.${extension}`)],
-  migrations: [path.join(__dirname, `migration/**/*.${extension}`)],
-  subscribers: [path.join(__dirname, `subscriber/**/*.${extension}`)],
-})
-
 const app: Application = express()
 app.disable('x-powered-by')
 if (localConfig.runtimeMode !== 'local') app.set('trust proxy', 'loopback')
@@ -135,37 +118,14 @@ app.use('*', (req, res, next) => {
 
 export async function startLocalApp() {
   await AppDataSource.initialize()
-  await (await import('./dev/upgrade-account-security')).upgradeAccountSecurity(AppDataSource,localConfig.runtimeMode==='local')
-  await (await import('./dev/upgrade-waiver-documents')).upgradeWaiverDocuments(AppDataSource,localConfig.runtimeMode==='local')
-  await (await import('./dev/upgrade-backups')).upgradeBackups(AppDataSource,localConfig.runtimeMode==='local')
-  await (await import('./dev/upgrade-billing-tools')).upgradeBillingTools(AppDataSource,localConfig.runtimeMode==='local')
+  await assertSchemaReady(AppDataSource)
   if (localConfig.runtimeMode === 'hosted-demo') {
     const rows=await AppDataSource.query("SELECT complete FROM cubit_demo_manifest WHERE id='synthetic-v1'")
     if(rows.length!==1||!rows[0].complete)throw Error('Synthetic demo has not been initialized.')
   } else if (localConfig.dataMode === 'imported') {
     const rows = await AppDataSource.query("SELECT complete FROM cubit_import_manifest WHERE id = 'current'")
     if (rows.length !== 1 || !rows[0].complete) throw Error('The local import has not been validated.')
-  } else {
-  const { upgradeLocalMoneyColumns } = await import('./dev/upgrade-schema')
-  await upgradeLocalMoneyColumns(AppDataSource)
-  await AppDataSource.synchronize()
-  const { retireUnusedFeatures } = await import('./dev/retire-features')
-  await retireUnusedFeatures(AppDataSource)
-  const { seedLocalData } = await import('./dev/seed')
-  await seedLocalData()
-  const { seedScenarios } = await import('./dev/seed-scenarios')
-  await seedScenarios()
-  const { seedPlanCatalog } = await import('./dev/seed-plan-catalog')
-  await seedPlanCatalog()
-  const { initializeBilling } = await import('./billing/store')
-  await initializeBilling()
-  const { seedWaivers } = await import('./dev/seed-waivers')
-  await seedWaivers()
   }
-  await (await import('./dev/upgrade-staff-tools')).upgradeStaffTools(AppDataSource,localConfig.runtimeMode==='local')
-  if(localConfig.runtimeMode==='local')await (await import('./dev/upgrade-account-security')).normalizeLoginEmails(AppDataSource)
-  const { upgradeKeyHistory } = await import('./dev/upgrade-key-history')
-  await upgradeKeyHistory(AppDataSource)
   const { startAutomationScheduler } = await import('./billing/automation')
   const server = app.listen(localConfig.port, localConfig.listenHost, () => {
     console.log(`Cubit ${localConfig.runtimeMode} ready on port ${localConfig.port}`)

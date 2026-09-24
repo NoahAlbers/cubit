@@ -1,6 +1,6 @@
 import express from "express";
 import { AccessLog } from "../../entity/accessLog";
-import { AppDataSource } from '../../app';
+import { AppDataSource } from '../../database';
 import { accessLogOptions } from '../../billing/access-log-options';
 
 const router = express.Router();

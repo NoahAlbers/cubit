@@ -1,7 +1,7 @@
 import { recordAudit, snapshot, profileFields } from '../../staff/audit'
 import { memberInput } from '../common/member-input'
 import { validateNewPassword } from '../../security/password-policy'
-import { AppDataSource } from './../../app'
+import { AppDataSource } from '../../database'
 import express from 'express'
 import { Member, ROLES } from '../../entity/member'
 import { hash } from 'bcrypt'

@@ -1,4 +1,4 @@
-import {AppDataSource} from '../app'
+import {AppDataSource} from '../database'
 import {WaiverSignature} from '../entity/waiver'
 import {docusealConfig} from './docuseal'
 import {syncSigning} from './store'

@@ -113,8 +113,8 @@ async function start() {
     const bootstrap = path.join(state, 'bootstrap.sql')
     const statements = ['CREATE DATABASE IF NOT EXISTS TonicLocalDev CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;']
     for (const host of ['127.0.0.1', 'localhost']) {
-      statements.push(`CREATE USER IF NOT EXISTS 'tonic_local'@'${host}' IDENTIFIED WITH caching_sha2_password BY '${settings.appPassword}';`, `ALTER USER 'tonic_local'@'${host}' IDENTIFIED WITH caching_sha2_password BY '${settings.appPassword}';`, `GRANT ALL PRIVILEGES ON TonicLocalDev.* TO 'tonic_local'@'${host}';`)
-      statements.push(`GRANT ALL PRIVILEGES ON TonicLocalReview.* TO 'tonic_local'@'${host}';`)
+      statements.push(`CREATE USER IF NOT EXISTS 'tonic_local'@'${host}' IDENTIFIED WITH caching_sha2_password BY '${settings.appPassword}';`, `ALTER USER 'tonic_local'@'${host}' IDENTIFIED WITH caching_sha2_password BY '${settings.appPassword}';`, `GRANT SELECT, INSERT, UPDATE, DELETE ON TonicLocalDev.* TO 'tonic_local'@'${host}';`)
+      statements.push(`GRANT SELECT, INSERT, UPDATE, DELETE ON TonicLocalReview.* TO 'tonic_local'@'${host}';`)
     }
     statements.push(`CREATE USER IF NOT EXISTS 'root'@'127.0.0.1' IDENTIFIED WITH caching_sha2_password BY '${settings.rootPassword}';`, `ALTER USER 'root'@'127.0.0.1' IDENTIFIED WITH caching_sha2_password BY '${settings.rootPassword}';`, "GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1';", `ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY '${settings.rootPassword}';`)
     write(bootstrap, statements.join('\n') + '\n')
@@ -123,6 +123,8 @@ async function start() {
     fs.unlinkSync(bootstrap)
   }
   write(path.join(appDirectory, '.env.local'), `LOCAL_DEVELOPMENT=true\nDATABASE_URI=127.0.0.1\nDATABASE_PORT=3307\nDATABASE_NAME=${database}\nDATABASE_USERNAME=tonic_local\nDATABASE_PASSWORD=${settings.appPassword}\nJWT_SECRET=${settings.jwtSecret}\nHOST=127.0.0.1\nPORT=5001\n`)
+
+  await run(nodeExe, [path.join(__dirname,'migrate-local.cjs')])
 
   let existing = null
   if (fs.existsSync(appPidFile)) existing = verifyAppProcess(Number(fs.readFileSync(appPidFile, 'utf8')))

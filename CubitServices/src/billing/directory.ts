@@ -1,4 +1,4 @@
-import { AppDataSource } from '../app'
+import { AppDataSource } from '../database'
 import { Member } from '../entity/member'
 import { MemberPlan } from '../entity/memberPlan'
 import { Transaction } from '../entity/transaction'

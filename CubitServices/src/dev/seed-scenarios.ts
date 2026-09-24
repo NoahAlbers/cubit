@@ -1,4 +1,4 @@
-import { AppDataSource } from '../app'
+import { AppDataSource } from '../database'
 import { hash } from 'bcrypt'
 import { Member, ROLES } from '../entity/member'
 import { Plan } from '../entity/plan'

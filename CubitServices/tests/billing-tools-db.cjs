@@ -17,12 +17,14 @@ const reconcile=(e,body)=>ok('/api/cubit/automation/events/'+e.id+'/process',bod
 const attempt=(e,body)=>request('/api/cubit/automation/events/'+e.id+'/process',body);
 async function main(){
  await db.initialize();assert.equal((await db.query('SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE()')).length,0,'Refusing a nonempty database');
- await db.synchronize();await db.manager.save(OperationsSettings,{id:'default',graceDays:60,dailyEnabled:false});
+ await db.runMigrations({transaction:'none'});assert.equal((await db.driver.createSchemaBuilder().log()).upQueries.length,0,'Migration/entity drift');await require('./migration-startup.cjs')(db); await db.manager.save(OperationsSettings,{id:'default',graceDays:60,dailyEnabled:false});
  const members=[];for(const [firstName,role]of [['Staff','admin'],['Existing','member'],['Another','member'],['Future','member']])members.push(await db.manager.save(Member,db.manager.create(Member,{firstName,lastName:'Fixture',email:firstName.toLowerCase()+'@example.test',paypalEmail:firstName.toLowerCase()+'.billing@example.test',role,password:'Not Set'})));
  const [staff,existing,another,future]=members;token=jwtHelper.GenerateJWT(staff);
- const {StaffNote}=require('../src/entity/cubitOperations'),{upgradeStaffTools}=require('../src/dev/upgrade-staff-tools');
+ const {StaffNote}=require('../src/entity/cubitOperations'),{StaffHistory1790250000006}=require('../src/migrations/review-baseline');
  await db.manager.save(StaffNote,{memberId:existing.id,text:'Preserved fixture note',author:staff.email,createdAt:new Date('2004-01-01T00:00:00Z')});
- await upgradeStaffTools(db,true);const legacyCount=await db.manager.count(OperationsAudit);await upgradeStaffTools(db,true);assert.equal(await db.manager.count(OperationsAudit),legacyCount,'History migration is idempotent');
+ await db.query("DELETE FROM cubit_staff_tools_manifest WHERE id='audit-baseline-v1'");
+ const upgradeStaffTools=async()=>{const runner=db.createQueryRunner();try{await new StaffHistory1790250000006().up(runner);}finally{await runner.release();}};
+ await upgradeStaffTools();const legacyCount=await db.manager.count(OperationsAudit);await upgradeStaffTools();assert.equal(await db.manager.count(OperationsAudit),legacyCount,'History migration is idempotent');
  server=await new Promise(resolve=>{const s=app.listen(0,'127.0.0.1',()=>resolve(s))});base=`http://127.0.0.1:${server.address().port}`;
  for(const path of ['/api/cubit/plan-catalog','/api/cubit/payment-matching','/api/cubit/matching-members?q=existing']){assert.equal((await request(path,null,'GET',null)).status,401);assert.equal((await request(path,null,'GET',jwtHelper.GenerateJWT(existing))).status,403);}
  let p=await ok('/api/cubit/plan-catalog',{id:randomUUID(),name:'Test Standard',monthlyCost:60,available:true});
@@ -157,7 +159,7 @@ async function main(){
  await db.manager.update(Member,existing.id,{loginDisabled:false});
  const collision=await db.manager.save(Member,db.manager.create(Member,{firstName:'Duplicate',lastName:'Fixture',email:'\t'+existing.email+'\t',paypalEmail:'duplicate.billing@example.test',role:'member',password:'Not Set'}));
  await assert.rejects(new Member().GetMemberByEmailAndPass(existing.email,'another-strong-fixture-phrase'),'Normalized collisions reject otherwise valid passwords');
- const {normalizeLoginEmails}=require('../src/dev/upgrade-account-security');await normalizeLoginEmails(db);
+ const {NormalizeLoginEmails1790250000007}=require('../src/migrations/review-baseline');const normalizeLoginEmails=async()=>{const runner=db.createQueryRunner();try{await new NormalizeLoginEmails1790250000007().up(runner);}finally{await runner.release();}};await normalizeLoginEmails(db);
  assert.equal((await db.manager.findOneByOrFail(Member,{id:collision.id})).email,existing.email,'Imported tabs are trimmed');
  const normalizedAudits=await db.manager.countBy(OperationsAudit,{kind:'Login email whitespace corrected'});assert.equal(normalizedAudits,1);
  await normalizeLoginEmails(db);assert.equal(await db.manager.countBy(OperationsAudit,{kind:'Login email whitespace corrected'}),normalizedAudits,'Normalization is idempotent and preserves history');

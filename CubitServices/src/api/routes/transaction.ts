@@ -1,4 +1,4 @@
-import { AppDataSource } from '../../app'
+import { AppDataSource } from '../../database'
 import express from 'express'
 import { Transaction } from '../../entity/transaction'
 import { recordPayment } from '../../billing/payments'

@@ -1,5 +1,5 @@
 import { recordAudit } from '../staff/audit'
-import { AppDataSource } from '../app'
+import { AppDataSource } from '../database'
 import { Waiver, WaiverVersion, WaiverSignature } from '../entity/waiver'
 import { Member } from '../entity/member'
 import { OperationsAudit } from '../entity/cubitOperations'

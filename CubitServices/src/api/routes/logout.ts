@@ -1,5 +1,5 @@
 import express from 'express'
-import { AppDataSource } from '../../app'
+import { AppDataSource } from '../../database'
 import { Member } from '../../entity/member'
 import { signedIn } from '../common/member-auth'
 import { recordAudit } from '../../staff/audit'

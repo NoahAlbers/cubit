@@ -16,6 +16,7 @@ export class ReviewBaseline1790250000000 extends ForwardMigration {
   async up(runner: QueryRunner) {
     // Existing tables are never recreated. Additive compatibility migrations below
     // bring an older local/review copy forward; fresh databases use this frozen DDL.
+    if (!await runner.hasTable('memberkey') && await runner.hasTable('memberKey')) await runner.renameTable('memberKey','memberkey')
     for (const table of baselineTables) if (!await runner.hasTable(table.name)) await runner.query(table.sql)
   }
 }

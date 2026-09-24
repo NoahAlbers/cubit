@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
-import { AppDataSource } from '../../app'
+import { AppDataSource } from '../../database'
 import { Member } from '../../entity/member'
 import { jwtHelper } from './jwtHelper'
 

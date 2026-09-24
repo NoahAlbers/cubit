@@ -1,6 +1,6 @@
 import { auditActor } from '../../staff/audit'
 import { Request, Response, NextFunction } from 'express'
-import { AppDataSource } from '../../app'
+import { AppDataSource } from '../../database'
 import { Member, ROLES } from '../../entity/member'
 import { jwtHelper } from './jwtHelper'
 

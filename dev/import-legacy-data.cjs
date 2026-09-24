@@ -38,7 +38,7 @@ async function main(){
     Object.assign(process.env,{LOCAL_DEVELOPMENT:'true',DATABASE_URI:'127.0.0.1',DATABASE_PORT:'3307',DATABASE_NAME:'TonicLocalReview',DATABASE_USERNAME:'tonic_local',DATABASE_PASSWORD:settings.appPassword,JWT_SECRET:settings.jwtSecret,TZ:'UTC'})
     require('../CubitServices/node_modules/ts-node/register')
     db=require('../CubitServices/src/app').AppDataSource
-    await db.initialize();await db.synchronize()
+    db.setOptions({username:'root',password:settings.rootPassword});await db.initialize();await db.runMigrations({transaction:'none'})
     const {billingLedger}=require('../CubitServices/src/billing/ledger')
     const {postedLedger,accessDecision}=require('../CubitServices/src/billing/posted-ledger')
     const stamp=source.source.snapshotUtc,asOf=stamp.slice(0,10)
@@ -110,7 +110,6 @@ async function main(){
     assert.equal(money(total.amount),overview.paymentTotalCents)
     const roles=t.member.filter(m=>normalizedRole(m.role)==='admin').length
     assert.equal(roles,3,'Review unexpected staff-role mapping')
-    await db.query('CREATE TABLE cubit_import_manifest (id VARCHAR(20) PRIMARY KEY, complete BOOLEAN NOT NULL, sha256 CHAR(64) NOT NULL, snapshotUtc DATETIME NOT NULL)')
     await db.query('INSERT INTO cubit_import_manifest VALUES (?,1,?,?)',['current',hash,stamp])
     fs.writeFileSync(path.join(folder,'import-reconciliation.json'),JSON.stringify({overview,members:billing,unassignedPayments:t.transaction.filter(p=>!p.memberId)},null,2))
     fs.writeFileSync(path.join(folder,'local-access.json'),JSON.stringify({staff:{id:staff.id,email:staff.email,password:staffPassword},member:{id:portal.id,email:portal.email,password:memberPassword}},null,2),{mode:0o600})

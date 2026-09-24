@@ -1,6 +1,6 @@
 import { recordAudit } from '../../staff/audit'
 import express from 'express'
-import { AppDataSource } from '../../app'
+import { AppDataSource } from '../../database'
 import { staffOnly } from '../common/staff-auth'
 import { Waiver, WaiverVersion, WaiverSignature } from '../../entity/waiver'
 import { OperationsAudit } from '../../entity/cubitOperations'

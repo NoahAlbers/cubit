@@ -1,5 +1,5 @@
 import { createHash } from 'crypto'
-import { AppDataSource } from '../app'
+import { AppDataSource } from '../database'
 import { WaiverDocument } from '../entity/waiverDocument'
 import { Waiver, WaiverVersion } from '../entity/waiver'
 import { Member } from '../entity/member'

@@ -1,6 +1,6 @@
 import express from 'express'
 import {randomUUID} from 'crypto'
-import {AppDataSource} from '../../app'
+import {AppDataSource} from '../../database'
 import {staffOnly} from '../common/staff-auth'
 import {localConfig} from '../../dev/config'
 import {BackupSettings,BackupJob,BackupRuntime} from '../../entity/backup'

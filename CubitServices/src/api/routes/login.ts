@@ -4,7 +4,7 @@ import { Member } from '../../entity/member';
 import { jwtHelper } from '../common/jwtHelper';
 import { createRememberedGreeting } from '../common/remembered-greeting';
 import { localConfig } from '../../dev/config';
-import { AppDataSource } from '../../app';
+import { AppDataSource } from '../../database';
 import { authenticateSecondFactor } from '../../security/accounts';
 
 const router = express.Router();

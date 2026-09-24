@@ -46,6 +46,19 @@ jobs:
         working-directory: CubitServices
       - run: node tests/backup-settings.cjs && node tests/contact-validation.cjs && node tests/local-safety.cjs && node tests/hosted-safety.cjs && node tests/hosted-demo.cjs && node tests/billing.cjs && node tests/activity-patterns.cjs && node tests/review-controls.cjs
         working-directory: CubitServices
+      - run: node tests/migration-baseline.cjs
+        working-directory: CubitServices
+        env:
+          CUBIT_MIGRATION_TEST: disposable
+          CUBIT_MODE: hosted-demo
+          LOCAL_DEVELOPMENT: 'false'
+          HOST: 127.0.0.1
+          PORT: '5002'
+          DATABASE_URI: 127.0.0.1
+          DATABASE_NAME: cubit_demo
+          DATABASE_USERNAME: cubit_demo
+          DATABASE_PASSWORD: ci-demo-only
+          JWT_SECRET: ci-disposable-demo-signing-key-not-a-runtime-secret-2026
       - run: node tests/billing-tools-db.cjs
         working-directory: CubitServices
         env:

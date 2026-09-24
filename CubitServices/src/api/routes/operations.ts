@@ -1,6 +1,6 @@
 import { recordAudit } from '../../staff/audit'
 import express from 'express'
-import { AppDataSource } from '../../app'
+import { AppDataSource } from '../../database'
 import { staffOnly } from '../common/staff-auth'
 import { Member } from '../../entity/member'
 import { localConfig } from '../../dev/config'

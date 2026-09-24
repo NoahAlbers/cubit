@@ -1,7 +1,7 @@
 import { recordAudit } from '../staff/audit'
 import { randomUUID } from 'crypto'
 import { EntityManager } from 'typeorm'
-import { AppDataSource } from '../app'
+import { AppDataSource } from '../database'
 import { Member } from '../entity/member'
 import { AutomationRun, OperationsSettings } from '../entity/cubitOperations'
 import { billingLedger, day } from './ledger'
