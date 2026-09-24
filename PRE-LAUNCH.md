@@ -132,8 +132,13 @@ Owner: **Unassigned — technical release owner**. Target: **Unassigned**. Sign-
   for current versions and upstream compatibility limits. Combined PR #21 passed
   CI `36040603185`; release `e87e500` was deployed and verified by Codex on
   2026-09-24. Full development/runtime audits reported zero known vulnerabilities.
-- [ ] Add typed request validation throughout operations, staff tools, waivers and
+- [x] Add typed request validation throughout operations, staff tools, waivers and
   backups. Enforce linting/formatting in CI and resolve material findings.
+  Evidence: `c546c8d`, PR #22, CI `36043351177`; deployed as `a7f7666` and verified
+  by Codex on 2026-09-24. Invalid-body/no-mutation tests, valid waiver operations,
+  full backend/browser/database checks and lint/format checks passed. Clean builds
+  remove retired compiled entities; TypeORM's explicit drift CLI passes. The
+  deployment reran zero migrations and both hosted schemas matched the entities.
 - [x] Cover login, member directory/profile and portal with frontend smoke tests;
   run isolated end-to-end verification in CI. Evidence: `922b25f`, CI run
   `36034566869`, deployed to review on 2026-09-24. Codex verified 14 component
