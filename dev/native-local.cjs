@@ -7,8 +7,7 @@ const { spawn, execFileSync } = require('child_process')
 const root = path.resolve(__dirname, '..')
 const state = path.join(root, '.private/native')
 const appDirectory = path.join(root, 'CubitServices')
-const nodeExe = path.join(root, '.private/tools/node17/node.exe')
-const mysqlBase = path.join(root, '.private/tools/mysql/mysql-8.0.19-winx64')
+const { nodeExe, mysqlBase } = require('./runtime.cjs')
 const mysqlExe = path.join(mysqlBase, 'bin/mysqld.exe')
 const nodemonScript = path.join(appDirectory, 'node_modules/nodemon/bin/nodemon.js')
 const appPidFile = path.join(state, 'app.pid')
@@ -86,6 +85,10 @@ async function start() {
   fs.mkdirSync(state, { recursive: true })
   const settingsFile = path.join(state, 'settings.json')
   const dataDirectory = path.join(state, 'mysql-data')
+  const versionMarker = path.join(state, 'initialized.flag')
+  if (fs.existsSync(dataDirectory) && (!fs.existsSync(versionMarker) || !fs.readFileSync(versionMarker,'utf8').includes('8.4.'))) {
+    throw new Error('Existing local data needs the offline upgrade: node dev/upgrade-native-mysql.cjs. Back up and stop the old local app first.')
+  }
   if (!fs.existsSync(settingsFile)) {
     if (fs.existsSync(dataDirectory)) throw new Error('Existing MySQL data has no local settings; refusing to replace credentials.')
     write(settingsFile, JSON.stringify({ rootPassword: crypto.randomBytes(24).toString('hex'), appPassword: crypto.randomBytes(24).toString('hex'), jwtSecret: crypto.randomBytes(32).toString('hex') }, null, 2))
@@ -105,15 +108,15 @@ async function start() {
     if (!fs.existsSync(marker)) {
       console.log('Initializing the workspace MySQL database...')
       await run(mysqlExe, [`--defaults-file=${mysqlConfig}`, '--initialize-insecure'])
-      write(marker, 'MySQL 8.0.19 initialized')
+      write(marker, 'MySQL 8.4.11 initialized')
     }
     const bootstrap = path.join(state, 'bootstrap.sql')
     const statements = ['CREATE DATABASE IF NOT EXISTS TonicLocalDev CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;']
     for (const host of ['127.0.0.1', 'localhost']) {
-      statements.push(`CREATE USER IF NOT EXISTS 'tonic_local'@'${host}' IDENTIFIED BY '${settings.appPassword}';`, `ALTER USER 'tonic_local'@'${host}' IDENTIFIED BY '${settings.appPassword}';`, `GRANT ALL PRIVILEGES ON TonicLocalDev.* TO 'tonic_local'@'${host}';`)
+      statements.push(`CREATE USER IF NOT EXISTS 'tonic_local'@'${host}' IDENTIFIED WITH caching_sha2_password BY '${settings.appPassword}';`, `ALTER USER 'tonic_local'@'${host}' IDENTIFIED WITH caching_sha2_password BY '${settings.appPassword}';`, `GRANT ALL PRIVILEGES ON TonicLocalDev.* TO 'tonic_local'@'${host}';`)
       statements.push(`GRANT ALL PRIVILEGES ON TonicLocalReview.* TO 'tonic_local'@'${host}';`)
     }
-    statements.push(`CREATE USER IF NOT EXISTS 'root'@'127.0.0.1' IDENTIFIED BY '${settings.rootPassword}';`, `ALTER USER 'root'@'127.0.0.1' IDENTIFIED BY '${settings.rootPassword}';`, "GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1';", `ALTER USER 'root'@'localhost' IDENTIFIED BY '${settings.rootPassword}';`)
+    statements.push(`CREATE USER IF NOT EXISTS 'root'@'127.0.0.1' IDENTIFIED WITH caching_sha2_password BY '${settings.rootPassword}';`, `ALTER USER 'root'@'127.0.0.1' IDENTIFIED WITH caching_sha2_password BY '${settings.rootPassword}';`, "GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1';", `ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY '${settings.rootPassword}';`)
     write(bootstrap, statements.join('\n') + '\n')
     launch(mysqlExe, [`--defaults-file=${mysqlConfig}`, `--init-file=${bootstrap}`], state, 'mysql')
     await run(nodeExe, [dbHelper, 'wait'])

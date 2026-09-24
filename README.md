@@ -160,7 +160,20 @@ Open [localhost:5001](http://localhost:5001). A fresh setup creates synthetic de
 .\dev\stop-local.cmd # Stop the app and database, preserving local data
 ```
 
-Setup downloads verified portable tools into `.private/tools/`. The Windows compatibility setup uses Node 17 for the API and Node 22.23.3 for frontend builds; the hosted review uses Node 22. Angular 22 builds require Node 22.22.3 or newer in the 22.x line, or Node 24.15 or newer in the 24.x line. Existing Windows installations should rerun setup before using `build-web.cmd` to obtain the updated build runtime. Never point local development at an operational database: development setup can initialize or update its own schema.
+Setup downloads verified portable tools into `.private/tools/`. Windows development,
+Docker, CI, and the hosted API use Node **22.23.3** and MySQL **8.4.11 LTS**
+(the VPS uses Ubuntu's 8.4.11 package). `.nvmrc` pins Node; both projects declare
+supported engine versions. Plan the Node 24 LTS transition before April 2027.
+Never point development at an operational database.
+
+Existing Windows installations using MySQL 8.0.19 need a one-time offline upgrade:
+stop the old app with its existing `dev/stop-local.cmd`, run the updated setup,
+then run `node dev/upgrade-native-mysql.cjs` before starting Cubit. The upgrader
+exports the local schemas, restores them into a fresh 8.4 data directory, compares
+all table counts, and preserves both the logical backup and original 8.0 directory
+under `.private/`. It never starts MySQL 8.4 against the old data directory. Keep
+the old portable MySQL binary until this upgrade is verified. Fresh setups do not
+need this step. Native startup refuses an unconverted data directory.
 
 `compose.yaml` provides an optional isolated Docker configuration. The native Windows workflow is the verified development path. Docker requires building the frontend first; Docker startup has not been verified in the current Windows environment.
 
@@ -209,7 +222,16 @@ Integration tests require an appropriate local dataset and may create or modify 
 
 ### Hosted review configuration
 
-The reference service is `deploy/cubit-review.service`; the release updater is `deploy/update-review.sh`. The service runs the compiled API from `/opt/cubit/current/CubitServices`, behind Caddy, with private settings in `/etc/cubit/review.env`. On an x86_64 VPS, run `sudo bash deploy/install-build-node.sh` once before the Angular 22 deployment. It installs a checksum-verified Node 22.23.3 build runtime under `/opt/cubit/tools/`; the updater uses it without replacing Ubuntu's API runtime.
+The reference service is `deploy/cubit-review.service`; the release updater is
+`deploy/update-review.sh`. The service runs the compiled API from
+`/opt/cubit/current/CubitServices`, behind Caddy, with private settings in
+`/etc/cubit/review.env`. On an x86_64 VPS, run
+`sudo bash deploy/install-build-node.sh` before deployment. It installs a
+checksum-verified Node 22.23.3 runtime under `/opt/cubit/tools/`, used by both
+the API services and release builds. Ubuntu's system Node binary is left intact.
+MySQL application accounts must use `caching_sha2_password`; the removed native
+password plugin is not enabled. Pin backup restore images to a verified MySQL
+8.4.11 image digest.
 
 Use `CUBIT_MODE=hosted-review`, `HOST=127.0.0.1`, a loopback MySQL connection, a separately validated review schema, and strong independently generated credentials. Hosted mode requires `DATABASE_NAME=cubit_review`, `DATABASE_USERNAME=cubit_app`, and a JWT secret of at least 48 characters. Set `WAIVER_PREVIEW_PASSWORD` privately for the staff preview. Do not enable local development mode on the VPS. Disable copied login passwords before exposing a review database.
 

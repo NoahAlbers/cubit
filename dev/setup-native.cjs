@@ -44,11 +44,9 @@ function run(exe, args, options = {}) {
 }
 
 async function main() {
-  const node17 = path.join(tools, 'node17/node.exe')
-  await verifiedDownload('https://nodejs.org/dist/v17.6.0/win-x64/node.exe', node17, '7b47df21d0f089efdcdf03f1596a7c53414083e84e296cad4119723fed263bab')
-  const mysqlArchive = path.join(tools, 'mysql/mysql-8.0.19-winx64.zip')
-  await verifiedDownload('https://cdn.mysql.com/archives/mysql-8.0/mysql-8.0.19-winx64.zip', mysqlArchive, 'e36d107c57b8382272396802d56564efa6f59b51cc011e1c5a05761b7157e74d')
-  if (!fs.existsSync(path.join(tools, 'mysql/mysql-8.0.19-winx64/bin/mysqld.exe'))) {
+  const mysqlArchive = path.join(tools, 'mysql/mysql-8.4.11-winx64.zip')
+  await verifiedDownload('https://cdn.mysql.com/Downloads/MySQL-8.4/mysql-8.4.11-winx64.zip', mysqlArchive, 'a492371d687d2bab088b0062581144a0044b8964baefdf4faa579292b423d25c')
+  if (!fs.existsSync(path.join(tools, 'mysql/mysql-8.4.11-winx64/bin/mysqld.exe'))) {
     console.log('Extracting portable MySQL...')
     await run('tar.exe', ['-xf', mysqlArchive, '-C', path.dirname(mysqlArchive)])
   }
@@ -64,8 +62,8 @@ async function main() {
   env[pathKey] = `${path.dirname(node22)};${env[pathKey] || ''}`
   const cwd = path.join(root, 'CubitServices')
   await run(node22, [pnpm, 'install', '--frozen-lockfile', '--force', '--store-dir', path.join(root, '.private/pnpm-native-store')], { cwd, env })
-  await run(node17, ['node_modules/typescript/bin/tsc', '--noEmit'], { cwd })
-  await run(node17, ['tests/local-safety.cjs'], { cwd })
+  await run(node22, ['node_modules/typescript/bin/tsc', '--noEmit'], { cwd })
+  await run(node22, ['tests/local-safety.cjs'], { cwd })
   console.log('Native tools are ready. Run dev\\start-local.cmd.')
 }
 main().catch(err => { console.error(err.message); process.exitCode = 1 })

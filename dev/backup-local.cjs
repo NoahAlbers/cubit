@@ -14,7 +14,7 @@ async function main() {
     const target = path.join(root, '.private/backups')
     fs.mkdirSync(target, { recursive: true })
     const file = path.join(target, `cubit-${new Date().toISOString().replace(/[:.]/g, '-')}.sql`)
-    execFileSync(path.join(root, '.private/tools/mysql/mysql-8.0.19-winx64/bin/mysqldump.exe'),
+    execFileSync(path.join(require('./runtime.cjs').mysqlBase, 'bin/mysqldump.exe'),
       ['--host=127.0.0.1', '--port=3307', '--user=root', '--single-transaction', '--no-tablespaces', '--set-gtid-purged=OFF', `--result-file=${file}`, database.toLowerCase()],
       { env: { ...process.env, MYSQL_PWD: settings.rootPassword }, windowsHide: true, stdio: 'pipe' })
     if (fs.statSync(file).size < 1000) throw Error('Backup is unexpectedly small')

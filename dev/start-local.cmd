@@ -1,9 +1,9 @@
 @echo off
 setlocal
 for %%I in ("%~dp0..") do set "CUBIT_ROOT=%%~fI"
-if not exist "%CUBIT_ROOT%\.private\tools\node17\node.exe" (
+if not exist "%CUBIT_ROOT%\.private\tools\node22-22.23.3\node.exe" (
   echo Run dev\setup-local.cmd first.
   exit /b 1
 )
-"%CUBIT_ROOT%\.private\tools\node17\node.exe" "%~dp0native-local.cjs" start
+"%CUBIT_ROOT%\.private\tools\node22-22.23.3\node.exe" "%~dp0native-local.cjs" start
 exit /b %errorlevel%
