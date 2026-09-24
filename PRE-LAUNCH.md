@@ -126,9 +126,11 @@ Owner: **Unassigned — technical release owner**. Target: **Unassigned**. Sign-
 - [ ] Add typed request validation throughout operations, staff tools, waivers and
   backups. Enforce linting/formatting in CI and resolve material findings.
 - [x] Cover login, member directory/profile and portal with frontend smoke tests;
-  run isolated end-to-end verification in CI. Evidence: `47beb95`, CI run
-  `36031781891`, deployed to review on 2026-09-24. Codex verified 13 component
+  run isolated end-to-end verification in CI. Evidence: `922b25f`, CI run
+  `36034566869`, deployed to review on 2026-09-24. Codex verified 14 component
   tests, login at 320–2560px, and a browser → API → disposable MySQL walkthrough.
+  Profile draft/save behavior and copy-control containment at 390px and 1280px
+  also passed. Trusted HTTPS health and all three hosted services were verified.
   This does not replace staff acceptance below.
 - [ ] Walk every sidebar and portal screen on the review VPS, including saves,
   cancellation, keyboard/mobile use and errors. Record staff acceptance separately

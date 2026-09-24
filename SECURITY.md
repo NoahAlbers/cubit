@@ -16,7 +16,7 @@ and some cross-references say nine). Work follows the numbered phases below.
 | 3 | Node 22 and MySQL 8.4 alignment | Local logical upgrade, CI, and review deployment verified |
 | 4 | Revocable sessions, account recovery, MFA, identity cleanup | Sessions, single-use links, TOTP, account notices and audited email trimming verified in CI and deployed; staff enrollment, duplicate reconciliation and email ownership verification remain launch requirements |
 | 5 | Backup confidentiality, immutable offsite recovery, DocuSeal boundary | `0c58159` deployed after green CI; v2 backup restored in isolation; public DocuSeal admin returns 404 and signing assets load. Offsite policy, external key custody, full signing and fresh-server recovery remain pending |
-| 6 | Angular modernization and frontend regression coverage | Angular 22 implemented; `47beb95` passed CI run `36031781891` and deployed; 13 component tests and synthetic browser/database walkthrough pass. Staff acceptance remains pending |
+| 6 | Angular modernization and frontend regression coverage | Angular 22 implemented; `922b25f` passed CI run `36034566869` and deployed; 14 component tests and synthetic browser/database walkthrough pass. Staff acceptance remains pending |
 | 7 | Versioned schema migrations, backend major upgrades, request validation | Frozen baseline builds a disposable database with zero entity drift; runtime/deployment migration wiring, existing-data upgrade checks and major upgrades remain pending |
 | 8 | Independent review and operational launch gates | Not signed off |
 
