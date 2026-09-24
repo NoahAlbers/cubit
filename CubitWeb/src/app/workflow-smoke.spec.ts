@@ -90,6 +90,32 @@ describe('Core workflow rendering and submissions', () => {
     expect(component.hasUnsavedChanges()).toBe(true); expect(component.form.enabled).toBe(true); fixture.destroy();
   });
 
+  it('clears contact-change markers only after reverting or a successful save', async () => {
+    const fixture = TestBed.createComponent(MemberComponent); fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.memberId = 'fixture-member';
+    component.form.patchValue({id:'fixture-member',firstName:'Casey',lastName:'Example',email:'casey@example.test'});
+    component.originalContact = {...component.form.getRawValue()};
+    component.form.controls.firstName.setValue('Changed'); component.form.markAsDirty();
+    expect(component.contactFieldChanged('firstName')).toBe(true);
+    expect(component.hasContactChanges()).toBe(true);
+    component.form.controls.firstName.setValue('Casey');
+    expect(component.form.dirty).toBe(true);
+    expect(component.hasContactChanges()).toBe(false);
+    component.form.controls.firstName.setValue('Changed'); component.revertContact();
+    expect(component.form.controls.firstName.value).toBe('Casey');
+    expect(component.hasContactChanges()).toBe(false);
+    component.form.controls.firstName.setValue('Saved');
+    const response = new Subject<any>();
+    vi.spyOn(TestBed.inject(MemberService),'saveMember').mockReturnValue(response);
+    const pending = component.save(false);
+    expect(component.hasContactChanges()).toBe(true);
+    response.next(component.form.getRawValue()); response.complete();
+    expect(await pending).toBe(true);
+    expect(component.hasContactChanges()).toBe(false);
+    fixture.destroy();
+  });
+
   it('renders portal contact fields and acknowledges a save only when the API succeeds', async () => {
     route.snapshot.data = {section: 'profile'};
     const fixture = TestBed.createComponent(PortalComponent), http = TestBed.inject(HttpTestingController);

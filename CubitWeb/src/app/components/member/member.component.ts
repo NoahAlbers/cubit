@@ -71,8 +71,13 @@ export class MemberComponent implements OnInit, OnDestroy {
   get entryAllowed(){return this.memberStatus==='Active'&&this.enabledKeys>0;}
   get entryReason(){return this.memberStatus==='Active'?(this.enabledKeys?(this.billing?.pastDue>0?'Within the billing grace period':'Membership is current'):'No enabled key'):this.billing?.accessReason||'Review membership status';}
   jump(id:string){document.getElementById(id)?.scrollIntoView({block:'start'});document.getElementById(id)?.focus({preventScroll:true});}
-  hasUnsavedChanges(){return this.form.dirty||!!this.staffTools?.hasUnsavedChanges()||!!(this.cutoffPlan&&this.cutoffOriginal!==JSON.stringify([this.cutoffDate,this.cutoffReason]));}
-  canSaveDraft(){return this.form.dirty&&this.form.valid&&!this.saving&&!this.contactLoading&&!this.staffTools?.hasUnsavedChanges()&&!this.cutoffPlan;}
+  contactFieldChanged(name:string){
+    if(this.memberId==='New'||!this.originalContact)return false;
+    return String(this.form.controls[name]?.value??'')!==String(this.originalContact[name]??'');
+  }
+  hasContactChanges(){return this.memberId==='New'?this.form.dirty:Object.keys(this.form.controls).some(name=>this.contactFieldChanged(name));}
+  hasUnsavedChanges(){return this.hasContactChanges()||!!this.staffTools?.hasUnsavedChanges()||!!(this.cutoffPlan&&this.cutoffOriginal!==JSON.stringify([this.cutoffDate,this.cutoffReason]));}
+  canSaveDraft(){return this.hasContactChanges()&&this.form.valid&&!this.saving&&!this.contactLoading&&!this.staffTools?.hasUnsavedChanges()&&!this.cutoffPlan;}
   discardDraft(){this.form.reset(this.originalContact||this.emptyContact());this.staffTools?.discardDraft();this.cutoffPlan=null;}
   saveDraft(){return this.save(false);}
   revertContact(){this.form.reset(this.originalContact||this.emptyContact());this.saveError='';}

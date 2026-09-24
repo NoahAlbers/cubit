@@ -161,7 +161,7 @@ th{color:#4b5d73;font-size:12px}.badge{font-size:12px}.directory-panel td{font-s
 .profile-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:10px 22px}
 .member-sticky .profile-quick-actions,.member-sticky .section-nav{display:flex;flex-wrap:wrap;gap:6px;margin:0}
 .member-sticky .profile-toolbar button{min-height:34px;padding:7px 11px;font-size:12px;line-height:18px}
-.member-sticky .section-nav button{background:#eaf2fc;border-color:#c5d8ef;color:var(--blue)}
+.member-sticky .profile-toolbar .secondary{background:white;border-color:#ccd6e2;color:var(--ink)}
 .member-page .stats{margin-bottom:16px}
 .member-page [id],.member-page #access-keys{scroll-margin-top:210px}
 .account-controls{display:flex;align-items:center;gap:16px;min-width:0}
@@ -427,3 +427,16 @@ select:not([multiple]):not([size]){appearance:none;-webkit-appearance:none;paddi
 .account-permissions{margin-top:20px;border-top:1px solid var(--line);padding-top:4px}
 .account-permissions>label{margin:10px 0}
 @media(max-width:480px){.mat-mdc-dialog-surface{padding:18px}.billing-entry-sheet .mat-mdc-dialog-title{font-size:19px;padding:16px 16px 10px}.billing-entry-sheet .billing-entry-body{padding:0 16px}.billing-entry-sheet .billing-entry-footer{padding:12px 16px}.cubit-loading-area{min-height:180px}}
+
+/* Profile edits remain visible without competing with payment actions. */
+.profile-contact-actions{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.profile-contact-actions .actions{margin:0;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.profile-contact-actions button{font-size:12px;min-height:38px}
+.profile-contact-actions .draft-indicator:empty{display:none}
+.member-page input.contact-changed,.member-page select.contact-changed{border-color:#ad720f;background:#fffaf0;box-shadow:inset 3px 0 #ad720f}
+.member-page input[aria-invalid=true],.member-page select[aria-invalid=true]{border-color:#b52c33}
+.profile-contact-actions .save-pending{animation:contact-save-pulse 2.4s ease-in-out infinite}
+@keyframes contact-save-pulse{0%,100%{box-shadow:0 0 0 0 rgba(9,79,163,.08)}50%{box-shadow:0 0 0 4px rgba(9,79,163,.2)}}
+@media(prefers-reduced-motion:reduce){.profile-contact-actions .save-pending{animation:none;box-shadow:0 0 0 3px rgba(9,79,163,.18)}}
+@media(max-width:1050px){.member-page .profile-title-row{align-items:flex-start;flex-wrap:wrap}.profile-contact-actions{margin-left:auto}}
+@media(max-width:600px){.profile-contact-actions{width:100%;align-items:flex-start}.profile-contact-actions .actions{width:100%;justify-content:flex-start}.profile-contact-actions button{flex:1;min-height:42px}.member-sticky .profile-toolbar .section-nav{display:flex}.member-sticky .profile-toolbar button,.member-sticky .profile-toolbar .button{white-space:normal}}
