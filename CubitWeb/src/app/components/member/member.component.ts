@@ -64,6 +64,19 @@ export class MemberComponent implements OnInit, OnDestroy {
   emptyContact(id='New'){return {id,firstName:'',lastName:'',email:'',paypalEmail:'',phone:'',emergencyContact:'',emergencyEmail:'',emergencyPhone:'',password:'',role:'member'};}
   historyFrom='';historyTo='';historyType='';historyPage=1;historySize=20;
   cutoffOriginal=''; changingPlan=false;
+  planGoal:'change'|'cancel'|'activate'='change'; planStep:'cutoff'|'assign'|'done'='cutoff';
+  availablePlans:any[]=[]; newPlanId=''; newPlanDate=''; planConfirmed=false; planError=''; planBusy=false;
+  get selectedPlan(){return this.availablePlans.find(p=>p.id===this.newPlanId);}
+  get lastPlanCutoff(){return this.memberPlans.data.map(p=>String(p.finalBillingDate||p.endDate||'').slice(0,10)).filter(Boolean).sort().pop()||'';}
+  get earliestPlanStart(){if(!this.lastPlanCutoff)return '';const d=new Date(this.lastPlanCutoff+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+1);return d.toISOString().slice(0,10);}
+  get validNewPlan(){return !!(this.selectedPlan&&this.newPlanDate&&(!this.earliestPlanStart||this.newPlanDate>=this.earliestPlanStart)&&this.planConfirmed);}
+  get pendingPlanDraft(){return this.changingPlan&&this.planStep==='assign'&&!!(this.newPlanId||this.planConfirmed);}
+  loadCatalog(){this.http.get<any[]>('/plan?available=true').subscribe({next:plans=>{this.availablePlans=plans;this.planError='';},error:()=>this.planError='Could not load available plans. Close and try again.'});}
+  async closePlanWorkflow(){if(this.planBusy||this.cutoffBusy)return;if((this.pendingPlanDraft||(this.cutoffPlan&&this.cutoffOriginal!==JSON.stringify([this.cutoffDate,this.cutoffReason])))&&!await this.drafts.confirmDiscard())return;this.changingPlan=false;this.cutoffPlan=null;}
+  setPlanGoal(goal:'change'|'cancel'){this.planGoal=goal;}
+  prepareAssignment(){this.planStep='assign';this.cutoffPlan=null;this.newPlanId='';this.planConfirmed=false;const d=new Date();const today=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');this.newPlanDate=this.earliestPlanStart>today?this.earliestPlanStart:today;this.loadCatalog();}
+  async saveWorkflowPlan(){if(!this.validNewPlan||this.planBusy)return;this.planBusy=true;this.planError='';try{await this.memberService.savePlan({id:'New',memberId:this.memberId,planId:this.newPlanId,startDate:this.newPlanDate,catalogRevision:this.selectedPlan.revision});this.planStep='done';this.cutoffSaved='Membership plan saved. Review the member’s access status and enabled keys below.';this.loadPlans();}catch(e){this.planError=e.error?.message||'Could not save the plan. Your earlier cutoff remains saved.';}finally{this.planBusy=false;}}
+
   get filteredHistory(){return this.historyRows.filter(r=>(!this.historyFrom||r.date>=this.historyFrom)&&(!this.historyTo||r.date<=this.historyTo)&&(!this.historyType||r.kind===this.historyType));}
   get historyPages(){return Math.max(1,Math.ceil(this.filteredHistory.length/this.historySize));}
   get visibleHistory(){return this.filteredHistory.slice((this.historyPage-1)*this.historySize,this.historyPage*this.historySize);}
@@ -76,12 +89,12 @@ export class MemberComponent implements OnInit, OnDestroy {
     return String(this.form.controls[name]?.value??'')!==String(this.originalContact[name]??'');
   }
   hasContactChanges(){return this.memberId==='New'?this.form.dirty:Object.keys(this.form.controls).some(name=>this.contactFieldChanged(name));}
-  hasUnsavedChanges(){return this.hasContactChanges()||!!this.staffTools?.hasUnsavedChanges()||!!(this.cutoffPlan&&this.cutoffOriginal!==JSON.stringify([this.cutoffDate,this.cutoffReason]));}
+  hasUnsavedChanges(){return this.pendingPlanDraft||this.hasContactChanges()||!!this.staffTools?.hasUnsavedChanges()||!!(this.cutoffPlan&&this.cutoffOriginal!==JSON.stringify([this.cutoffDate,this.cutoffReason]));}
   canSaveDraft(){return this.hasContactChanges()&&this.form.valid&&!this.saving&&!this.contactLoading&&!this.staffTools?.hasUnsavedChanges()&&!this.cutoffPlan;}
-  discardDraft(){this.form.reset(this.originalContact||this.emptyContact());this.staffTools?.discardDraft();this.cutoffPlan=null;}
+  discardDraft(){this.form.reset(this.originalContact||this.emptyContact());this.staffTools?.discardDraft();this.cutoffPlan=null;this.changingPlan=false;}
   saveDraft(){return this.save(false);}
   revertContact(){this.form.reset(this.originalContact||this.emptyContact());this.saveError='';}
-  async closeCutoff(){if(this.cutoffOriginal!==JSON.stringify([this.cutoffDate,this.cutoffReason])&&!await this.drafts.confirmDiscard())return;this.cutoffPlan=null;}
+  closeCutoff(){return this.closePlanWorkflow();}
   get returnUrl() { return this.navigation.memberReturn(this.activatedRoute.snapshot.queryParams.returnTo,this.memberId); }
   get auditQuery(){const previous=this.router.parseUrl(this.returnUrl);return this.returnUrl.split(/[?#]/)[0]==='/audit'&&previous.queryParams.memberId===this.memberId?previous.queryParams:{memberId:this.memberId,memberReturnTo:this.returnUrl};}
   get returnTarget() { return this.returnUrl.split(/[?#]/)[0]; }
@@ -162,7 +175,7 @@ export class MemberComponent implements OnInit, OnDestroy {
       this.lastEntry=null;this.activityError='';this.activityLoading=params.id!=='New';
       this.form.reset(this.emptyContact(params.id));this.originalContact=null;this.billing=null;this.memberPlans.data=[];this.memberKeys.data=[];
       this.contactLoading=params.id!=='New';if(this.contactLoading)this.form.disable();else this.form.enable();
-      this.initialSections.clear();
+      this.initialSections.clear();this.changingPlan=false;this.cutoffPlan=null;this.planBusy=false;
       this.anchorScroll?.unsubscribe();
       this.anchorScroll = undefined;
 
@@ -220,8 +233,9 @@ export class MemberComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() { this.anchorScroll?.unsubscribe(); }
 
-  async openCutoff(plan: any) {
+  async openCutoff(plan: any, goal: 'change'|'cancel'='cancel') {
     if(this.cutoffPlan&&this.cutoffOriginal!==JSON.stringify([this.cutoffDate,this.cutoffReason])&&!await this.drafts.confirmDiscard())return;
+    this.changingPlan=true;this.planGoal=goal;this.planStep='cutoff';
     this.cutoffPlan = plan;
     this.cutoffDate = plan.finalBillingDate || (plan.endDate ? plan.endDate.slice(0, 10) : '');
     this.cutoffReason = ''; this.cutoffPreview = null; this.cutoffError = ''; this.cutoffSaved = '';
@@ -231,7 +245,7 @@ export class MemberComponent implements OnInit, OnDestroy {
   changeCutoff() { this.cutoffPreview = null; this.cutoffError = ''; }
 
   submitCutoff(preview: boolean) {
-    if (this.cutoffBusy || !this.cutoffDate || !this.cutoffReason.trim()) return;
+    if (this.cutoffBusy || !this.cutoffDate || !this.cutoffReason.trim() || (!preview&&!this.cutoffPreview)) return;
     this.cutoffBusy = true; this.cutoffError = '';
     this.http.post<any>('/api/cubit/plans/' + this.cutoffPlan.id + '/cutoff', {
       finalBillingDate: this.cutoffDate, reason: this.cutoffReason, preview,
@@ -239,11 +253,11 @@ export class MemberComponent implements OnInit, OnDestroy {
     }).subscribe({ next: result => {
       this.cutoffBusy = false;
       if (preview) this.cutoffPreview = result;
-      else { this.cutoffSaved = 'Final billing date saved. Earlier unpaid charges remain on the account.'; this.cutoffPlan = null; this.loadPlans(); this.updateMemberBalance(); }
+      else { this.cutoffSaved = 'Final billing date saved. Earlier unpaid charges remain on the account.'; this.cutoffPlan = null; this.loadPlans(true, true); }
     }, error: err => { this.cutoffBusy = false; this.cutoffError = err.error?.message || 'Could not save the final billing date.'; } });
   }
 
-  private loadPlans(refreshBilling = true) {
+  private loadPlans(refreshBilling = true, advanceWorkflow = false) {
     this.memberService
       .getMemberPlans(this.memberId)
       .pipe(take(1))
@@ -258,6 +272,12 @@ export class MemberComponent implements OnInit, OnDestroy {
           }
         });
         if(refreshBilling)this.checkMemberStatus();
+        if(advanceWorkflow){
+          const next=data.find(p=>!p.endDate&&!p.finalBillingDate);
+          if(this.planGoal==='change'&&next){this.openCutoff(next,'change');this.cutoffSaved='Cutoff saved. This member has another ongoing plan; set its cutoff before assigning a replacement.';}
+          else if(this.planGoal==='change')this.prepareAssignment();
+          else this.planStep='done';
+        }
       });
   }
 
@@ -329,23 +349,13 @@ export class MemberComponent implements OnInit, OnDestroy {
       });
   }
 
-  addEditPlan(Id) {
-    if (Id === 'New' && this.openPlan) {
-      this.changingPlan=true;
-      this.openCutoff(this.memberPlans.data.find(p=>!p.endDate));
-      this.jump('membership-billing');
-      return;
-    }
-
-    this.dialog
-      .open(AddEditMemberPlanComponent, {
-        disableClose: true,
-        data: { Id: Id, memberId: this.memberId },
-      })
-      .afterClosed()
-      .subscribe((result) => {
-        this.loadPlans();
-      });
+  async addEditPlan(Id) {
+    if(this.changingPlan){this.jump('membership-billing');return;}
+    const ongoing=this.memberPlans.data.find(p=>!p.endDate&&!p.finalBillingDate);
+    this.cutoffSaved='';this.planError='';this.changingPlan=true;
+    if(ongoing)await this.openCutoff(ongoing,'change');
+    else {this.planGoal='activate';this.prepareAssignment();}
+    this.jump('membership-billing');
   }
 
   loadValuesIfExisting(memberId) {

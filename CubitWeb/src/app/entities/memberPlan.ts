@@ -5,6 +5,7 @@ export class MemberPlan {
   id: string;
   billingRate?: number;
   billingName?: string;
+  finalBillingDate?: string;
 
   startDate: Date;
 

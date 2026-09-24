@@ -117,6 +117,26 @@ describe('Core workflow rendering and submissions', () => {
     fixture.destroy();
   });
 
+  it('requires a preview before saving a cutoff and a reviewed non-overlapping replacement', async () => {
+    const fixture=TestBed.createComponent(MemberComponent),http=TestBed.inject(HttpTestingController),c=fixture.componentInstance;
+    fixture.detectChanges();c.memberId='plan-fixture';
+    const old:any={id:'old',plan:{name:'Standard'},startDate:'2026-01-01',endDate:null};c.memberPlans.data=[old];
+    vi.spyOn(c,'jump').mockImplementation(()=>{});vi.spyOn(c,'loadBilling').mockImplementation(()=>{});
+    const plans=vi.spyOn(TestBed.inject(MemberService),'getMemberPlans').mockReturnValue(of([{...old,endDate:'2026-09-30',finalBillingDate:'2026-09-30'}]));
+    await c.addEditPlan('New');expect(c.planGoal).toBe('change');expect(c.planStep).toBe('cutoff');
+    c.cutoffDate='2026-09-30';c.cutoffReason='Changing plan';c.submitCutoff(false);http.expectNone('/api/cubit/plans/old/cutoff');
+    c.submitCutoff(true);const preview=http.expectOne('/api/cubit/plans/old/cutoff');expect(preview.request.body.preview).toBe(true);preview.flush({before:{balance:60},after:{balance:60}});
+    c.submitCutoff(false);http.expectOne('/api/cubit/plans/old/cutoff').flush({saved:true});
+    expect(c.planStep).toBe('assign');expect(plans).toHaveBeenCalled();
+    http.expectOne('/plan?available=true').flush([{id:'new',name:'New plan',monthlyCost:90,revision:4}]);
+    c.newPlanId='new';c.newPlanDate='2026-09-30';c.planConfirmed=true;expect(c.validNewPlan).toBe(false);
+    c.newPlanDate='2026-10-01';c.planConfirmed=false;expect(c.validNewPlan).toBe(false);c.planConfirmed=true;
+    const save=vi.spyOn(TestBed.inject(MemberService),'savePlan').mockRejectedValueOnce({error:{message:'Plan changed. Reload.'}}).mockResolvedValueOnce({});
+    await c.saveWorkflowPlan();expect(c.planStep).toBe('assign');expect(c.planError).toContain('Plan changed');
+    await c.saveWorkflowPlan();expect(c.planStep).toBe('done');expect(save).toHaveBeenLastCalledWith({id:'New',memberId:'plan-fixture',planId:'new',startDate:'2026-10-01',catalogRevision:4});
+    await c.openCutoff(old);expect(c.planGoal).toBe('cancel');c.cutoffDate='2026-09-30';c.cutoffReason='Cancellation';c.submitCutoff(true);http.expectOne('/api/cubit/plans/old/cutoff').flush({before:{},after:{}});c.submitCutoff(false);http.expectOne('/api/cubit/plans/old/cutoff').flush({saved:true});expect(c.planStep).toBe('done');http.expectNone('/plan?available=true');fixture.destroy();
+  });
+
   it('opens only the selected waiver and offers uploads only for unsigned current records', () => {
     const fixture=TestBed.createComponent(MemberWaiversComponent),http=TestBed.inject(HttpTestingController);
     fixture.componentRef.setInput('memberId','fixture');fixture.detectChanges();

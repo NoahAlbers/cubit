@@ -70,29 +70,46 @@
         }<p class="muted">An enabled key only grants entry when the membership is eligible.</p></section>
         <app-member-waivers [memberId]="memberId" (ready)="sectionLoaded('waivers')"></app-member-waivers>
       </div>
-      <section id="membership-billing" tabindex="-1" class="panel detail-panel"><div class="section-heading"><div><h2>Membership plans</h2><p class="muted">Monthly charges stop after the final billing date.</p></div><button class="secondary" (click)="addEditPlan('New')">{{openPlan?'Change membership plan':'＋ Add plan'}}</button></div>
-      @if (changingPlan) {
-        <div class="notice-strip"><b>Change plan</b><p>1. Set and preview the current plan’s final billing date. 2. Save the cutoff. 3. Add the new plan with a start date after that cutoff and review its monthly rate. Update the PayPal subscription separately.</p>@if (!openPlan) {
-        <button class="secondary" (click)="addEditPlan('New')">Continue: add replacement plan</button>
-      }</div>
-      }<div class="table-scroll"><table class="record-table"><thead><tr><th>Plan</th><th>Monthly rate</th><th>Starts</th><th>Final billing date</th><th></th></tr></thead><tbody>@for (plan of memberPlans.data; track plan) {
+      <div id="membership-billing" tabindex="-1" class="plan-workflow-layout" [class.workflow-open]="changingPlan">
+      <section class="panel detail-panel plan-summary"><div class="section-heading"><div><h2>Membership plans</h2><p class="muted">Monthly charges stop after the final billing date.</p></div><button class="secondary" (click)="addEditPlan('New')">{{openPlan?'Change membership plan':'Add plan'}}</button></div>
+      <div class="table-scroll"><table class="record-table"><thead><tr><th>Plan</th><th>Monthly rate</th><th>Starts</th><th>Final billing date</th><th></th></tr></thead><tbody>@for (plan of memberPlans.data; track plan) {
       <tr><td data-label="Plan"><b>{{plan.billingName || plan.plan.name}}</b></td><td data-label="Monthly rate">{{(plan.billingRate ?? plan.plan.monthlyCost) | currency}}</td><td data-label="Starts">{{plan.startDate | date:'MMM d, y'}}</td><td data-label="Final billing date">{{(plan.finalBillingDate || plan.endDate) ? ((plan.finalBillingDate || plan.endDate) | date:'MMM d, y':'UTC') : 'Ongoing'}}</td><td><button class="secondary" (click)="openCutoff(plan)">{{(plan.finalBillingDate || plan.endDate) ? 'Review cutoff' : 'End billing'}}</button></td></tr>
     }</tbody></table></div>@if (!memberPlans.data.length) {
     <p class="empty-small">No membership plans yet.</p>
   }
-  @if (cutoffSaved) {
-    <p class="success-message" role="status">{{cutoffSaved}}</p>
-  }
-  @if (cutoffPlan) {
-    <div class="cutoff-box"><div class="section-heading"><h3>Set final billing date · {{cutoffPlan.billingName || cutoffPlan.plan.name}}</h3><button class="quiet" (click)="closeCutoff()" [disabled]="cutoffBusy">Close</button></div><dl class="cutoff-context"><div><dt>Last payment</dt><dd>{{billingError ? 'Payment history unavailable' : !billing ? 'Loading…' : lastPaymentDate ? (lastPaymentDate | date:'MMM d, y':'UTC') : 'No recorded payment'}}</dd></div><div><dt>Last entry</dt><dd>{{activityError ? 'Entry history unavailable' : activityLoading ? 'Loading…' : lastEntry ? (lastEntry | date:'MMM d, y') : 'No recorded entry'}}</dd></div></dl><p>Include monthly charges scheduled on or before this date. No proration. Membership access ends after this date. This records a local cutoff; it does not cancel a PayPal subscription.</p><div class="form-grid"><label>Final billing date (required)<input type="date" [(ngModel)]="cutoffDate" (ngModelChange)="changeCutoff()" [disabled]="cutoffBusy"></label><label>Reason (required)<input [(ngModel)]="cutoffReason" (ngModelChange)="changeCutoff()" maxlength="255" placeholder="e.g. Member canceled via PayPal" [disabled]="cutoffBusy"></label></div>@if (cutoffError) {
+
+      </section>
+      @if(changingPlan){
+      <aside class="panel detail-panel plan-workflow" aria-label="Membership plan workflow" [attr.aria-busy]="cutoffBusy||planBusy">
+      <div class="section-heading"><h2>{{planGoal==='cancel'?'End membership':planGoal==='activate'?'Activate a plan':'Change membership plan'}}</h2><button class="secondary" (click)="closePlanWorkflow()" [disabled]="cutoffBusy||planBusy">Close</button></div>
+      @if(planStep==='cutoff'){
+      <label>What would you like to do?<select [ngModel]="planGoal" (ngModelChange)="setPlanGoal($event)" [disabled]="cutoffBusy"><option value="change">Change to another plan</option><option value="cancel">End this plan without a replacement</option></select></label>
+      <p class="muted">Step 1 of {{planGoal==='change'?3:2}} · Preview and save the current plan’s cutoff.</p>
+      }
+      @if(cutoffSaved){<p class="success-message" role="status">{{cutoffSaved}}</p>}
+      @if(cutoffPlan){    <div class="cutoff-box"><div class="section-heading"><h3>Set final billing date · {{cutoffPlan.billingName || cutoffPlan.plan.name}}</h3></div><dl class="cutoff-context"><div><dt>Last payment</dt><dd>{{billingError ? 'Payment history unavailable' : !billing ? 'Loading…' : lastPaymentDate ? (lastPaymentDate | date:'MMM d, y':'UTC') : 'No recorded payment'}}</dd></div><div><dt>Last entry</dt><dd>{{activityError ? 'Entry history unavailable' : activityLoading ? 'Loading…' : lastEntry ? (lastEntry | date:'MMM d, y') : 'No recorded entry'}}</dd></div></dl><p>Include monthly charges scheduled on or before this date. No proration. Membership access ends after this date. This records a local cutoff; it does not cancel a PayPal subscription.</p><div class="form-grid"><label>Final billing date (required)<input type="date" [(ngModel)]="cutoffDate" (ngModelChange)="changeCutoff()" [disabled]="cutoffBusy"></label><label>Reason (required)<input [(ngModel)]="cutoffReason" (ngModelChange)="changeCutoff()" maxlength="255" placeholder="e.g. Member canceled via PayPal" [disabled]="cutoffBusy"></label></div>@if (cutoffError) {
     <p class="error" role="alert">{{cutoffError}}</p>
     }@if (cutoffPreview) {
     <div class="cutoff-preview"><b>Review this change</b><p>Balance: {{cutoffPreview.before.balance | currency}} <span class="sr-only">to</span> <app-arrow name="arrow-right"></app-arrow> <strong>{{cutoffPreview.after.balance | currency}}</strong><br>Past due: {{cutoffPreview.before.pastDue | currency}} <span class="sr-only">to</span> <app-arrow name="arrow-right"></app-arrow> {{cutoffPreview.after.pastDue | currency}}<br>Last billing date: {{cutoffDate | date:'MMM d, y':'UTC'}}</p><small>Payments stay intact. The date, reason, and staff account are recorded in the change history.</small></div>
     }<div class="actions"><button class="secondary" (click)="submitCutoff(true)" [disabled]="cutoffBusy || !cutoffDate || !cutoffReason.trim()">Preview balance</button>@if (cutoffPreview) {
     <button class="primary" (click)="submitCutoff(false)" [disabled]="cutoffBusy">Save final billing date</button>
-  }</div></div>
-}
-</section>
+  }</div></div>}
+      @if(planStep==='assign'){
+      <p class="muted">{{planGoal==='change'?'Step 2 of 3 · Choose the replacement plan.':'Step 1 of 2 · Choose a plan and its first billing date.'}}</p>
+      <label>Available plan<select [(ngModel)]="newPlanId" (ngModelChange)="planConfirmed=false" [disabled]="planBusy"><option value="">Choose a plan</option>@for(p of availablePlans;track p.id){<option [value]="p.id">{{p.name}} · {{p.monthlyCost|currency}} / month</option>}</select></label>
+      <label>Start date<input type="date" [(ngModel)]="newPlanDate" [min]="earliestPlanStart" (ngModelChange)="planConfirmed=false" [disabled]="planBusy" required></label>
+      @if(lastPlanCutoff){<p class="muted">The previous plan ends {{lastPlanCutoff|date:'MMM d, y':'UTC'}}. The new plan must start after this date.</p>}
+      @if(newPlanDate&&earliestPlanStart&&newPlanDate<earliestPlanStart){<p class="error">Choose a start date after the previous plan’s final billing date.</p>}
+      @if(selectedPlan){<div class="cutoff-preview"><b>Review the new membership</b><p>{{selectedPlan.name}} · {{selectedPlan.monthlyCost|currency}} each month<br>First charge: {{newPlanDate|date:'MMM d, y':'UTC'}}</p><p>Charges repeat on the monthly billing anniversary. Earlier unpaid charges remain. Staff access blocks and disabled keys stay in place.</p><label class="check"><input type="checkbox" [(ngModel)]="planConfirmed" [disabled]="planBusy">I have checked the start date and monthly rate.</label></div>}
+      @if(planError){<p class="error" role="alert">{{planError}}</p>}
+      <button class="primary" (click)="saveWorkflowPlan()" [disabled]="!validNewPlan||planBusy">{{planBusy?'Saving…':'Save membership plan'}}</button>
+      }
+      @if(planStep==='done'){
+      <h3>Final step · Check payment collection</h3><p>Cubit has saved the membership change. Update or cancel the PayPal subscription separately, if this member uses PayPal. This workflow does not change PayPal.</p><p>Check the membership status and access keys before the member’s next visit. A staff access block or disabled key is never cleared by changing plans.</p><button class="primary" (click)="closePlanWorkflow()">Done</button>
+      }
+      <p class="muted">Each Save takes effect immediately. Closing this panel keeps steps you have already saved.</p>
+      </aside>}
+      </div>
 @if (billing) {
   <section id="billing-history" tabindex="-1" class="panel detail-panel billing-history">
     <div class="section-heading"><h2>Billing history</h2><button class="primary" [disabled]="contactLoading" (click)="addEditTransaction('New')">Record payment / entry</button></div>

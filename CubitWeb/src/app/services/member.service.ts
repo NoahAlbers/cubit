@@ -30,7 +30,7 @@ export class MemberService {
     return this.http.get<MemberPlan>(environment.apiUrl + 'plan/' + Id);
   }
 
-  savePlan(plan: MemberPlan): Promise<any> {
+  savePlan(plan: {id: string; memberId: string; planId: string; startDate: string; catalogRevision?: number}): Promise<any> {
     //console.log('saving plan', plan);
     return this.http
       .post(environment.apiUrl + 'plan/memberplan', plan)
