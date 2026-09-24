@@ -38,13 +38,13 @@ export class AppComponent implements OnInit {
   private flyoutClose:ReturnType<typeof setTimeout>|undefined;
   flyoutTop=100;
   staffNavigation:NavItem[]=[
-    {id:'members',label:'Members',icon:'members',path:'/memberlist',children:[{label:'All members',path:'/memberlist'},{label:'Overdue',path:'/overdue'},{label:'Waivers',path:'/waivers'},{label:'Org management',path:'/organization',administration:true}]},
+    {id:'members',label:'Members',icon:'members',path:'/memberlist',children:[{label:'All members',path:'/memberlist'},{label:'Overdue',path:'/overdue'},{label:'Waivers',path:'/waivers'}]},
     {label:'Payment matching',icon:'payment-matching',path:'/payments'},
     {label:'Access log',icon:'access',path:'/accessLog'},
     {label:'Audit log',icon:'audit',path:'/audit'},
     {label:'Reports',icon:'reports',path:'/reports'},
     {id:'settings',label:'Settings & automation',icon:'settings',path:'/automation',children:[{label:'Billing & processing',path:'/automation'},{label:'Plan catalog',path:'/plans'},{label:'Backups & recovery',path:'/automation',fragment:'backups'}]},
-
+    {label:'Organization Management',icon:'organization',path:'/organization',administration:true},
   ];
   constructor(public organization:OrganizationService,public auth: AuthService, public router: Router, private http: HttpClient, public navigation:ListNavigationService) {
     try {const saved=JSON.parse(localStorage.getItem('cubit.navigation')||'null');if(saved){this.sidebarCollapsed=saved.compact===true;for(const id of ['members','settings'])if(typeof saved.groups?.[id]==='boolean')this.expandedGroups[id]=saved.groups[id];}}catch{}
@@ -79,7 +79,7 @@ export class AppComponent implements OnInit {
   @HostListener('document:pointerdown',['$event']) closeOutside(event:PointerEvent){if(!(event.target as Element).closest('.nav-group'))this.compactGroup=null;}
   @HostListener('window:resize') closeOnResize(){this.compactGroup=null;this.hoverLabel='';}
   @HostListener('document:keydown.escape',['$event']) closeOnEscape(event:KeyboardEvent){if(this.compactGroup){const button=document.querySelector('.nav-group-button[aria-controls="nav-'+this.compactGroup+'"]') as HTMLElement;button?.focus();this.compactGroup=null;this.hoverLabel='';event.preventDefault();}else if(this.hoverLabel){this.hoverLabel='';event.preventDefault();}else if(this.menuOpen){this.menuOpen=false;(document.querySelector('.mobile-menu') as HTMLElement)?.focus();}}
-  get sectionName(){const p=this.router.url.split(/[?#]/)[0];if(p==='/member/New')return 'Add Member';if(p.startsWith('/account/access/'))return 'Sign-in Access';return ({'/memberlist':'Members','/overdue':'Overdue Memberships','/accessLog':'Access Log','/reports':'Reports','/automation':'Settings & Automation','/audit':'Audit Log','/organization':'Org Management','/staff/settings':'Staff User Settings','/account/security':'Account Security','/payments':'Payment Matching','/plans':'Plan Catalog','/waivers':'Waivers','/portal':'My Membership','/portal/profile':'My Details','/portal/billing':'Billing History','/portal/waivers':'My Waivers'})[p]||(p.startsWith('/member/')?'Member Profile':'Cubit');}
+  get sectionName(){const p=this.router.url.split(/[?#]/)[0];if(p==='/member/New')return 'Add Member';if(p.startsWith('/account/access/'))return 'Sign-in Access';return ({'/memberlist':'Members','/overdue':'Overdue Memberships','/accessLog':'Access Log','/reports':'Reports','/automation':'Settings & Automation','/audit':'Audit Log','/organization':'Organization Management','/staff/settings':'Staff User Settings','/account/security':'Account Security','/payments':'Payment Matching','/plans':'Plan Catalog','/waivers':'Waivers','/portal':'My Membership','/portal/profile':'My Details','/portal/billing':'Billing History','/portal/waivers':'My Waivers'})[p]||(p.startsWith('/member/')?'Member Profile':'Cubit');}
   get headerBack(){
     const path=this.router.url.split(/[?#]/)[0],q=this.router.parseUrl(this.router.url).queryParams;
     if(path.startsWith('/member/')){

@@ -83,7 +83,7 @@ Staff handle sign-in help and contact requests manually. From a member's **Sign-
 
 ### Organization and staff administration
 
-**Members → Org Management** is available to Administration accounts. Administrators can create staff accounts or explicitly grant access to an existing member, change staff details and roles, disable logins, and prepare private invitation/reset links. Staff Users have operational tools but cannot manage staff accounts or organization settings. Members retain portal-only access. Staff changes require a reason, reject stale edits, revoke existing sessions and record an audit event. The shared demo account and the last enabled administrator are protected.
+**Organization Management** in the sidebar is available to Administration accounts. Administrators can create staff accounts or explicitly grant access to an existing member, change staff details and roles, disable logins, and prepare private invitation/reset links. Staff Users have operational tools but cannot manage staff accounts or organization settings. Members retain portal-only access. Staff changes require a reason, reject stale edits, revoke existing sessions and record an audit event. The shared demo account and the last enabled administrator are protected.
 
 Organization name and help email are editable here and feed the login page, browser title and member help links. Changing them does not rename historical signed documents or configure domains, time zones or mail delivery. Login identities still share the member-record model; separating those identities remains planned.
 

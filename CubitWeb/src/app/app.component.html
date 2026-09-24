@@ -6,7 +6,7 @@
       <button class="secondary mobile-menu" (click)="menuOpen=!menuOpen" [attr.aria-expanded]="menuOpen" aria-controls="main-navigation">{{sectionName}} · {{menuOpen?'Close menu':'Menu'}}</button><div class="nav-label">{{portalView ? 'MY MEMBERSHIP' : 'WORKSPACE'}}</div>
       @if (!portalView) {
         <nav id="main-navigation" aria-label="Main navigation">
-          @for (item of staffNavigation; track item) {
+          @for (item of staffNavigation; track item) { @if(!item.administration||auth.isAdmin){
             @if (item.children) {
               <div class="nav-group" [class.group-current]="groupCurrent(item)" (mouseenter)="previewNavigation(item,$event)" (mouseleave)="leaveNavigation()" (focusin)="previewNavigation(item,$event)" (focusout)="leaveGroup($event)">
                 <div class="nav-group-header" [class.group-current]="groupCurrent(item)">
@@ -27,7 +27,7 @@
             } @else {
               <a class="nav-direct" [routerLink]="item.path" [queryParams]="navigation.query(item.path)" [class.selected]="navCurrent(item)" [attr.aria-current]="navCurrent(item)?'page':null" (mouseenter)="previewNavigation(item,$event)" (mouseleave)="leaveNavigation()" (focus)="previewNavigation(item,$event)" (blur)="leaveNavigation()"><img class="nav-icon" [src]="'assets/icons/'+item.icon+'.svg'" alt=""><span class="nav-text">{{item.label}}</span></a>
             }
-          }
+          }}
         </nav>
       }
       @if (portalView) {
