@@ -47,6 +47,18 @@ database/browser suite, fresh/existing-schema migration checks, responsive login
 checks, lint/format checks and 11 backup-worker tests. Full dependency audits found
 no known vulnerabilities. These results do not clear the launch gates below.
 
+Follow-up release `b437c04` adds bounded/paginated notes, profile and sidebar
+layout refinements, separate plan-ending controls, authenticator QR/manual-key
+setup and grouped staff alert preferences. Codex verified desktop and mobile
+layouts, 21 frontend tests, backend checks, isolated database/browser workflows,
+and fresh/existing-schema migrations on 2026-09-24. Email-reset requests remain
+disabled and issue no token; alert previews send or queue nothing. Provider
+connection and live event delivery remain open launch gates.
+GitHub CI `36054880737` passed. Codex verified the deployed release on 2026-09-24:
+review and synthetic-demo each have 11 migrations with zero schema drift,
+both application services and Caddy are active, and trusted HTTPS `/health`
+returns 200. This is review verification, not authorization for live cutover.
+
 ## 1. Accounts and access
 
 Owner: **Unassigned — account administrator**. Target: **Unassigned**. Sign-off: **Pending**.
