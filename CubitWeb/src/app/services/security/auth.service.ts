@@ -19,6 +19,7 @@ export class AuthService  {
   get roleLabel(){return this.isAdmin?'Administration':this.isStaff?'Staff User':'Member';}
   get isDemo() { try { return JSON.parse(atob(this.authToken.split('.')[1])).aud === 'cubit-demo'; } catch { return false; } }
   get home() { return this.isStaff ? '/memberlist' : '/portal'; }
+  get memberId(){try{return JSON.parse(atob(this.authToken.split('.')[1])).id||'';}catch{return '';}}
   get accountLabel(){try{return JSON.parse(atob(this.authToken.split('.')[1])).email||'Signed in';}catch{return '';}}
   canActivate(route: ActivatedRouteSnapshot) {
     if (this.validToken()) {

@@ -41,7 +41,7 @@
       @if(auth.isStaff){
         <div class="sidebar-portal-switch" (pointerover)="previewPortal($event)" (focusin)="previewPortal($event)" (mouseleave)="leaveNavigation()" (focusout)="leaveNavigation()">
           @if(!portalView){
-            <a title="My portal · Member view" routerLink="/portal"><img class="nav-icon" src="assets/icons/portal.svg" alt=""><span class="nav-text"><strong>My portal</strong><small>Member view</small></span></a>
+            <a title="My portal · Member view" routerLink="/portal"><svg class="nav-icon portal-identicon" width="28" height="28" [appMemberIcon]="auth.memberId" aria-hidden="true" focusable="false"></svg><span class="nav-text"><strong>My portal</strong><small>Member view</small></span></a>
           } @else {
             <a title="Staff workspace" [routerLink]="navigation.target('/memberlist')" [queryParams]="navigation.query('/memberlist')"><app-arrow name="arrow-left"></app-arrow><span class="nav-text"><strong>Staff workspace</strong><small>Return to staff tools</small></span></a>
           }
