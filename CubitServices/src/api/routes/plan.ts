@@ -2,7 +2,7 @@ import { recordAudit, snapshot, planFields } from '../../staff/audit'
 import { paypalTransactions } from './../../entity/PaypalTransaction'
 import { AppDataSource } from './../../app'
 import express from 'express'
-import { Guid } from 'guid-typescript'
+import { randomUUID } from 'crypto'
 import { Plan } from '../../entity/plan'
 import { MemberPlan } from '../../entity/memberPlan'
 import { Member } from '../../entity/member'
@@ -59,7 +59,7 @@ router.post('/memberplan', async (req, res, next) => {
     throw Object.assign(new Error('This would overlap an existing plan. Set its final billing date first.'), { status: 409 })
 
   if (postedMemberPlan.id == 'New') {
-    postedMemberPlan.id = Guid.create().toString()
+    postedMemberPlan.id = randomUUID()
     postedMemberPlan.paypalSubscriptionId = ''
     postedMemberPlan.paypalSubscriptionPlanId = ''
   }

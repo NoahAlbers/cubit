@@ -1,4 +1,4 @@
-import { Guid } from 'guid-typescript'
+import { randomUUID } from 'crypto'
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -11,7 +11,7 @@ import { Member } from './member'
 //see https://typeorm.io/#/entities/ for how entities work
 @Entity({ name: 'memberKey' })
 export class MemberKey {
-  @PrimaryColumn({ type: String, default: Guid.create().toString() })
+  @PrimaryColumn({ type: String, default: randomUUID() })
   id: string
 
   //see https://typeorm.io/#/entities/column-types-for-mysql--mariadb for type options

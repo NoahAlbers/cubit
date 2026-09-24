@@ -33,6 +33,8 @@ jobs:
       - run: npm install --global pnpm@9.15.9
       - run: pnpm --dir CubitServices install --frozen-lockfile
       - run: pnpm --dir CubitWeb install --frozen-lockfile
+      - run: pnpm --dir CubitServices audit --prod --audit-level=high
+      - run: pnpm --dir CubitWeb audit --prod --audit-level=high
       - run: node dev/build-web.cjs
       - run: pnpm --dir CubitWeb test
       - run: pnpm --dir CubitServices build

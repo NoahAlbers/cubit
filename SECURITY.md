@@ -1,0 +1,42 @@
+# Security upgrade and launch checklist
+
+Cubit remains a review deployment. Production door access and payment imports are disabled.
+Changes to this repository must not connect to or modify the existing membership system.
+
+The September 2026 specification contains eight numbered phases (its introduction
+and some cross-references say nine). Work follows the numbered phases below.
+
+| Phase | Scope | Status |
+| --- | --- | --- |
+| 1 | Patched runtime dependencies, dependency alerts, CI audits | Implemented; deployment verification pending |
+| 2 | Headers, login hardening, legacy-route validation and removal | Pending |
+| 3 | Node 22 and MySQL 8.4 alignment | Pending |
+| 4 | Revocable sessions, account recovery, MFA, identity cleanup | Pending |
+| 5 | Backup confidentiality, immutable offsite recovery, DocuSeal boundary | Pending; offsite storage not configured |
+| 6 | Angular modernization and frontend regression coverage | Angular 22 already implemented; expanded checks pending |
+| 7 | Versioned schema migrations, backend major upgrades, request validation | Pending |
+| 8 | Independent review and operational launch gates | Not signed off |
+
+## Verification
+
+Before each milestone: build the backend and frontend, run the CI regression
+suite locally (database tests use an isolated disposable schema), and audit both
+production dependency trees. Commit lockfiles with pnpm 9.15.9. CI must pass before
+review deployment. Back up the database before schema changes and verify health
+after deployment. Keep imported records, credentials, backup archives, and local
+audit evidence out of Git.
+
+Phase 1 local checks: backend build, frontend build and five frontend tests,
+backend CI regression tests including database integration tests, and backup
+worker tests. Production audits: no high/critical findings; the backend has one
+low finding and the frontend has none. These counts are a point-in-time result,
+not a guarantee that future audits will remain unchanged.
+
+## External launch requirements
+
+Launch still requires an offsite storage destination with independently controlled
+retention, external recovery-key custody, a fresh-server restore rehearsal,
+staff reconciliation of imported billing records, authenticated door integration,
+verified payment imports, an independent security review, monitoring, and a named
+on-call owner. Each requires an owner and a dated sign-off before cutover.
+The shared review administrator password is outside this upgrade's scope.

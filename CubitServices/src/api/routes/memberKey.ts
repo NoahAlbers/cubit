@@ -3,7 +3,7 @@ import { lockIdentities } from '../../billing/member-identity'
 import { lockMember } from '../../billing/store'
 import { fail, reasonText } from '../../billing/payments'
 import express from 'express'
-import { Guid } from 'guid-typescript'
+import { randomUUID } from 'crypto'
 import { MemberKey } from '../../entity/memberKey'
 import { VerifyLoggedIn } from '../common/check-auth'
 import { AppDataSource } from '../../app'
@@ -45,7 +45,7 @@ router.post('/', VerifyLoggedIn, async (req,res,next)=>{
       const duplicate=await manager.createQueryBuilder(MemberKey,'k').where('UPPER(TRIM(k.serialNumber))=:serial',{serial:serial.toUpperCase()}).andWhere('k.id<>:id',{id:before?.id||''}).getOne()
       if(duplicate)fail('This fob is already assigned. Review its existing member before adding it.',409)
       const reason=before?reasonText(b.reason):typeof b.reason==='string'?b.reason.trim().slice(0,500):''
-      const after=await manager.save(MemberKey,manager.create(MemberKey,{id:before?.id||Guid.create().toString(),memberId:b.memberId,serialNumber:serial,status:b.status}))
+      const after=await manager.save(MemberKey,manager.create(MemberKey,{id:before?.id||randomUUID(),memberId:b.memberId,serialNumber:serial,status:b.status}))
       await recordAudit(manager,{memberId:b.memberId,kind:before?'Fob updated':'Fob assigned',author:req.member!.email,entityId:after.id,before:snapshot(before,keyFields),after:snapshot(after,keyFields),reason})
       return after
     })

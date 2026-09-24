@@ -6,7 +6,7 @@ import { Member, ROLES } from '../../entity/member'
 import { hash } from 'bcrypt'
 import { jwtHelper } from '../common/jwtHelper'
 import { VerifyLoggedIn } from '../common/check-auth'
-import { Guid } from 'guid-typescript'
+import { randomUUID } from 'crypto'
 import { MemberPlan } from '../../entity/memberPlan'
 import { localConfig } from '../../dev/config'
 import { demoEmail, demoMemberId } from '../../demo/identity'
@@ -88,7 +88,7 @@ router.post('/', async (req, res, next) => {
   if (member.id != 'New') {
     throw 'use put method to update an existing member, not post'
   } else {
-    member.id = Guid.create().toString()
+    member.id = randomUUID()
   }
 
   if (await memberClass.checkForDuplicateEmail(member.email)) {

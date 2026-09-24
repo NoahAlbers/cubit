@@ -9,7 +9,6 @@ import path from 'path'
 import { staffOnly } from './api/common/staff-auth'
 import { loginLimit } from './api/common/login-limit'
 import { demoProxy } from './demo/proxy'
-const bodyParser = require('body-parser')
 const extension = __filename.endsWith('.js') ? 'js' : 'ts'
 
 export const AppDataSource = new DataSource({
@@ -32,7 +31,6 @@ app.disable('x-powered-by')
 if (localConfig.runtimeMode !== 'local') app.set('trust proxy', 'loopback')
 
 app.use(morgan('dev')) //nicer console logging and errors
-app.use(bodyParser.json())
 
 //nicer output
 app.use(express.urlencoded({ extended: false }))

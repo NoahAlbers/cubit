@@ -1,5 +1,5 @@
 import express, { response } from 'express'
-import { Guid } from 'guid-typescript'
+import { randomUUID } from 'crypto'
 import {
   paypalTransactions,
   TransactionDetailsEntity,
@@ -114,7 +114,7 @@ function processPayments(paypalData: paypalTransactions) {
         member.role = ROLES.MEMBER
         member.email = pp.paypalEmail
         member.paypalEmail = pp.paypalEmail
-        member.id = Guid.create().toString()
+        member.id = randomUUID()
         AppDataSource.manager.insert(Member, member).then(
           (insertResult) => {
             pp.memberId = member.id
