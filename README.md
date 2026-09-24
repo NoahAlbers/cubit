@@ -93,7 +93,7 @@ not yet verification that the member owns the new email address.
 
 ### Digital and uploaded waivers
 
-Waiver management is a work-in-progress preview with an additional password gate for staff. The foundation includes versioned templates, required and optional documents, signing history, and a view of active members missing required waivers.
+Waiver management uses normal staff and member account permissions, with no additional preview password. The foundation includes versioned templates, required and optional documents, signing history, and a view of active members missing required waivers.
 
 Members can sign through a separately hosted DocuSeal signing page or upload a signed PDF, JPG, or PNG. Staff can attach files or use a phone camera on a member profile. Uploads remain pending until staff checks and accepts them; rejected and superseded files remain available. The active-member compliance list counts the current required version only.
 
@@ -249,7 +249,7 @@ MySQL application accounts must use `caching_sha2_password`; the removed native
 password plugin is not enabled. Pin backup restore images to a verified MySQL
 8.4.11 image digest.
 
-Use `CUBIT_MODE=hosted-review`, `HOST=127.0.0.1`, a loopback MySQL connection, a separately validated review schema, and strong independently generated credentials. Hosted mode requires `DATABASE_NAME=cubit_review`, `DATABASE_USERNAME=cubit_app`, and a JWT secret of at least 48 characters. Set `WAIVER_PREVIEW_PASSWORD` privately for the staff preview. Do not enable local development mode on the VPS. Disable copied login passwords before exposing a review database.
+Use `CUBIT_MODE=hosted-review`, `HOST=127.0.0.1`, a loopback MySQL connection, a separately validated review schema, and strong independently generated credentials. Hosted mode requires `DATABASE_NAME=cubit_review`, `DATABASE_USERNAME=cubit_app`, and a JWT secret of at least 48 characters. Do not enable local development mode on the VPS. Disable copied login passwords before exposing a review database.
 
 The service's loopback-only network restriction is part of the review boundary. Source code and secrets are managed separately. Hosted startup does not synchronize the schema, seed demo members, or enable daily processing.
 

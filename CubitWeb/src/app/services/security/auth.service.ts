@@ -28,7 +28,6 @@ export class AuthService  {
   logout() {
     this.authToken = '';
     sessionStorage.removeItem('cubit-token');
-    sessionStorage.removeItem('cubit-waiver-preview');
     localStorage.removeItem('token');
     this.isAuthenticated$.next(false);
     this.router.navigateByUrl('/');
@@ -41,7 +40,6 @@ export class AuthService  {
   }
   login(email: string, password: string, code = '', workspace = '') {
     return this.http.post<any>('/login', { email, password, code, workspace }).pipe(tap(result => {
-      sessionStorage.removeItem('cubit-waiver-preview');
       this.authToken = result.token;
       sessionStorage.setItem('cubit-token', result.token);
       this.isAuthenticated$.next(true);

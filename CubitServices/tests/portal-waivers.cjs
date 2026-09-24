@@ -15,12 +15,11 @@ async function main(){
   for(const url of ['/api/portal','/api/waivers','/task','/ACON/getWhitelist'])assert.equal((await request(url)).status,401)
   const admin=(await request('/login',{method:'POST',body:{email:'admin@example.test',password:'LocalDemoOnly!2026'}})).json().token
   assert.equal((await request('/api/waivers',{token:admin})).status,403)
-  const previewToken=(await request('/api/waivers/unlock',{method:'POST',token:admin,body:{password:process.env.WAIVER_PREVIEW_PASSWORD||'test'}})).json().token
   assert.equal((await request('/login',{method:'POST',body:{email:{bad:true},password:1}})).status,401)
   await db.initialize()
   const id=randomUUID(),other=randomUUID(),prefix='portal-'+randomUUID(),waiverIds=[]
   let token
-  const call=async(url,method='GET',body,who=token,status=200)=>{const r=await request(url,{method,body,token:who,previewToken});assert.equal(r.status,status,r.text);return status===200||status===201?r.json():r}
+  const call=async(url,method='GET',body,who=token,status=200)=>{const r=await request(url,{method,body,token:who});assert.equal(r.status,status,r.text);return status===200||status===201?r.json():r}
   try{
     const password=await hash('PortalTestOnly!2026',10)
     for(const [memberId,name] of [[id,'Portal'],[other,'Other']])await db.manager.save(Member,{id:memberId,firstName:name,lastName:'Fixture',email:`${prefix}-${name}@example.test`.toLowerCase(),paypalEmail:'',password,role:'member',phone:'202-555-0199'})

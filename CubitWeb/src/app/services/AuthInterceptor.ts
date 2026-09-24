@@ -18,14 +18,11 @@ export class AuthInterceptor implements HttpInterceptor {
         "Bearer " + this.auth.authToken
       ),
     });
-    const preview=sessionStorage.getItem('cubit-waiver-preview');
-    if(preview&&req.url.startsWith('/api/waivers'))reqClone=reqClone.clone({setHeaders:{'X-Cubit-Waiver-Preview':preview}});
     return next.handle(reqClone).pipe(
       tap(
         () => {},
         (err: any) => {
           if (err instanceof HttpErrorResponse) {
-            if(err.error?.code==='WAIVER_PREVIEW_LOCKED')sessionStorage.removeItem('cubit-waiver-preview');
             if (err.status !== 401 || req.url==='/login' || req.url==='/api/account/redeem') {
               return;
             }

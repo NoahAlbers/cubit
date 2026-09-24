@@ -12,9 +12,9 @@ const {validateTemplate,createSigning,downloadSigningFile}=require('../src/waive
 const pdf=Buffer.from('%PDF-1.4\nSynthetic test bytes only; no legal effect.\n%%EOF\n')
 async function main(){
  const server=await startLocalApp(),ids=[randomUUID(),randomUUID()],documents=[],waivers=[]
- const base='http://127.0.0.1:5013';let preview
+ const base='http://127.0.0.1:5013'
  const call=async(path,token,body,status=200,binary=false)=>{
-  const headers={Authorization:'Bearer '+token};if(preview)headers['X-Cubit-Waiver-Preview']=preview
+  const headers={Authorization:'Bearer '+token}
   if(body!==undefined)headers['Content-Type']=binary?'application/octet-stream':'application/json'
   if(binary)headers['X-Cubit-Filename']='fixture.pdf'
   const r=await fetch(base+path,{method:body===undefined?'GET':'POST',headers,body:body===undefined?undefined:binary?body:JSON.stringify(body)})
@@ -25,8 +25,6 @@ async function main(){
   for(const id of ids)await db.manager.save(Member,{id,firstName:'Waiver',lastName:'QA',email:id+'@example.test',paypalEmail:'',phone:'',role:'member',password})
   const admin=await db.manager.findOneByOrFail(Member,{email:'admin@example.test'}),a=jwtHelper.GenerateJWT(admin)
   const member=await db.manager.findOneByOrFail(Member,{id:ids[0]}),m=jwtHelper.GenerateJWT(member),other=jwtHelper.GenerateJWT(await db.manager.findOneByOrFail(Member,{id:ids[1]}))
-  await call('/api/waivers/documents/template',a,pdf,403,true)
-  preview=(await call('/api/waivers/unlock',a,{password:process.env.WAIVER_PREVIEW_PASSWORD||'test'})).json().token
   await call('/api/waivers/documents/template',m,pdf,403,true)
   await call('/api/waivers/documents/template',a,Buffer.from('<script>invalid</script>'),400,true)
   const original=(await call('/api/waivers/documents/template',a,pdf,201,true)).json();documents.push(original.id)

@@ -24,7 +24,7 @@ export function demoProxy(enabled: boolean, port = 5002): RequestHandler {
     const binary=req.headers['content-type']==='application/octet-stream'
     const body = binary||['GET','HEAD'].includes(req.method) ? undefined : JSON.stringify(req.body || {})
     const headers: http.OutgoingHttpHeaders = {accept:req.headers.accept || 'application/json', 'x-forwarded-for':req.ip}
-    for (const key of ['authorization','x-cubit-waiver-preview','x-cubit-filename']) if(req.headers[key])headers[key]=req.headers[key]
+    for (const key of ['authorization','x-cubit-filename']) if(req.headers[key])headers[key]=req.headers[key]
     if(binary){headers['content-type']='application/octet-stream';if(req.headers['content-length'])headers['content-length']=req.headers['content-length']}
     if (body) { headers['content-type']='application/json'; headers['content-length']=Buffer.byteLength(body) }
     const upstream = http.request({hostname:'127.0.0.1',port,path:req.originalUrl,method:req.method,headers}, response => {

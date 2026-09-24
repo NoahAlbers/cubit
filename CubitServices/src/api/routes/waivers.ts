@@ -8,16 +8,12 @@ import { directoryRows } from '../../billing/directory'
 import { publishWaiver, publicSignature, memberWaivers, syncSigning } from '../../waivers/store'
 import { docusealConfig } from '../../waivers/docuseal'
 import { fail } from '../../billing/payments'
-import { unlockWaiverPreview, requireWaiverPreview } from '../../waivers/preview'
-import { loginLimit } from '../common/login-limit'
 import { WaiverDocument } from '../../entity/waiverDocument'
 import { documentLimit, uploadDocument, reviewDocument, sendDocument, publicDocument } from '../../waivers/documents'
 
 const router=express.Router()
 router.use(staffOnly)
 router.use((req,res,next)=>{res.setHeader('Cache-Control','no-store');next()})
-router.post('/unlock',loginLimit(),unlockWaiverPreview)
-router.use(requireWaiverPreview)
 const route=(fn:any)=>async(req:any,res:any,next:any)=>{try{await fn(req,res)}catch(err){next(err)}}
 router.post('/documents/template',express.raw({type:'application/octet-stream',limit:documentLimit}),route(async(req:any,res:any)=>
   res.status(201).json(await uploadDocument(null,null,req.body,String(req.headers['x-cubit-filename']||'waiver'),req.member,true))))

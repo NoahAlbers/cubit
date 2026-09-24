@@ -112,6 +112,11 @@ async function main(){
  const otherPrefs=await request('/api/cubit/staff/preferences',null,'GET',jwtHelper.GenerateJWT(admin2));assert.equal(otherPrefs.data.preferences.enabled,false,'Preferences isolated per staff member');
  const preview=await ok('/api/cubit/staff/preferences/preview',{});assert.equal(preview.deliveryEnabled,false);assert.deepEqual(preview.results.map(r=>r.decision),['Would alert','Duplicate suppressed','Would alert','Successful entry \u2014 no email','Would alert']);
  assert.equal((await request('/api/cubit/audit',{kind:'Forged entry'})).status,404,'Audit has no mutation API');
+ // Waivers need normal staff authorization, without an extra preview token.
+ assert.equal((await request('/api/waivers',null,'GET',null)).status,401);
+ assert.equal((await request('/api/waivers',null,'GET',jwtHelper.GenerateJWT(await db.manager.findOneByOrFail(Member,{id:existing.id})))).status,403);
+ assert.equal((await request('/api/waivers')).status,200);
+ assert.equal((await request('/api/waivers/members/'+existing.id)).status,200);
  // Backup requests stay staff-only and validate snapshot identities before a worker sees them.
  for(const path of ['/api/backups']){assert.equal((await request(path,null,'GET',null)).status,401);assert.equal((await request(path,null,'GET',jwtHelper.GenerateJWT(await db.manager.findOneByOrFail(Member,{id:existing.id})))).status,403);}
  for(const body of [{kind:'verify',snapshot:'../secret'},{kind:'backup',snapshot:'a'.repeat(64)},{kind:'shell'},{kind:'verify',command:'anything'}])assert.equal((await request('/api/backups/jobs',body)).status,400);

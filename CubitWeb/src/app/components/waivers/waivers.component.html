@@ -1,7 +1,3 @@
-@if (!gate.unlocked) {
-  <section class="page"><div class="panel detail-panel waiver-lock-panel"><app-waiver-lock (unlocked)="load()"></app-waiver-lock></div></section>
-}
-@if (gate.unlocked) {
   <section class="page waivers-page" [appDraft]="hasUnsavedChanges()"><div class="page-heading"><button class="primary" (click)="edit()" [disabled]="busy">＋ New waiver</button></div>
   @if (error) {
     <p class="error" role="alert">{{error}}</p>
@@ -81,4 +77,3 @@
 }<a href="https://www.docuseal.com/docs/api" target="_blank" rel="noopener noreferrer">DocuSeal documentation <app-arrow name="external-link"></app-arrow></a></details>
 }
 </section>
-}

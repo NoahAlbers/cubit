@@ -4,7 +4,6 @@ import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ListNavigationService } from '../../services/list-navigation.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { WaiverPreviewService } from '../../services/waiver-preview.service';
 
 @Component({
     selector: 'app-waivers', templateUrl: './waivers.component.html',
@@ -17,10 +16,10 @@ export class WaiversComponent implements OnInit {
   discardDraft(){this.form=null;this.confirmed=false;}
   async cancelEdit(){if(this.hasUnsavedChanges()&&!await this.drafts.confirmDiscard())return;this.discardDraft();}
   data:any;error='';saved='';busy=false;editing:any=null;form:any=null;confirmed=false;search='';scope='active';completion='missing';showArchived=false;
-  constructor(private documents:WaiverDocumentsService,public gate:WaiverPreviewService,private drafts:DraftGuard,private http:HttpClient, public navigation:ListNavigationService, private route:ActivatedRoute, private router:Router){}
+  constructor(private documents:WaiverDocumentsService,private drafts:DraftGuard,private http:HttpClient, public navigation:ListNavigationService, private route:ActivatedRoute, private router:Router){}
   ngOnInit(){const q=this.route.snapshot.queryParams;this.search=q.search||'';this.scope=q.scope==='all'?'all':'active';this.completion=['all','complete'].includes(q.completion)?q.completion:'missing';this.showArchived=q.archived==='true';this.load();}
   remember(){this.router.navigate([],{relativeTo:this.route,queryParams:{search:this.search,scope:this.scope,completion:this.completion,archived:this.showArchived},replaceUrl:true});}
-  load(){if(!this.gate.unlocked)return;this.error='';this.http.get<any>('/api/waivers').subscribe({next:d=>{this.data=d;this.navigation.restoreScroll();},error:e=>this.error=e.error?.code==='WAIVER_PREVIEW_LOCKED'?'':e.error?.message||'Unable to load waivers.'});}
+  load(){this.error='';this.http.get<any>('/api/waivers').subscribe({next:d=>{this.data=d;this.navigation.restoreScroll();},error:e=>this.error=e.error?.message||'Unable to load waivers.'});}
   get visibleWaivers(){return this.data?.waivers.filter(w=>this.showArchived||!w.archived)||[];}
   get members(){const q=this.search.trim().toLowerCase();return this.data?.compliance.filter(m=>(this.scope==='all'||m.status==='Active')&&
     (this.completion==='all'||(this.completion==='missing'?m.missing.length>0:m.missing.length===0))&&(!q||(m.name+' '+m.email).toLowerCase().includes(q)))||[];}
