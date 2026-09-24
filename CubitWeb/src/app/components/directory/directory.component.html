@@ -123,7 +123,7 @@
 </section>
 <ng-template #pageControls let-position="position">
   @if (data?.total&&!error) {
-    <div class="directory-pagination" [class.top-pagination]="position==='top'">
+    <div class="directory-pagination">
       <div class="page-settings"><span aria-live="polite">{{firstRow}}–{{lastRow}} of {{data.total}} members · Page {{data.page}} of {{data.pages}}</span><label>Members per page<select [attr.aria-label]="'Members per page ('+position+')'" [(ngModel)]="filters.pageSize" (ngModelChange)="apply()" [disabled]="loading">@for (size of pageSizes; track size) {
       <option [ngValue]="size">{{size}}</option>
     }</select></label></div>

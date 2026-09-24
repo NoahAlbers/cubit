@@ -25,8 +25,8 @@
   </section>
 </section>
 <ng-template #controls let-position="position">@if (total&&!loading&&!error) {
-  <div class="directory-pagination" [class.top-pagination]="position==='top'">
-    <div class="page-settings"><span>{{firstRow}}–{{lastRow}} of {{total}} events · Page {{page}} of {{pages}}</span><label>Events per page<select [attr.aria-label]="'Events per page ('+position+')'" [(ngModel)]="pageSize" (ngModelChange)="apply()">@for (size of sizes; track size) {
+  <div class="directory-pagination">
+    <div class="page-settings"><span aria-live="polite">{{firstRow}}–{{lastRow}} of {{total}} events · Page {{page}} of {{pages}}</span><label>Events per page<select [attr.aria-label]="'Events per page ('+position+')'" [(ngModel)]="pageSize" (ngModelChange)="apply()">@for (size of sizes; track size) {
     <option [ngValue]="size">{{size}}</option>
   }</select></label></div>
   <nav class="page-buttons" [attr.aria-label]="'Access log pages ('+position+')'">@if (page > 1) {<button class="secondary" aria-label="First page" [disabled]="page===1" (click)="go(1)"><app-arrow name="first-page"></app-arrow> First</button><button class="secondary" aria-label="Previous page" [disabled]="page===1" (click)="go(page-1)"><app-arrow name="chevron-left"></app-arrow> Prev</button>}@for (p of pageNumbers; track p) {
