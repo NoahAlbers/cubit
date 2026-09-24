@@ -19,7 +19,13 @@ export class CopyFieldDirective implements OnInit,OnDestroy,DoCheck {
     if(input&&!input.hasAttribute('aria-label')&&!input.hasAttribute('aria-labelledby'))r.setAttribute(input,'aria-label',this.el.nativeElement.textContent.trim());
     r.setAttribute(this.button,'type','button');r.setAttribute(this.button,'aria-label','Copy '+this.copyLabel);r.setAttribute(this.button,'title','Copy '+this.copyLabel);
     r.addClass(this.button,'copy-field-button');r.addClass(this.el.nativeElement,'copyable-field');
-    const icon=r.createElement('img');r.setAttribute(icon,'src','assets/icons/copy.svg');r.setAttribute(icon,'alt','');r.appendChild(this.button,icon);r.appendChild(this.el.nativeElement,this.button);
+    const icon=r.createElement('img');r.setAttribute(icon,'src','assets/icons/copy.svg');r.setAttribute(icon,'alt','');r.appendChild(this.button,icon);
+    if(input){
+      // Anchor to the input itself so wrapped labels and validation messages
+      // cannot move the copy action outside its field.
+      const wrapper=r.createElement('span');r.addClass(wrapper,'copy-input-wrap');
+      r.insertBefore(input.parentNode,wrapper,input);r.appendChild(wrapper,input);r.appendChild(wrapper,this.button);
+    }else r.appendChild(this.el.nativeElement,this.button);
     this.unlisten=r.listen(this.button,'click',(event:Event)=>{void this.copy(event);});
   }
   private async copy(event:Event){

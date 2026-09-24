@@ -251,11 +251,15 @@ select:not([multiple]):not([size]){appearance:none;-webkit-appearance:none;paddi
 /* One persistent page header, with aligned navigation and account controls. */
 .badge.inactive{background:#fff5d5;color:#795c0c}
 .copyable-field{position:relative}
-.copyable-field .copy-field-button{position:absolute;left:-23px;top:24px;display:flex;align-items:center;justify-content:center;width:23px;height:28px;min-width:0;padding:3px;border:0;border-radius:4px;background:transparent;opacity:0;pointer-events:none;transition:opacity 120ms ease}
+.copyable-field .copy-field-button{position:absolute;right:5px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:30px;height:30px;min-width:0;padding:3px;border:0;border-radius:4px;background:transparent;opacity:0;pointer-events:none;transition:opacity 120ms ease}
 .copy-field-button img{width:17px;height:17px;display:block}
-.copyable-field:hover>.copy-field-button,.copyable-field:focus-within>.copy-field-button,.copy-field-button:focus-visible{opacity:.65;pointer-events:auto}
+.copyable-field:hover .copy-field-button,.copyable-field:focus-within .copy-field-button,.copy-field-button:focus-visible{opacity:.65;pointer-events:auto}
 .copyable-field .copy-field-button:hover,.copyable-field .copy-field-button:focus-visible{opacity:1;background:#edf3fa}
-.key-row.copyable-field>.copy-field-button{top:12px}
+.copy-input-wrap{display:block;position:relative;width:100%}
+.copy-input-wrap input{padding-right:40px}
+.key-value.copyable-field{display:inline-flex;align-items:center;position:relative;padding-left:35px;min-height:32px;max-width:100%}
+.key-value.copyable-field>.copy-field-button{left:0;right:auto}
+.key-row .key-value code{min-width:0;overflow-wrap:anywhere;word-break:break-word}
 @media(hover:none){.copyable-field .copy-field-button{opacity:.65;pointer-events:auto}}
 .header-back span{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .workspace-body .page{padding-top:24px}
