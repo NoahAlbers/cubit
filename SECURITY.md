@@ -15,7 +15,7 @@ and some cross-references say nine). Work follows the numbered phases below.
 | 2 | Headers, login hardening, legacy-route validation and removal | Verified locally and in CI; review deployed |
 | 3 | Node 22 and MySQL 8.4 alignment | Local logical upgrade, CI, and review deployment verified |
 | 4 | Revocable sessions, account recovery, MFA, identity cleanup | Sessions, single-use links, TOTP, account notices and audited email trimming verified in CI and deployed; staff enrollment, duplicate reconciliation and email ownership verification remain launch requirements |
-| 5 | Backup confidentiality, immutable offsite recovery, DocuSeal boundary | New backups exclude service configuration; worker forbids remote deletion; restricted DocuSeal proxy validated. Offsite policy, external key custody and fresh-server recovery remain pending |
+| 5 | Backup confidentiality, immutable offsite recovery, DocuSeal boundary | `0c58159` deployed after green CI; v2 backup restored in isolation; public DocuSeal admin returns 404 and signing assets load. Offsite policy, external key custody, full signing and fresh-server recovery remain pending |
 | 6 | Angular modernization and frontend regression coverage | Angular 22 already implemented; expanded checks pending |
 | 7 | Versioned schema migrations, backend major upgrades, request validation | Pending |
 | 8 | Independent review and operational launch gates | Not signed off |

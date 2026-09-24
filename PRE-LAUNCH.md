@@ -61,10 +61,11 @@ Owner: **Unassigned — account administrator**. Target: **Unassigned**. Sign-of
 
 Owner: **Unassigned — server/backup operator**. Target: **Unassigned**. Sign-off: **Pending**.
 
-Latest local evidence: on 2026-09-24, review release `ecbae54` successfully restored
-the selected retained snapshot `ad410909d18c` into an isolated database, checking
-tables, waiver files and checksums. The deployed inventory shows retained copies,
-creation times and captured sizes. This is **not** an off-server or fresh-VPS rehearsal.
+Latest local evidence: on 2026-09-24, review release `0c58159` created v2 snapshot
+`c2dff18856f1` and successfully restored it into an isolated database, checking
+both databases, waiver files and checksums. The deployed inventory shows retained
+copies, creation times and captured sizes. CI run `36029780195` passed; Codex
+verified the deployed result. This is **not** an off-server or fresh-VPS rehearsal.
 
 - [ ] Choose a private off-server destination, budget, schedule and retention policy.
   No off-server destination has been supplied; same-VPS copies are not disaster recovery.
@@ -73,7 +74,7 @@ creation times and captured sizes. This is **not** an off-server or fresh-VPS re
   a VPS-side remote deletion attempt is denied. Remote pruning belongs on a
   separately trusted machine, never in the VPS backup worker.
 - [x] Remove private service configuration from new ordinary backup payloads.
-  Evidence: `cubit-backup-v2` capture regression, 11 worker tests passing,
+  Evidence: release `0c58159`, `cubit-backup-v2` capture regression, 11 worker tests passing,
   reviewed by Codex on 2026-09-24. Previous v1 snapshots remain sensitive and
   restorable; their retention and independent secret custody need operator review.
 - [ ] Put the restic repository password and any configuration-decryption key in
@@ -96,8 +97,10 @@ Owner: **Unassigned — waiver administrator and server operator**. Target: **Un
 - [ ] Restrict the public DocuSeal proxy to necessary signing/file/assets paths;
   verify its admin sign-in returns 404 externally or is behind an approved allowlist.
   Prove actual member signing and downloads still work through that restriction.
-  Proposed Caddy boundary validated on the review VPS; the installed signing
-  page's asset routes were inspected. Deployment and complete signing proof pending.
+  Boundary deployed with `0c58159`: external `/sign_in` returned 404, admin/API
+  paths were blocked, and an existing signing page plus eight assets loaded
+  through trusted HTTPS. Codex verified on 2026-09-24. A complete designated
+  signing/download walkthrough still needs the waiver administrator.
 - [ ] Give the DocuSeal administrator an individual strong password and MFA; store
   recovery credentials privately. Keep its API/database ports private.
 - [ ] Have the makerspace approve the actual waiver document, required signer
