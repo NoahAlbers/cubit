@@ -32,9 +32,10 @@ router.get('/notices',staffOnly,route(async(req,res)=>{
 }))
 router.post('/notices/:id/acknowledge',staffOnly,route(async(req,res)=>{
   body(req,[])
-  if(!/^[a-f\d-]{36}$/i.test(req.params.id))throw Object.assign(Error('Choose an account notice.'),{status:400})
+  const id=req.params.id
+  if(typeof id!=='string'||!/^[a-f\d-]{36}$/i.test(id))throw Object.assign(Error('Choose an account notice.'),{status:400})
   await AppDataSource.transaction(async manager=>{
-    const notice=await manager.findOne(AccountNotice,{where:{id:req.params.id},lock:{mode:'pessimistic_write'}})
+    const notice=await manager.findOne(AccountNotice,{where:{id},lock:{mode:'pessimistic_write'}})
     if(!notice)throw Object.assign(Error('Notice not found.'),{status:404})
     if(notice.acknowledgedAt)return
     await manager.update(AccountNotice,notice.id,{acknowledgedAt:new Date(),acknowledgedBy:req.member!.id})
@@ -43,9 +44,10 @@ router.post('/notices/:id/acknowledge',staffOnly,route(async(req,res)=>{
   res.status(204).end()
 }))
 router.post('/members/:id/link',limit,staffOnly,route(async(req,res)=>{
-  const b=body(req,['purpose']);if(!/^[a-f\d-]{36}$/i.test(req.params.id))throw Object.assign(Error('Choose a member.'),{status:400})
-  if(!await AppDataSource.manager.existsBy(Member,{id:req.params.id}))return res.status(404).json({message:'Member not found.'})
-  res.status(201).json(await issueAccountLink(req.params.id,req.member!,b.purpose))
+  const b=body(req,['purpose']),id=req.params.id
+  if(typeof id!=='string'||!/^[a-f\d-]{36}$/i.test(id))throw Object.assign(Error('Choose a member.'),{status:400})
+  if(!await AppDataSource.manager.existsBy(Member,{id}))return res.status(404).json({message:'Member not found.'})
+  res.status(201).json(await issueAccountLink(id,req.member!,b.purpose))
 }))
 router.post('/mfa/start',limit,staffOnly,route(async(req,res)=>{
   const b=body(req,['password']);res.json(await beginMfa(req.member!.id,b.password))
