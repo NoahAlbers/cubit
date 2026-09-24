@@ -1,3 +1,5 @@
+import { startAutomationScheduler } from './billing/automation'
+import { startWaiverReconciliation } from './waivers/reconcile'
 import { localConfig } from './dev/config'
 import {AppDataSource, assertSchemaReady} from './database'
 export {AppDataSource} from './database'
@@ -126,13 +128,12 @@ export async function startLocalApp() {
     const rows = await AppDataSource.query("SELECT complete FROM cubit_import_manifest WHERE id = 'current'")
     if (rows.length !== 1 || !rows[0].complete) throw Error('The local import has not been validated.')
   }
-  const { startAutomationScheduler } = await import('./billing/automation')
   const server = app.listen(localConfig.port, localConfig.listenHost, () => {
     console.log(`Cubit ${localConfig.runtimeMode} ready on port ${localConfig.port}`)
   })
   const stopScheduler = localConfig.runtimeMode === 'local' && localConfig.dataMode === 'demo' ? startAutomationScheduler() : () => {}
   server.on('close', stopScheduler)
-  const stopWaivers=(await import('./waivers/reconcile')).startWaiverReconciliation()
+  const stopWaivers=startWaiverReconciliation()
   server.on('close',stopWaivers)
   return server
 }

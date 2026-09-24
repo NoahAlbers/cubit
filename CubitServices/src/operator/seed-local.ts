@@ -1,3 +1,8 @@
+import { seedLocalData } from '../dev/seed'
+import { seedScenarios } from '../dev/seed-scenarios'
+import { seedPlanCatalog } from '../dev/seed-plan-catalog'
+import { initializeBilling } from '../billing/store'
+import { seedWaivers } from '../dev/seed-waivers'
 import {AppDataSource, assertSchemaReady} from '../database'
 import {localConfig} from '../dev/config'
 
@@ -6,11 +11,11 @@ export async function seedLocal() {
   await AppDataSource.initialize()
   try {
     await assertSchemaReady(AppDataSource)
-    await (await import('../dev/seed')).seedLocalData()
-    await (await import('../dev/seed-scenarios')).seedScenarios()
-    await (await import('../dev/seed-plan-catalog')).seedPlanCatalog()
-    await (await import('../billing/store')).initializeBilling()
-    await (await import('../dev/seed-waivers')).seedWaivers()
+    await seedLocalData()
+    await seedScenarios()
+    await seedPlanCatalog()
+    await initializeBilling()
+    await seedWaivers()
   } finally {await AppDataSource.destroy()}
 }
 if(require.main===module)seedLocal().catch(error=>{console.error(error.message);process.exitCode=1})
