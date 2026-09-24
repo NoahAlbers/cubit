@@ -42,6 +42,17 @@ module.exports = async function verifyWorkflows({base, staff, member, password})
     await page.getByText('Contact details saved', {exact: true}).waitFor()
     assert.equal(await page.getByRole('button', {name: 'Save contact details', exact: true}).isDisabled(), true)
     assert.equal(await page.locator('.contact-changed').count(), 0)
+    for (const width of [390, 1280]) {
+      await page.setViewportSize({width, height: 900})
+      const layout = await page.evaluate(() => {
+        const input = document.querySelector('input[formcontrolname=phone]'), copy = input.parentElement.querySelector('button')
+        const a = input.getBoundingClientRect(), b = copy.getBoundingClientRect()
+        const save = document.querySelector('.profile-contact-actions').getBoundingClientRect()
+        return {copyInside: b.left >= a.left && b.right <= a.right && b.top >= a.top && b.bottom <= a.bottom, actionsInside: save.left >= 0 && save.right <= innerWidth}
+      })
+      assert.deepEqual(layout, {copyInside:true, actionsInside:true}, `Profile controls fit at ${width}px`)
+    }
+    await page.setViewportSize({width: 1440, height: 1000})
     await page.getByRole('link', {name: 'Audit log for Browser Member'}).click()
     await page.getByRole('link', {name: 'Back to Browser Member', exact: true}).click()
     await page.getByRole('link', {name: 'Back to Members', exact: true}).click()

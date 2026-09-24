@@ -18,8 +18,10 @@ Cubit brings member records, billing, access history, reports, and member self-s
 
 - Search by name, contact email, PayPal email, and phone number; filter by membership status, plan, and recent activity.
 - Sort by name, contact, status, plan, last key use, and balance. Choose a page size and jump between pages.
+- Members, Overdue and Access log use matching pagination controls above and below the list. First/Previous appear only after page one.
 - Return from a profile with the previous list's filters, sort, page, and scroll position preserved. Overdue and access lists also retain their state.
 - View contact and emergency-contact details, plans, access keys, billing history, and staff notes in a compact profile.
+- Save or cancel contact edits beside the member's name. Changed fields are marked until saved or reverted; the save cue respects reduced-motion settings. Copy buttons stay inside contact fields and beside key values.
 - Identify members with consistent identicons and see their last recorded entry. Individual keys show their last recorded use where events can be associated with that key.
 - Add staff notes with an author and date. Members cannot view staff notes or change their own staff permissions.
 
