@@ -1,10 +1,10 @@
 <p align="center">
-
-**Launch status:** review only. See the maintained [pre-launch checklist](PRE-LAUNCH.md) for required work, verification evidence, ownership and cutover sign-off.
   <img src="CubitWeb/src/assets/cubit-logo.png" alt="Cubit — Melbourne Makerspace membership management" width="620">
 </p>
 
 # Cubit
+
+**Launch status:** review only. See the maintained [pre-launch checklist](PRE-LAUNCH.md) for required work, verification evidence, ownership and cutover sign-off.
 
 **Membership management for Melbourne Makerspace.**
 
