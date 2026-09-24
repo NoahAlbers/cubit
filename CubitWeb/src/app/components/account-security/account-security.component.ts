@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy, HostListener } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, HostListener, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -8,8 +8,10 @@ import { AuthService } from '../../services/security/auth.service';
 
 @Component({selector:'app-account-security',standalone:true,imports:[CommonModule,FormsModule,RouterLink],
   changeDetection:ChangeDetectionStrategy.Eager,templateUrl:'./account-security.component.html',
-  styles:[`:host{display:block;max-width:780px;margin:auto}.panel{padding:24px;margin-bottom:18px}label{display:grid;gap:6px;margin:16px 0}input,textarea{width:100%;box-sizing:border-box}code{display:block;overflow-wrap:anywhere;padding:12px;background:#eef4fc}li{padding:4px} .actions{display:flex;gap:8px;flex-wrap:wrap} .error{color:#a71924}`]})
+  host:{'[class.embedded]':'embedded'},
+  styles:[`:host.embedded{max-width:none;margin:0}:host.embedded .panel{padding:0;border:0;box-shadow:none;margin:0}:host{display:block;max-width:780px;margin:auto}.panel{padding:24px;margin-bottom:18px}label{display:grid;gap:6px;margin:16px 0}input,textarea{width:100%;box-sizing:border-box}code{display:block;overflow-wrap:anywhere;padding:12px;background:#eef4fc}li{padding:4px} .actions{display:flex;gap:8px;flex-wrap:wrap} .error{color:#a71924}`]})
 export class AccountSecurityComponent implements OnInit {
+  @Input() embedded=false; @Input() enrollmentBlocked=false;
   mode='security'; memberId=''; memberName=''; password=''; confirmPassword=''; code='';
   token=''; error=''; message=''; busy=false; loading=true; state:any;
   demoWorkspace=false;
@@ -32,7 +34,7 @@ export class AccountSecurityComponent implements OnInit {
       else this.state=await firstValueFrom(this.http.get('/api/account'));
     }catch(e:any){this.error=e.error?.message||'Could not load account security.';}finally{this.loading=false;}
   }
-  async action(fn:()=>Promise<void>){if(this.busy)return;this.busy=true;this.error='';try{await fn();}catch(e:any){this.error=e.error?.message||'Could not complete that request. Please try again.';}finally{this.busy=false;}}
+  async action(fn:()=>Promise<void>){if(this.busy||this.enrollmentBlocked)return;this.busy=true;this.error='';try{await fn();}catch(e:any){this.error=e.error?.message||'Could not complete that request. Please try again.';}finally{this.busy=false;}}
   prepare(purpose:string){return this.action(async()=>{this.link='';const r=await firstValueFrom(this.http.post<any>('/api/account/members/'+this.memberId+'/link',{purpose}));this.link=window.location.origin+r.path;this.expiresAt=r.expiresAt;this.email=r.email;});}
   startMfa(){return this.action(async()=>{this.setup=await firstValueFrom(this.http.post('/api/account/mfa/start',{password:this.password}));});}
   confirmMfa(){return this.action(async()=>{

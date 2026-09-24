@@ -60,8 +60,8 @@
         <div class="page-location">@if (headerBackTarget) {
           <a class="button secondary header-back" [routerLink]="headerBackTarget" [queryParams]="headerBackQuery" [attr.aria-label]="'Back to '+headerBackLabel" [attr.title]="'Back to '+headerBackLabel"><app-arrow name="arrow-left"></app-arrow><span>{{headerBackLabel}}</span></a>
           }<h1 class="page-title">{{sectionName}}</h1></div>
-          <div class="account-controls"><div class="account-identity"><a routerLink="/account/security" title="Account security">{{auth.accountLabel}}</a><small>{{auth.isDemo?'Demo administrator':auth.roleLabel}}</small></div>@if (auth.isStaff) {
-          <a class="button notification-button" routerLink="/staff/settings" routerLinkActive="current" aria-label="Notification settings" title="Notification settings"><img src="assets/icons/notification.svg" alt="" width="24" height="24">@if(accountNotices){<span class="account-notice-count" aria-label="Unreviewed account changes">{{accountNotices}}</span>}</a>
+          <div class="account-controls"><div class="account-identity"><a [routerLink]="auth.isStaff?'/staff/settings':'/account/security'" title="Account settings">{{auth.accountLabel}}</a><small>{{auth.isDemo?'Demo administrator':auth.roleLabel}}</small></div>@if (auth.isStaff) {
+          <a class="button notification-button" routerLink="/staff/settings" routerLinkActive="current" aria-label="Staff user settings" title="Staff user settings"><img src="assets/icons/settings.svg" alt="" width="24" height="24">@if(accountNotices){<span class="account-notice-count" aria-label="Unreviewed account changes">{{accountNotices}}</span>}</a>
           }<button class="secondary sign-out-button" (click)="logout()" [disabled]="auth.signingOut" title="Sign out on all devices">Sign out</button></div>
         </header>
       }

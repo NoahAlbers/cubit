@@ -19,7 +19,7 @@
     @if(link){<label>Private sign-in link<textarea readonly rows="3" [value]="link" aria-label="Private sign-in link"></textarea></label><p>Expires {{expiresAt|date:'medium'}}. Creating another link cancels the previous one. Password resets keep any enrolled authenticator in place.</p>}
   </section>
 } @else if(state){
-  <section class="panel"><h2>Account security</h2>
+  <section class="panel">@if(!embedded){<h2>Account security</h2>}
     @if(state.sharedDemo){<p>The shared demo login cannot change its password or enroll an authenticator.</p>}
     @else {
       <p>Signing out ends your sessions on every device. For a password reset, contact staff.</p>
@@ -28,9 +28,10 @@
         @if(state.mfaEnabled){<p>Enabled. Use your authenticator or an unused recovery code when signing in.</p>}
         @else if(!state.mfaAvailable){<p>The operator needs to configure the private encryption key before authenticator enrollment is available.</p>}
         @else {
+          @if(enrollmentBlocked){<p class="muted">Save or cancel your access-alert changes before setting up an authenticator.</p>}
           <form (ngSubmit)="setup?confirmMfa():startMfa()"><label>Current password<input name="password" type="password" [(ngModel)]="password" autocomplete="current-password" required></label>
           @if(setup){<p>Add a time-based account named Cubit in your authenticator app using this setup key:</p><code>{{setup.secret}}</code><p>Use a six-digit code with a 30-second period.</p><label>Authenticator code<input name="code" [(ngModel)]="code" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required></label>}
-          <button class="primary" type="submit" [disabled]="busy||!password">{{busy?'Working…':setup?'Confirm authenticator':'Set up authenticator'}}</button></form>
+          <button class="primary" type="submit" [disabled]="busy||enrollmentBlocked||!password||(setup&&code.length!==6)">{{busy?'Working…':setup?'Confirm authenticator':'Set up authenticator'}}</button></form>
         }
       }
       @if(recoveryCodes.length){<h3>Save your recovery codes</h3><p>Each code works once if your authenticator is unavailable. Store them in your password manager; they will not be shown again.</p><ul>@for(value of recoveryCodes;track value){<li><code>{{value}}</code></li>}</ul><button class="primary" (click)="finishSetup()">I saved my codes · Sign in again</button>}

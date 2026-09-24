@@ -61,7 +61,7 @@ The hosted review displays copied records. It does not receive live door events,
 - Payment recordings/corrections, assigned plans and final billing dates, manual charges/corrections, fob assignments/status/removal, profile changes, notes, catalog/settings changes, waiver administration, processing, and report exports are recorded. Change records keep the acting staff identity, time, selected before/after values, and reasons where applicable. Password changes record the action only, never the password or hash.
 - Account mutations and their audit records commit together. Fob status changes/removal require a reason and reject stale edits. There is no audit editing or deletion API. Direct database/operator changes are outside application auditing.
 - Existing billing and note history is preserved once during migration. Preserved rows are identified, and missing historical values are not invented. Staff actions are the default; system/member activity can also be included. Date filters and displayed audit times use UTC.
-- **Notification settings** in the top right stores preferences for the signed-in staff member only. Unknown and refused fobs are separate choices, with a configurable duplicate window (15 minutes by default). Everything is opted out initially; successful entries never qualify.
+- **Staff user settings** (the gear in the top right) stores preferences for the signed-in staff member only. Unknown and refused fobs are separate choices, with a configurable duplicate window (15 minutes by default). Everything is opted out initially; successful entries never qualify.
 - The fictional-scan preview demonstrates filtering and duplicate suppression. **There is no email transport, delivery worker, live-event subscription, or email queue in this release.** Preferences do not enable sending in local, review, or demo environments. A live rollout still needs authenticated door ingestion, durable suppression across workers/restarts, an explicitly enabled mail transport, and delivery/retry tests. Historical scans must not be replayed as alerts.
 
 ### Reports
@@ -95,14 +95,14 @@ on all devices. Newly assigned passwords require at least 12 characters, reject 
 bundled common-password dictionary, and cannot exceed bcrypt's 72-byte input limit.
 Ambiguous imported login emails are rejected until staff resolves the duplicates.
 Existing review credentials are retained. Staff can enroll an authenticator from
-**Account security** (the account-name link in the top bar), once the operator
+**Staff user settings → Sign-in & security**, once the operator
 provisions the private encryption key. TOTP codes and recovery codes cannot be
 reused, and password resets preserve enrolled MFA. Mandatory staff enrollment,
 external recovery-key custody, and verified email delivery remain launch requirements.
 See [account security operations](deploy/ACCOUNT-SECURITY.md).
 
 Portal login-email changes generate in-app staff notices and remain in the audit
-log. Staff can review and acknowledge them from Notification Settings. This is
+log. Staff can review and acknowledge them from Staff User Settings. This is
 not yet verification that the member owns the new email address.
 
 ### Digital and uploaded waivers
@@ -123,7 +123,7 @@ Self-hosted setup uses the free template builder and submission API, without pai
 
 ## Interface and branding
 
-Cubit uses Melbourne Makerspace blue (`#094fa3`), red (`#ed1c24`), and shades of white. The interface includes a sidebar, responsive layouts, SVG navigation icons, member identicons, and contextual help for billing and staff controls. Unsaved-edit prompts and remembered list state help staff move between records without losing work or their place.
+Cubit uses Melbourne Makerspace blue (`#094fa3`), red (`#ed1c24`), and shades of white. The interface includes a sidebar, responsive layouts, SVG navigation icons, member identicons, and contextual help for billing and staff controls. My portal sits separately at the bottom of staff navigation, with a return-to-staff link in the portal. Unsaved-edit prompts and remembered list state help staff move between records without losing work or their place.
 
 ## Review environment and data boundaries
 

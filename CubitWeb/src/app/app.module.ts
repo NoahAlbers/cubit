@@ -1,3 +1,4 @@
+import { AccountSecurityComponent } from './components/account-security/account-security.component';
 import { OrganizationComponent } from './components/organization/organization.component';
 import { LoadingComponent } from './components/shared/loading.component';
 import { ContactFieldsDirective, PhonePipe } from './services/contact-fields.directive';
@@ -72,7 +73,7 @@ import { AccessLogService } from './services/access-log.service';
         AddTransactionComponent,
         AccessLogComponent,
     ],
-    bootstrap: [AppComponent], imports: [AppRoutingModule,
+    bootstrap: [AppComponent], imports: [AccountSecurityComponent, AppRoutingModule,
         AppMaterialModule,
         BrowserModule,
         BrowserAnimationsModule,
