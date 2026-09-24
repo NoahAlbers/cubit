@@ -474,3 +474,5 @@ select:not([multiple]):not([size]){appearance:none;-webkit-appearance:none;paddi
 .staff-note-entry p{white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 10px;line-height:1.5}.staff-note-entry p.note-collapsed{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;max-height:6em}.note-footer,.notes-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.note-footer small{overflow-wrap:anywhere;min-width:0}.note-footer button{font-size:12px;padding:5px 9px}.notes-pagination{padding-top:16px;border-top:1px solid #dce5ef;margin-top:16px}.notes-pagination span{font-size:12px;color:#61748b}
 
 .sidebar-portal-switch .portal-identicon{width:28px;height:28px;flex-basis:28px}
+
+.member-sticky .profile-toolbar{gap:8px}.member-sticky .profile-quick-actions,.member-sticky .section-nav{gap:8px}
