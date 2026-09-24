@@ -114,21 +114,24 @@ Owner: **Unassigned — waiver administrator and server operator**. Target: **Un
 
 Owner: **Unassigned — technical release owner**. Target: **Unassigned**. Sign-off: **Pending**.
 
-- [ ] Replace startup schema changes and synchronization with versioned migrations
+- [x] Replace startup schema changes and synchronization with versioned migrations
   run by the deployment operator. Build a fresh database using only migrations and
   compare it with the review schema; enforce entity/migration drift checks in CI.
   Implementation: `1ef26ce`, CI `36037444971`. Frozen baseline and versioned
   transitions are wired into deployment and explicit local setup; startup performs
   no DDL or seeding. Fresh and existing-schema tests preserve fixture IDs/money and
   detect drift. Local copied data was backed up and migrated on 2026-09-24; app
-  privileges were reduced to CRUD. Hosted deployment verification remains pending.
-- [ ] Complete the specified major backend upgrades in separate reviewed pull
+  privileges were reduced to CRUD. Codex verified hosted release `e87e500` on
+  2026-09-24: nine migrations in each database, zero schema drift, CRUD-only app
+  grants, three active services and trusted HTTPS health.
+- [x] Complete the specified major backend upgrades in separate reviewed pull
   requests: TypeORM 1.x, Express 5.x, compatible current TypeScript, dotenv and
   reflect-metadata. Do not merge dependency branches solely because one check is green.
   Separate PRs #13–#20 cover the backend majors, compatible TypeScript 6, frontend
   libraries/tests and pinned current GitHub Actions. See [dependency maintenance](DEPENDENCIES.md)
-  for current versions and upstream compatibility limits. Final combined CI and
-  hosted review verification remain pending.
+  for current versions and upstream compatibility limits. Combined PR #21 passed
+  CI `36040603185`; release `e87e500` was deployed and verified by Codex on
+  2026-09-24. Full development/runtime audits reported zero known vulnerabilities.
 - [ ] Add typed request validation throughout operations, staff tools, waivers and
   backups. Enforce linting/formatting in CI and resolve material findings.
 - [x] Cover login, member directory/profile and portal with frontend smoke tests;

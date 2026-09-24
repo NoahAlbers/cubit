@@ -17,7 +17,7 @@ export class Transaction {
   //see https://typeorm.io/#/entities/column-types-for-mysql--mariadb for type options
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
-  amount: Number;
+  amount: number;
 
   @Column({ nullable: true })
   confirmation: string;

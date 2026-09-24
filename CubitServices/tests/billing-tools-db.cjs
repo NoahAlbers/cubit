@@ -26,6 +26,9 @@ async function main(){
  const upgradeStaffTools=async()=>{const runner=db.createQueryRunner();try{await new StaffHistory1790250000006().up(runner);}finally{await runner.release();}};
  await upgradeStaffTools();const legacyCount=await db.manager.count(OperationsAudit);await upgradeStaffTools();assert.equal(await db.manager.count(OperationsAudit),legacyCount,'History migration is idempotent');
  server=await new Promise(resolve=>{const s=app.listen(0,'127.0.0.1',()=>resolve(s))});base=`http://127.0.0.1:${server.address().port}`;
+ await require('./request-schemas.cjs')({request,db,memberId:existing.id});
+ const drift=require('node:child_process').spawnSync(process.execPath,[require.resolve('typeorm/cli.js'),'migration:generate','--check','-d','dist/database.js',require('node:path').join(require('node:os').tmpdir(),'cubit-ci-schema-drift')],{cwd:require('node:path').resolve(__dirname,'..'),env:process.env,encoding:'utf8',windowsHide:true});
+ assert.equal(drift.status,0,'TypeORM migration:generate --check: '+drift.stdout+drift.stderr);
  for(const path of ['/api/cubit/plan-catalog','/api/cubit/payment-matching','/api/cubit/matching-members?q=existing']){assert.equal((await request(path,null,'GET',null)).status,401);assert.equal((await request(path,null,'GET',jwtHelper.GenerateJWT(existing))).status,403);}
  let p=await ok('/api/cubit/plan-catalog',{id:randomUUID(),name:'Test Standard',monthlyCost:60,available:true});
  assert.equal((await request('/api/cubit/plan-catalog/'+p.id,{...p,monthlyCost:-5},'PUT')).status,400);
@@ -131,7 +134,8 @@ async function main(){
   assert.equal((await request('/api/backups/jobs',{kind:'verify',snapshot:'b'.repeat(64)})).status,409);
   const queued=await ok('/api/backups/jobs',{kind:'verify',snapshot:'a'.repeat(64)});assert.equal(JSON.parse(queued.result).requestedSnapshot,'a'.repeat(64));
   await db.manager.delete(BackupJob,{id:queued.id});
-  assert.equal((await request('/api/backups/jobs',{kind:'prune',revision:-1})).status,409);
+  assert.equal((await request('/api/backups/jobs',{kind:'prune',revision:-1})).status,400,'Negative revisions are malformed');
+  assert.equal((await request('/api/backups/jobs',{kind:'prune',revision:9999})).status,409,'Valid but stale revisions remain conflicts');
  }finally{backupMode.runtimeMode=originalMode;token=originalBackupToken;}
  // Revocation is enforced by both staff and portal middleware on the next request.
  const freshToken=async id=>jwtHelper.GenerateJWT(await db.manager.findOneByOrFail(Member,{id}));

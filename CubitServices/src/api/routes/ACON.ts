@@ -1,13 +1,13 @@
-import { MemberKey } from './../../entity/memberKey'
-import { AppDataSource } from '../../database'
-import express from 'express'
-import { AccessLog } from '../../entity/accessLog'
-import { Member } from '../../entity/member'
+import { MemberKey } from './../../entity/memberKey';
+import { AppDataSource } from '../../database';
+import express from 'express';
+import { AccessLog } from '../../entity/accessLog';
+import { Member } from '../../entity/member';
 
-const router = express.Router()
-const memberClass = new Member()
+const router = express.Router();
+const memberClass = new Member();
 
-router.get('/doorLockCheck/:keySerial', async (req, res, next) => {
+router.get('/doorLockCheck/:keySerial', async (req, res) => {
   AppDataSource.manager
     .findOneOrFail(MemberKey, {
       where: { serialNumber: req.params.keySerial, status: 'Active' },
@@ -15,32 +15,31 @@ router.get('/doorLockCheck/:keySerial', async (req, res, next) => {
     })
     .then(
       async (result: MemberKey) => {
-        const isActive = await memberClass.isMemberActive(result.memberId)
+        const isActive = await memberClass.isMemberActive(result.memberId);
         if (isActive) {
-          AccessLog.postAccessLog(
-            result.member,
-            'Successfully Scanned In',
-            true,
-            result.id
-          )
-          res.status(200).json(['True'])
+          AccessLog.postAccessLog(result.member, 'Successfully Scanned In', true, result.id);
+          res.status(200).json(['True']);
         } else {
-          const reason = `Access denied for ${result.member.firstName} ${result.member.lastName} because they are inactive`
-          AccessLog.postAccessLog(result.member, reason, false, result.id)
-          res.status(200).send([reason])
+          const reason = `Access denied for ${result.member.firstName} ${result.member.lastName} because they are inactive`;
+          AccessLog.postAccessLog(result.member, reason, false, result.id);
+          res.status(200).send([reason]);
         }
       },
-      (err) => {
-        AccessLog.postAccessLog(null, `scanned key ${req.params.keySerial} not found in Cubit`, false)
+      () => {
+        AccessLog.postAccessLog(
+          null,
+          `scanned key ${req.params.keySerial} not found in Cubit`,
+          false,
+        );
 
-        res.status(200).send([`key ${req.params.keySerial} not found in db`])
-      }
-    )
-})
+        res.status(200).send([`key ${req.params.keySerial} not found in db`]);
+      },
+    );
+});
 
-router.get('/getWhitelist', async (req, res, next) => {
-  const memberClass = new Member()
-  await memberClass.updateAllMemberBalancesAndStatus()
+router.get('/getWhitelist', async (req, res) => {
+  const memberClass = new Member();
+  await memberClass.updateAllMemberBalancesAndStatus();
 
   await AppDataSource.manager
     .createQueryBuilder(MemberKey, 'MemberKey')
@@ -52,47 +51,47 @@ router.get('/getWhitelist', async (req, res, next) => {
     .then(
       (memberKeys) => {
         memberKeys.forEach((key) => {
-          key.serial = key.serial.toUpperCase()
-        })
+          key.serial = key.serial.toUpperCase();
+        });
 
         //python expects uppercase for comparison (in our code)
-        res.status(200).json(memberKeys)
+        res.status(200).json(memberKeys);
       },
       (err) => {
-        res.status(500).json(err)
-      }
-    )
-})
+        res.status(500).json(err);
+      },
+    );
+});
 
-// router.get('/getAccessLogReport', async (req, res, next) => {
+// router.get('/getAccessLogReport', async (req, res) => {
 //   getRepository('AccessLog').find({timestamp: LessThan() })
 // }
 
 // logDoorAccess?rfid=000000000000&access=1&reason=xxxx
-router.get('/logDoorAccess', async (req, res, next) => {
-  var repo = AppDataSource.manager
+router.get('/logDoorAccess', async (req, res) => {
+  AppDataSource.manager
     .findOneOrFail(MemberKey, {
       where: { serialNumber: req.query.rfid?.toString() },
       relations: { member: true },
     })
     .then(
       async (result: MemberKey) => {
-        let accessGranted = false
+        let accessGranted = false;
         if (req.query.access && req.query.access == '1') {
-          accessGranted = true
+          accessGranted = true;
         }
-        let reason = req.query.reason || 'no reason sent'
+        const reason = req.query.reason || 'no reason sent';
 
-        AccessLog.postAccessLog(result.member, reason.toString(), accessGranted, result.id)
-        res.status(200).send('Logged')
+        AccessLog.postAccessLog(result.member, reason.toString(), accessGranted, result.id);
+        res.status(200).send('Logged');
       },
       (err) => {
-        res.status(404).json(err.message)
-      }
-    )
-})
+        res.status(404).json(err.message);
+      },
+    );
+});
 
-module.exports = router
+module.exports = router;
 
 // Direct calls from the lock
 

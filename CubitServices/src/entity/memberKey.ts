@@ -1,28 +1,22 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  PrimaryColumn,
-} from 'typeorm'
-import { Member } from './member'
+import { Entity, Column, ManyToOne, PrimaryColumn } from 'typeorm';
+import { Member } from './member';
 
 //see https://typeorm.io/#/entities/ for how entities work
 @Entity({ name: 'memberKey' })
 export class MemberKey {
   @PrimaryColumn({ type: String })
-  id: string
+  id: string;
 
   //see https://typeorm.io/#/entities/column-types-for-mysql--mariadb for type options
   @Column()
-  serialNumber: string
+  serialNumber: string;
 
   @Column()
-  memberId: string
+  memberId: string;
 
   @ManyToOne(() => Member)
-  member: Member
+  member: Member;
 
   @Column({ nullable: true })
-  status: string
+  status: string;
 }

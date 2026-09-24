@@ -3,7 +3,9 @@ export function accessLogOptions(query: any, now = new Date()) {
   const page = Math.min(1000000000, Math.max(1, Math.floor(Number(query.page)) || 1));
   const pageSize = [10, 20, 50, 100].includes(Number(query.pageSize)) ? Number(query.pageSize) : 20;
   return {
-    period, page, pageSize,
+    period,
+    page,
+    pageSize,
     since: period === 'all' ? null : new Date(+now - Number(period) * 86400000),
     search: typeof query.search === 'string' ? query.search.trim().slice(0, 200) : '',
     result: ['granted', 'denied'].includes(query.result) ? query.result : 'all',

@@ -1,4 +1,4 @@
-import { validEmail } from '../../contact/validation'
+import { validEmail } from '../../contact/validation';
 import express from 'express';
 import { Member } from '../../entity/member';
 import { jwtHelper } from '../common/jwtHelper';
@@ -14,30 +14,49 @@ const greeting = createRememberedGreeting({
   secure: localConfig.runtimeMode !== 'local',
   findFirstName: async (id, email) => {
     const member = await AppDataSource.getRepository(Member).findOne({
-      where: { id, email }, select: { firstName: true },
+      where: { id, email },
+      select: { firstName: true },
     });
     return member?.firstName || null;
   },
 });
 router.post('/greeting', greeting.greet);
 
-router.post('/', async (req, res, next) => {
-  if (!validEmail(req.body?.email) || typeof req.body?.password !== 'string' || req.body.email.length > 254 || req.body.password.length > 1024) {
+router.post('/', async (req, res) => {
+  if (
+    !validEmail(req.body?.email) ||
+    typeof req.body?.password !== 'string' ||
+    req.body.email.length > 254 ||
+    req.body.password.length > 1024
+  ) {
     return res.status(401).json({ message: 'Invalid email or password.' });
   }
-  let memberClass = new Member();
+  const memberClass = new Member();
 
   try {
-      const passwordMember=await memberClass.GetMemberByEmailAndPass(req.body.email.trim().toLowerCase(), req.body.password);
-      const member=await authenticateSecondFactor(passwordMember,req.body.code);
-      const token = jwtHelper.GenerateJWT(member,member.mfaVerified);
-      res.setHeader('Cache-Control', 'no-store');
-      greeting.remember(res, member);
-      res.status(200).json({ token, member: { id: member.id, email: member.email, role: member.role, firstName: member.firstName, lastName: member.lastName } });
-  } catch (err:any) {
-      if(err?.code==='MFA_REQUIRED')return res.status(401).json({message:err.message,code:'MFA_REQUIRED'});
-      if(err?.status===403)return res.status(403).json({message:err.message});
-      res.status(401).json({ message: 'Invalid email, password, or authenticator code.' });
+    const passwordMember = await memberClass.GetMemberByEmailAndPass(
+      req.body.email.trim().toLowerCase(),
+      req.body.password,
+    );
+    const member = await authenticateSecondFactor(passwordMember, req.body.code);
+    const token = jwtHelper.GenerateJWT(member, member.mfaVerified);
+    res.setHeader('Cache-Control', 'no-store');
+    greeting.remember(res, member);
+    res.status(200).json({
+      token,
+      member: {
+        id: member.id,
+        email: member.email,
+        role: member.role,
+        firstName: member.firstName,
+        lastName: member.lastName,
+      },
+    });
+  } catch (err: any) {
+    if (err?.code === 'MFA_REQUIRED')
+      return res.status(401).json({ message: err.message, code: 'MFA_REQUIRED' });
+    if (err?.status === 403) return res.status(403).json({ message: err.message });
+    res.status(401).json({ message: 'Invalid email, password, or authenticator code.' });
   }
 });
 
