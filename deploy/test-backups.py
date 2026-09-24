@@ -11,6 +11,28 @@ spec=importlib.util.spec_from_file_location('worker',pathlib.Path(__file__).with
 w=importlib.util.module_from_spec(spec);spec.loader.exec_module(w)
 
 class BackupTests(unittest.TestCase):
+    def test_inventory_has_only_safe_metadata_and_newest_first(self):
+        rows=[{'id':'a'*64,'time':'2026-09-01T00:00:00Z','paths':['/private/path'],'hostname':'private','summary':{'total_bytes_processed':123}}, {'id':'b'*64,'time':'2026-09-02T00:00:00Z'}]
+        with patch.object(w,'snapshots',return_value=rows):
+            actual=w.local_inventory()
+        self.assertEqual(actual,[{'id':'b'*64,'createdAt':rows[1]['time'],'bytes':None},{'id':'a'*64,'createdAt':rows[0]['time'],'bytes':123}])
+
+    def test_selected_restore_must_exist_locally(self):
+        with patch.object(w,'snapshots',return_value=[{'id':'a'*64,'time':'2026-09-01'}]) as listing,patch.object(w,'restic') as command:
+            with self.assertRaises(RuntimeError):w.verify({**w.DEFAULTS,'offsiteEnabled':True},'b'*64)
+            listing.assert_called_once_with(False);command.assert_not_called()
+        for value in ['--help','../private','a'*12]:
+            with self.assertRaises(ValueError):w.verify(w.DEFAULTS,value)
+
+    def test_manual_retention_is_local_and_requires_repository_check(self):
+        with patch.object(w,'local_inventory',side_effect=[[{}]*5,[{}]*3]),patch.object(w,'restic') as command:
+            result=w.prune_local({**w.DEFAULTS,'localKeep':3})
+            self.assertEqual(result['removed'],2)
+            self.assertEqual(command.call_args_list[0].args,(['check'],))
+            self.assertEqual(command.call_args_list[1].args,(['forget','--tag',w.TAG,'--group-by','host,tags','--keep-last','3','--prune'],))
+        with patch.object(w,'local_inventory',return_value=[{}]*4),patch.object(w,'restic',side_effect=RuntimeError('corrupt')) as command:
+            with self.assertRaises(RuntimeError):w.prune_local({**w.DEFAULTS,'localKeep':3})
+            command.assert_called_once_with(['check'])
     def test_schedule_edges(self):
         s={**w.DEFAULTS,'frequency':'monthly','monthday':31,'timezone':'UTC'}
         due,nxt=w.slots(s,dt.datetime(2024,2,29,12,tzinfo=w.UTC))

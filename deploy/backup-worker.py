@@ -81,6 +81,20 @@ def restic(args,remote=False,cwd=None):
     return run(['restic','--repo',repo,*args],env=env,cwd=cwd)
 
 def snapshots(remote=False): return json.loads(restic(['snapshots','--json','--tag',TAG],remote)) or []
+def local_inventory():
+    rows=[]
+    for item in snapshots():
+        if not re.fullmatch('[a-f0-9]{64}',item.get('id','')): raise ValueError('Invalid backup identifier')
+        rows.append({'id':item['id'],'createdAt':item['time'],'bytes':item.get('summary',{}).get('total_bytes_processed')})
+    return sorted(rows,key=lambda row:row['createdAt'],reverse=True)
+
+def prune_local(settings):
+    validate(settings)
+    before=local_inventory()
+    if len(before)<=settings['localKeep']: return {'message':'All local backups are within the retention limit.','removed':0}
+    restic(['check'])
+    restic(['forget','--tag',TAG,'--group-by','host,tags','--keep-last',str(settings['localKeep']),'--prune'])
+    return {'message':'Local retention applied. Off-server copies were not changed.','removed':len(before)-len(local_inventory())}
 def initialize():
     STATE.mkdir(mode=0o700,parents=True,exist_ok=True)
     key=pathlib.Path(KEY)
@@ -143,10 +157,13 @@ def safe_extract(archive,destination):
             if not target.is_relative_to(destination.resolve()): raise ValueError('Unsafe archive path')
         t.extractall(destination,filter='data')
 
-def verify(settings):
-    remote=bool(settings['offsiteEnabled']);available=snapshots(remote)
+def verify(settings,selected=None):
+    # An explicitly chosen copy always refers to the local inventory.
+    if selected is not None and not re.fullmatch('[a-f0-9]{64}',selected): raise ValueError('Invalid backup identifier')
+    remote=bool(settings['offsiteEnabled']) and selected is None;available=snapshots(remote)
     if not available: raise RuntimeError('No successful backup exists to restore')
-    selected=max(available,key=lambda x:x['time'])['id']
+    if selected is not None and not any(row['id']==selected for row in available): raise RuntimeError('This backup is no longer retained')
+    selected=selected or max(available,key=lambda x:x['time'])['id']
     restic(['check','--read-data'],remote)
     with tempfile.TemporaryDirectory(prefix='recovery-',dir=STATE) as directory:
         stage=pathlib.Path(directory);restic(['restore',selected,'--target',str(stage),'--verify'],remote)
@@ -217,6 +234,11 @@ def heartbeat():
     if not state.get('https') or (now-dt.datetime.fromisoformat(state['https']['checkedAt'])).total_seconds()>3600: state['https']=https_check()
     verified=sql("SELECT DATE_FORMAT(finishedAt,'%Y-%m-%dT%H:%i:%sZ') FROM backup_job WHERE kind='verify' AND status='Succeeded' ORDER BY finishedAt DESC LIMIT 1")
     state.update(localReady=pathlib.Path(REPO,'config').exists(),offsiteConfigured=bool(cfg.get('remote')),nextRunAt=upcoming[1].isoformat() if upcoming else None,lastVerifiedAt=verified or None)
+    try:
+        state.update(snapshots=local_inventory(),inventoryCheckedAt=nowstr(),inventoryError=False)
+    except Exception:
+        # Retain the last known inventory but label it stale rather than claim an empty repository.
+        state['inventoryError']=True
     sql("INSERT INTO backup_runtime(id,detail,heartbeat) VALUES ('default',"+literal(json.dumps(state))+",UTC_TIMESTAMP()) ON DUPLICATE KEY UPDATE detail=VALUES(detail),heartbeat=VALUES(heartbeat)")
 
 def cycle():
@@ -238,10 +260,10 @@ def cycle():
         if (not latest or (now-dt.datetime.fromisoformat(latest)).total_seconds()>settings['verifyDays']*86400) and snapshots():
             sql("INSERT INTO backup_job(id,kind,status,requestedBy) VALUES ("+literal(str(uuid.uuid4()))+",'verify','Queued','Recovery schedule')")
     heartbeat()
-    jobs=sql("SELECT JSON_OBJECT('id',id,'kind',kind,'requestedBy',requestedBy) FROM backup_job WHERE status='Queued' ORDER BY createdAt,id LIMIT 1")
+    jobs=sql("SELECT JSON_OBJECT('id',id,'kind',kind,'requestedBy',requestedBy,'request',result) FROM backup_job WHERE status='Queued' ORDER BY createdAt,id LIMIT 1")
     if not jobs:return
     job=json.loads(jobs)
-    if job['kind'] not in ('backup','verify'): raise ValueError('Invalid queued operation')
+    if job['kind'] not in ('backup','verify','prune'): raise ValueError('Invalid queued operation')
     sql("UPDATE backup_job SET status='Running',startedAt=UTC_TIMESTAMP() WHERE id="+literal(job['id']))
     stop=threading.Event()
     def pulse():
@@ -250,15 +272,17 @@ def cycle():
             except Exception: print('Heartbeat update failed',file=sys.stderr)
     thread=threading.Thread(target=pulse,daemon=True);thread.start()
     try:
-        result=backup(settings) if job['kind']=='backup' else verify(settings)
+        request=json.loads(job.get('request') or '{}')
+        if job['kind']=='prune' and request.get('localKeep')!=settings['localKeep']: raise ValueError('Retention changed after confirmation; confirm again')
+        result=backup(settings) if job['kind']=='backup' else prune_local(settings) if job['kind']=='prune' else verify(settings,request.get('requestedSnapshot'))
         status='Succeeded'
     except Exception as error:
-        status='Failed';result={'message':('Backup' if job['kind']=='backup' else 'Recovery test')+' did not finish. Check the server log and retry. The working database was not replaced.'}
+        status='Failed';result={'message':('Backup' if job['kind']=='backup' else 'Local retention' if job['kind']=='prune' else 'Recovery test')+' did not finish. Check the server log and retry. The working database was not replaced.'}
         print(type(error).__name__+': '+str(error),file=sys.stderr)
     finally:
         stop.set();thread.join(timeout=60)
     sql("UPDATE backup_job SET status="+literal(status)+",finishedAt=UTC_TIMESTAMP(),result="+literal(json.dumps(result))+" WHERE id="+literal(job['id']))
-    event('Backup '+status.lower() if job['kind']=='backup' else 'Recovery test '+status.lower(),job['requestedBy'],{'job':job['id'],**result})
+    event(('Backup ' if job['kind']=='backup' else 'Local retention ' if job['kind']=='prune' else 'Recovery test ')+status.lower(),job['requestedBy'],{'job':job['id'],**result})
     heartbeat()
 
 if __name__=='__main__':

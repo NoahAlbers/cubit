@@ -112,6 +112,20 @@ async function main(){
  const otherPrefs=await request('/api/cubit/staff/preferences',null,'GET',jwtHelper.GenerateJWT(admin2));assert.equal(otherPrefs.data.preferences.enabled,false,'Preferences isolated per staff member');
  const preview=await ok('/api/cubit/staff/preferences/preview',{});assert.equal(preview.deliveryEnabled,false);assert.deepEqual(preview.results.map(r=>r.decision),['Would alert','Duplicate suppressed','Would alert','Successful entry \u2014 no email','Would alert']);
  assert.equal((await request('/api/cubit/audit',{kind:'Forged entry'})).status,404,'Audit has no mutation API');
+ // Backup requests stay staff-only and validate snapshot identities before a worker sees them.
+ for(const path of ['/api/backups']){assert.equal((await request(path,null,'GET',null)).status,401);assert.equal((await request(path,null,'GET',jwtHelper.GenerateJWT(await db.manager.findOneByOrFail(Member,{id:existing.id})))).status,403);}
+ for(const body of [{kind:'verify',snapshot:'../secret'},{kind:'backup',snapshot:'a'.repeat(64)},{kind:'shell'},{kind:'verify',command:'anything'}])assert.equal((await request('/api/backups/jobs',body)).status,400);
+ const {localConfig:backupMode}=require('../src/dev/config'),{BackupRuntime,BackupJob}=require('../src/entity/backup');
+ const originalMode=backupMode.runtimeMode,originalBackupToken=token;
+ try{
+  backupMode.runtimeMode='hosted-review';
+  token=jwtHelper.GenerateJWT(await db.manager.findOneByOrFail(Member,{id:staff.id}));
+  await db.manager.save(BackupRuntime,{id:'default',heartbeat:new Date(),detail:JSON.stringify({snapshots:[{id:'a'.repeat(64),createdAt:new Date().toISOString()}]})});
+  assert.equal((await request('/api/backups/jobs',{kind:'verify',snapshot:'b'.repeat(64)})).status,409);
+  const queued=await ok('/api/backups/jobs',{kind:'verify',snapshot:'a'.repeat(64)});assert.equal(JSON.parse(queued.result).requestedSnapshot,'a'.repeat(64));
+  await db.manager.delete(BackupJob,{id:queued.id});
+  assert.equal((await request('/api/backups/jobs',{kind:'prune',revision:-1})).status,409);
+ }finally{backupMode.runtimeMode=originalMode;token=originalBackupToken;}
  // Revocation is enforced by both staff and portal middleware on the next request.
  const freshToken=async id=>jwtHelper.GenerateJWT(await db.manager.findOneByOrFail(Member,{id}));
  const oldMemberToken=await freshToken(existing.id);

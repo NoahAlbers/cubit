@@ -1,6 +1,13 @@
 # Backup and recovery operations
 
 Staff manage schedules, retention, and recovery tests in **Settings & Automation**.
+The **Saved local backups** inventory shows the actual retained repository snapshots,
+creation times, and captured data sizes, refreshed by the worker every minute.
+**Test this backup** checks a selected local copy in isolation. **Apply local
+retention now** confirms and removes older managed local copies according to the
+saved retention count; it never affects off-server storage or the working database.
+Save pending settings first. Operation history records requests and outcomes;
+it is separate from the inventory because historical jobs can outlive their snapshots.
 The root-owned systemd worker checks the queue every minute. Manual, daily,
 weekly, and monthly schedules are supported, with a chosen time zone. Missed
 schedules run once after recovery; a 31st-of-month schedule uses the last day of

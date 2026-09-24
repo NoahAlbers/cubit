@@ -20,10 +20,20 @@ router.post('/settings',route(async(req:any,res:any)=>{
  res.json({revision})
 }))
 router.post('/jobs',route(async(req:any,res:any)=>{
- if(!['backup','verify'].includes(req.body.kind))fail('Choose backup or recovery test.')
+ if(!req.body||typeof req.body!=='object'||Array.isArray(req.body)||Object.keys(req.body).some(k=>!['kind','snapshot','revision'].includes(k)))fail('Unexpected backup request.')
+ if(!['backup','verify','prune'].includes(req.body.kind))fail('Choose backup, recovery test or local retention.')
+ if(req.body.snapshot!==undefined&&(req.body.kind!=='verify'||typeof req.body.snapshot!=='string'||!/^[a-f0-9]{64}$/.test(req.body.snapshot)))fail('Choose a retained local backup.')
  const r=await runtime();if(!r.available)fail('The backup worker is unavailable. No job was started.',503)
+ if(req.body.snapshot&&(!Array.isArray(r.snapshots)||!r.snapshots.some((s:any)=>s.id===req.body.snapshot)))fail('This backup is no longer listed. Refresh the inventory.',409)
  await settings()
- const job=await AppDataSource.transaction(async m=>{await m.findOneOrFail(BackupSettings,{where:{id:'default'},lock:{mode:'pessimistic_write'}});if(await m.createQueryBuilder(BackupJob,'j').where("j.status IN ('Queued','Running')").getCount())fail('A backup operation is already queued or running.',409);const j=await m.save(BackupJob,m.create(BackupJob,{id:randomUUID(),kind:req.body.kind,status:'Queued',requestedBy:req.member.email}));await recordAudit(m,{kind:j.kind==='backup'?'Backup requested':'Recovery test requested',author:req.member.email,entityId:j.id});return j})
+ const job=await AppDataSource.transaction(async m=>{
+  const s=await m.findOneOrFail(BackupSettings,{where:{id:'default'},lock:{mode:'pessimistic_write'}})
+  if(req.body.kind==='prune'&&req.body.revision!==s.revision)fail('Retention settings changed. Refresh before confirming cleanup.',409)
+  if(await m.createQueryBuilder(BackupJob,'j').where("j.status IN ('Queued','Running')").getCount())fail('A backup operation is already queued or running.',409)
+  const request=req.body.snapshot?{requestedSnapshot:req.body.snapshot}:req.body.kind==='prune'?{localKeep:JSON.parse(s.settings).localKeep}:{}
+  const j=await m.save(BackupJob,m.create(BackupJob,{id:randomUUID(),kind:req.body.kind,status:'Queued',requestedBy:req.member.email,result:JSON.stringify(request)}))
+  await recordAudit(m,{kind:j.kind==='backup'?'Backup requested':j.kind==='prune'?'Local retention requested':'Recovery test requested',author:req.member.email,entityId:j.id,after:request});return j
+ })
  res.status(202).json(job)
 }))
 module.exports=router
