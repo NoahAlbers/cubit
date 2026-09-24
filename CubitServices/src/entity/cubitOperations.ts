@@ -46,6 +46,9 @@ export class OperationsSettings {
 }
 
 @Entity()
+@Index('idx_audit_time', ['createdAt', 'id'])
+@Index('idx_audit_member_time', ['memberId', 'createdAt'])
+@Index('idx_audit_author', ['author'])
 export class OperationsAudit {
   @PrimaryGeneratedColumn('uuid') id: string
   @Index() @Column({ nullable: true }) memberId: string

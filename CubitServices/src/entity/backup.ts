@@ -9,7 +9,7 @@ export class BackupSettings {
 export class BackupJob {
  @PrimaryColumn() id:string
  @Column() kind:string
- @Index() @Column({default:'Queued'}) status:string
+ @Index('idx_backup_status') @Column({default:'Queued'}) status:string
  @Column() requestedBy:string
  @Column({default:()=> 'CURRENT_TIMESTAMP'}) createdAt:Date
  @Column({nullable:true}) startedAt:Date

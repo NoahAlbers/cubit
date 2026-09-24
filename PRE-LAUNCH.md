@@ -117,15 +117,19 @@ Owner: **Unassigned — technical release owner**. Target: **Unassigned**. Sign-
 - [ ] Replace startup schema changes and synchronization with versioned migrations
   run by the deployment operator. Build a fresh database using only migrations and
   compare it with the review schema; enforce entity/migration drift checks in CI.
+  Baseline checkpoint: a schema-only review export produced frozen migrations;
+  a disposable fresh database matches entities with zero drift. These migrations
+  are not yet wired into startup/deployment or applied to copied member databases.
 - [ ] Complete the specified major backend upgrades in separate reviewed pull
   requests: TypeORM 1.x, Express 5.x, compatible current TypeScript, dotenv and
   reflect-metadata. Do not merge dependency branches solely because one check is green.
 - [ ] Add typed request validation throughout operations, staff tools, waivers and
   backups. Enforce linting/formatting in CI and resolve material findings.
-- [ ] Cover login, member directory/profile and portal with frontend smoke tests;
-  run isolated end-to-end verification in CI. Local evidence: 13 component tests,
-  mocked login at 320–2560px, and a browser → API → disposable MySQL walkthrough
-  passed on 2026-09-24. CI confirmation for this addition is pending.
+- [x] Cover login, member directory/profile and portal with frontend smoke tests;
+  run isolated end-to-end verification in CI. Evidence: `47beb95`, CI run
+  `36031781891`, deployed to review on 2026-09-24. Codex verified 13 component
+  tests, login at 320–2560px, and a browser → API → disposable MySQL walkthrough.
+  This does not replace staff acceptance below.
 - [ ] Walk every sidebar and portal screen on the review VPS, including saves,
   cancellation, keyboard/mobile use and errors. Record staff acceptance separately
   from the automated synthetic checks.

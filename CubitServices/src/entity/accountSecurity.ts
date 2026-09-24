@@ -14,7 +14,7 @@ export class AccountNotice {
 @Entity('account_link')
 export class AccountLink {
   @PrimaryColumn({length:64}) tokenHash: string
-  @Index() @Column({length:36}) memberId: string
+  @Index('idx_account_link_member') @Column({length:36}) memberId: string
   @Column({length:16}) purpose: string
   @Column() email: string
   @Column({type:'int',unsigned:true}) tokenVersion: number
