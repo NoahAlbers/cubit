@@ -1,26 +1,30 @@
 <a class="skip-link" href="#main" (click)="skip($event)">Skip to content</a>
-<div class="workspace" [class.signed-out]="!isAuthenticated">
+<div class="workspace" [class.signed-out]="!isAuthenticated" [class.sidebar-compact]="sidebarCollapsed">
   <aside class="sidebar" [class.menu-open]="menuOpen" *ngIf="isAuthenticated">
-    <a class="brand" [routerLink]="portalView ? '/portal' : '/memberlist'" aria-label="Cubit home"><img class="cubit-wordmark" src="assets/cubit-logo.png" alt="Cubit CRM Software"></a>
+    <a class="brand" [routerLink]="portalView ? '/portal' : '/memberlist'" aria-label="Cubit home"><span class="compact-brand" aria-hidden="true">C</span><img class="cubit-wordmark" src="assets/cubit-logo.png" alt="Cubit CRM Software"></a>
     <button class="secondary mobile-menu" (click)="menuOpen=!menuOpen" [attr.aria-expanded]="menuOpen" aria-controls="main-navigation">{{sectionName}} · {{menuOpen?'Close menu':'Menu'}}</button><div class="nav-label">{{portalView ? 'MY MEMBERSHIP' : 'WORKSPACE'}}</div>
     <nav id="main-navigation" aria-label="Main navigation" *ngIf="!portalView">
-      <a [routerLink]="navigation.target('/memberlist')" [queryParams]="navigation.query('/memberlist')" routerLinkActive="selected" ariaCurrentWhenActive="page" [class.selected]="router.url.startsWith('/member/')" [attr.aria-current]="router.url.startsWith('/member/')?'page':null"><img class="nav-icon" src="assets/icons/members.svg" alt=""> Members</a>
-      <a [routerLink]="navigation.target('/overdue')" [queryParams]="navigation.query('/overdue')" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/overdue.svg" alt=""> Overdue</a>
-      <a routerLink="/payments" [queryParams]="navigation.query('/payments')" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/payment-matching.svg" alt=""> Payment matching</a>
-      <a [routerLink]="navigation.target('/accessLog')" [queryParams]="navigation.query('/accessLog')" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/access.svg" alt=""> Access log</a>
-      <a [routerLink]="navigation.target('/automation')" [queryParams]="navigation.query('/automation')" [class.selected]="billingSection" [attr.aria-current]="billingSection ? 'page' : null"><img class="nav-icon" src="assets/icons/settings.svg" alt=""> Settings & automation</a>
-      <a [routerLink]="navigation.target('/reports')" [queryParams]="navigation.query('/reports')" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/reports.svg" alt=""> Reports</a>
-      <a [routerLink]="navigation.target('/waivers')" [queryParams]="navigation.query('/waivers')" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/waiver.svg" alt=""> Waivers</a>
-      <a routerLink="/audit" [queryParams]="navigation.query('/audit')" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/audit.svg" alt=""> Audit log</a>
-      <a routerLink="/portal"><img class="nav-icon" src="assets/icons/portal.svg" alt=""> My portal</a>
+      <ng-container *ngFor="let item of staffNavigation">
+        <div *ngIf="item.children; else directLink" class="nav-group" [class.group-current]="groupCurrent(item)" (focusout)="leaveGroup($event)">
+          <button class="nav-group-button" [class.group-current]="groupCurrent(item)" [attr.aria-expanded]="groupExpanded(item.id)" [attr.aria-controls]="'nav-'+item.id" [attr.title]="compactNavigation?item.label:null" (click)="toggleGroup(item.id,$event)">
+            <img class="nav-icon" [src]="'assets/icons/'+item.icon+'.svg'" alt=""><span class="nav-text">{{item.label}}</span><app-arrow class="group-chevron" name="chevron-right" [class.expanded]="groupExpanded(item.id)"></app-arrow>
+          </button>
+          <div class="nav-children" *ngIf="groupExpanded(item.id)" [id]="'nav-'+item.id" [class.nav-flyout]="compactNavigation" [style.top.px]="compactNavigation?flyoutTop:null">
+            <div class="flyout-title" *ngIf="compactNavigation">{{item.label}}</div>
+            <a *ngFor="let child of item.children" [routerLink]="child.path" [queryParams]="navigation.query(child.path)" [fragment]="child.fragment" (click)="scrollToNavItem(child)" [class.selected]="navCurrent(child)" [attr.aria-current]="navCurrent(child)?'page':null"><span class="nav-text">{{child.label}}</span></a>
+          </div>
+        </div>
+        <ng-template #directLink><a class="nav-direct" [routerLink]="item.path" [queryParams]="navigation.query(item.path)" [class.selected]="navCurrent(item)" [attr.aria-current]="navCurrent(item)?'page':null" [attr.title]="compactNavigation?item.label:null"><img class="nav-icon" [src]="'assets/icons/'+item.icon+'.svg'" alt=""><span class="nav-text">{{item.label}}</span></a></ng-template>
+      </ng-container>
     </nav>
     <nav id="main-navigation" aria-label="Member navigation" *ngIf="portalView">
-      <a routerLink="/portal" routerLinkActive="selected" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{exact:true}"><img class="nav-icon" src="assets/icons/members.svg" alt=""> Overview</a>
-      <a routerLink="/portal/billing" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/reports.svg" alt=""> Billing history</a>
-      <a routerLink="/portal/waivers" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/waiver.svg" alt=""> My waivers</a>
-      <a routerLink="/portal/profile" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/settings.svg" alt=""> My details</a>
-      <a *ngIf="auth.isAdmin" [routerLink]="navigation.target('/memberlist')" [queryParams]="navigation.query('/memberlist')"><app-arrow name="arrow-left"></app-arrow> Staff workspace</a>
+      <a title="Overview" routerLink="/portal" routerLinkActive="selected" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{exact:true}"><img class="nav-icon" src="assets/icons/members.svg" alt=""> <span class="nav-text">Overview</span></a>
+      <a title="Billing history" routerLink="/portal/billing" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/reports.svg" alt=""> <span class="nav-text">Billing history</span></a>
+      <a title="My waivers" routerLink="/portal/waivers" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/waiver.svg" alt=""> <span class="nav-text">My waivers</span></a>
+      <a title="My details" routerLink="/portal/profile" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/settings.svg" alt=""> <span class="nav-text">My details</span></a>
+      <a title="Staff workspace" *ngIf="auth.isAdmin" [routerLink]="navigation.target('/memberlist')" [queryParams]="navigation.query('/memberlist')"><app-arrow name="arrow-left"></app-arrow> <span class="nav-text">Staff workspace</span></a>
     </nav>
+    <button class="sidebar-toggle" (click)="toggleSidebar()" [attr.aria-label]="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'" [attr.title]="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"><app-arrow [name]="sidebarCollapsed ? 'chevron-right' : 'chevron-left'"></app-arrow><span>Collapse sidebar</span></button>
     <div class="sidebar-bottom" *ngIf="workspaceLabel"><span class="environment-label"><span class="demo-dot"></span>{{workspaceLabel}}</span></div>
   </aside>
   <div class="workspace-body">
