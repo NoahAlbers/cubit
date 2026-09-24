@@ -1,9 +1,10 @@
+import { authorizeAccountChange, isStaffRole } from './staff-permissions';
 import { createCipheriv, createDecipheriv, createHash, randomBytes, timingSafeEqual } from 'crypto';
 import { compare, hash } from 'bcrypt';
 import { TOTP, Secret } from 'otpauth';
 import { EntityManager } from 'typeorm';
 import { AccountLink, AccountMfa } from '../entity/accountSecurity';
-import { Member, ROLES } from '../entity/member';
+import { Member } from '../entity/member';
 import { AppDataSource } from '../database';
 import { localConfig } from '../dev/config';
 import { demoMemberId } from '../demo/identity';
@@ -137,7 +138,7 @@ export async function authenticateSecondFactor(member: Member, code: unknown) {
       manager,
       current,
       code,
-      current.role === ROLES.ADMIN && process.env.REQUIRE_STAFF_MFA === 'true',
+      isStaffRole(current.role) && process.env.REQUIRE_STAFF_MFA === 'true',
     );
     return Object.assign(current, { mfaVerified });
   });
@@ -148,6 +149,7 @@ export async function issueAccountLink(memberId: string, actor: Member, purpose:
   return AppDataSource.transaction(async (manager) => {
     await lockIdentities(manager);
     const member = await lockAccount(manager, memberId);
+    await authorizeAccountChange(manager, actor, member);
     editable(member);
     await uniqueLogin(manager, member);
     if (purpose === 'invite' && /^\$2[aby]\$/.test(member.password))
@@ -226,7 +228,7 @@ export async function beginMfa(memberId: string, password: unknown) {
     const member = await lockAccount(manager, memberId);
     editable(member);
     await reauthenticate(manager, member, password);
-    if (member.role !== ROLES.ADMIN)
+    if (!isStaffRole(member.role))
       fail('Authenticator enrollment is currently available to staff accounts.', 403);
     const existing = await manager.findOneBy(AccountMfa, { memberId });
     if (existing?.secret) fail('An authenticator is already enrolled.');

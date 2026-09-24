@@ -1,3 +1,4 @@
+import { isStaffRole } from '../../security/staff-permissions';
 import * as jwt from 'jsonwebtoken';
 import { Member } from '../../entity/member';
 import { environment } from '../configuration';
@@ -47,7 +48,7 @@ export class jwtHelper {
       Number.isSafeInteger(identity?.tokenVersion) &&
       identity.tokenVersion >= 0 &&
       identity.tokenVersion === member.tokenVersion &&
-      (member.role !== 'admin' ||
+      (!isStaffRole(member.role) ||
         process.env.REQUIRE_STAFF_MFA !== 'true' ||
         identity.mfaVerified === true)
     );

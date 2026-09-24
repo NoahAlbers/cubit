@@ -18,8 +18,8 @@
                     @if (compactNavigation) {
                       <div class="flyout-title">{{item.label}}</div>
                     }
-                    @for (child of item.children; track child) {
-                      <a [routerLink]="child.path" [queryParams]="navigation.query(child.path)" [fragment]="child.fragment" (click)="scrollToNavItem(child)" [class.selected]="navCurrent(child)" [attr.aria-current]="navCurrent(child)?'page':null"><span class="nav-text">{{child.label}}</span></a>
+                    @for (child of item.children; track child) { @if(!child.administration||auth.isAdmin){
+                      <a [routerLink]="child.path" [queryParams]="navigation.query(child.path)" [fragment]="child.fragment" (click)="scrollToNavItem(child)" [class.selected]="navCurrent(child)" [attr.aria-current]="navCurrent(child)?'page':null"><span class="nav-text">{{child.label}}</span></a>}
                     }
                   </div>
                 }
@@ -36,7 +36,7 @@
           <a title="Billing history" routerLink="/portal/billing" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/reports.svg" alt=""> <span class="nav-text">Billing history</span></a>
           <a title="My waivers" routerLink="/portal/waivers" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/waiver.svg" alt=""> <span class="nav-text">My waivers</span></a>
           <a title="My details" routerLink="/portal/profile" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/settings.svg" alt=""> <span class="nav-text">My details</span></a>
-          @if (auth.isAdmin) {
+          @if (auth.isStaff) {
             <a title="Staff workspace" [routerLink]="navigation.target('/memberlist')" [queryParams]="navigation.query('/memberlist')"><app-arrow name="arrow-left"></app-arrow> <span class="nav-text">Staff workspace</span></a>
           }
         </nav>
@@ -54,7 +54,7 @@
         <div class="page-location">@if (headerBackTarget) {
           <a class="button secondary header-back" [routerLink]="headerBackTarget" [queryParams]="headerBackQuery" [attr.aria-label]="'Back to '+headerBackLabel" [attr.title]="'Back to '+headerBackLabel"><app-arrow name="arrow-left"></app-arrow><span>{{headerBackLabel}}</span></a>
           }<h1 class="page-title">{{sectionName}}</h1></div>
-          <div class="account-controls"><div class="account-identity"><a routerLink="/account/security" title="Account security">{{auth.accountLabel}}</a><small>{{auth.isDemo?'Demo administrator':auth.isAdmin?'Staff administrator':'Member'}}</small></div>@if (auth.isAdmin) {
+          <div class="account-controls"><div class="account-identity"><a routerLink="/account/security" title="Account security">{{auth.accountLabel}}</a><small>{{auth.isDemo?'Demo administrator':auth.roleLabel}}</small></div>@if (auth.isStaff) {
           <a class="button notification-button" routerLink="/staff/settings" routerLinkActive="current" aria-label="Notification settings" title="Notification settings"><img src="assets/icons/notification.svg" alt="" width="24" height="24">@if(accountNotices){<span class="account-notice-count" aria-label="Unreviewed account changes">{{accountNotices}}</span>}</a>
           }<button class="secondary sign-out-button" (click)="logout()" [disabled]="auth.signingOut" title="Sign out on all devices">Sign out</button></div>
         </header>

@@ -10,7 +10,7 @@ describe('Account recovery and authenticator screens',()=>{
   async function render(mode:string){
     await TestBed.configureTestingModule({imports:[AccountSecurityComponent],providers:[provideRouter([]),provideHttpClient(withXhr()),provideHttpClientTesting(),
       {provide:ActivatedRoute,useValue:{snapshot:{data:{mode},paramMap:new Map(),fragment:'token=d.'+'x'.repeat(43)}}},
-      {provide:AuthService,useValue:{isAdmin:true,logout:vi.fn()}}]}).compileComponents();
+      {provide:AuthService,useValue:{isAdmin:true,isStaff:true,logout:vi.fn()}}]}).compileComponents();
     const fixture=TestBed.createComponent(AccountSecurityComponent);fixture.detectChanges();
     return {fixture,component:fixture.componentInstance,http:TestBed.inject(HttpTestingController)};
   }

@@ -16,7 +16,7 @@
     </svg>
 
     <div class="login-brand"><img class="logo" src="assets/login/cubit-logo-concept.png" alt="Cubit CRM Software"></div>
-    <div class="story"><h2><span class="sr-only">A place for people who make things.</span><span aria-hidden="true">A place for people<br>who <span class="story-word" [class.fading]="storyFading">{{storyWord}}</span> things.</span></h2><p>Members, access, billing, and the details that keep the Melbourne Makerspace moving.</p></div>
+    <div class="story"><h2><span class="sr-only">A place for people who make things.</span><span aria-hidden="true">A place for people<br>who <span class="story-word" [class.fading]="storyFading">{{storyWord}}</span> things.</span></h2><p>Members, access, billing, and the details that keep {{organization.name || 'your organization'}} moving.</p></div>
   </section>
   <section class="sign-in" aria-labelledby="welcome">
     <img class="watermark" src="assets/login/cubit-gear-watermark.svg" #gear alt="" aria-hidden="true">
@@ -41,7 +41,7 @@
           <p class="notice error" role="alert">{{loginError}}</p>
         }
       </form>
-      <p class="help">Need access or a password reset? <a href="mailto:webmaster@melbournemakerspace.org?subject=Cubit%20sign-in%20help">Contact staff</a> here.</p>
+      <p class="help">Need access or a password reset? @if(organization.supportEmail){<a [href]="organization.contactUrl">Contact staff</a>}@else{contact your organization’s staff} here.</p>
       @if (demoAvailable) {
         <details class="demo-access"><summary>Try the local demo</summary><div class="actions"><button type="button" class="secondary" [disabled]="pending" (click)="demo(true)">Demo member</button><button type="button" class="secondary" [disabled]="pending" (click)="demo(false)">Demo staff</button></div><small>Uses synthetic accounts only.</small></details>
       }

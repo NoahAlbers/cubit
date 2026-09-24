@@ -1,7 +1,8 @@
+import { isStaffRole } from '../../security/staff-permissions';
 import { auditActor } from '../../staff/audit';
 import { Request, Response, NextFunction } from 'express';
 import { AppDataSource } from '../../database';
-import { Member, ROLES } from '../../entity/member';
+import { Member } from '../../entity/member';
 import { jwtHelper } from './jwtHelper';
 
 export async function staffOnly(req: Request, res: Response, next: NextFunction) {
@@ -13,7 +14,7 @@ export async function staffOnly(req: Request, res: Response, next: NextFunction)
     const member = await AppDataSource.manager.findOneBy(Member, { id: decoded.id });
     if (!member || !jwtHelper.sessionMatches(decoded, member))
       return res.status(401).json({ message: 'Please sign in.' });
-    if (member.role !== ROLES.ADMIN)
+    if (!isStaffRole(member.role))
       return res.status(403).json({ message: 'Staff access is required.' });
     req.member = member;
     auditActor.run({ id: member.id, email: member.email }, () => next());

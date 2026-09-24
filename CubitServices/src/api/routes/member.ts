@@ -1,3 +1,4 @@
+import { authorizeAccountChange } from '../../security/staff-permissions';
 import { recordAudit, snapshot, profileFields } from '../../staff/audit';
 import { memberInput } from '../common/member-input';
 import { validateNewPassword } from '../../security/password-policy';
@@ -61,6 +62,8 @@ router.put('/', async (req, res, next) => {
         where: { id: postedMemberData.id },
         lock: { mode: 'pessimistic_write' },
       });
+      await authorizeAccountChange(manager, req.member!, before, postedMemberData);
+      postedMemberData.staffVersion = before.staffVersion + 1;
       if (
         typeof postedMemberData.email === 'string' &&
         postedMemberData.email.trim().toLowerCase() !== before.email.trim().toLowerCase()

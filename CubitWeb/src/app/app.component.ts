@@ -1,3 +1,4 @@
+import { OrganizationService } from './services/organization.service';
 import { Component, HostListener, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../environments/environment';
@@ -7,7 +8,7 @@ import { ListNavigationService } from './services/list-navigation.service';
 import { switchMap, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 
-interface NavItem {id?:string;label:string;icon?:string;path?:string;fragment?:string;children?:NavItem[];}
+interface NavItem {id?:string;label:string;icon?:string;path?:string;fragment?:string;children?:NavItem[];administration?:boolean;}
 
 @Component({
     selector: 'app-root',
@@ -27,7 +28,7 @@ export class AppComponent implements OnInit {
   dataMode = '';
   accountNotices=0;
   private lastNoticeCheck=0;
-  refreshAccountNotices(){if(!this.auth.validToken()||!this.auth.isAdmin){this.accountNotices=0;return;}if(Date.now()-this.lastNoticeCheck<15000)return;this.lastNoticeCheck=Date.now();this.http.get<any>('/api/account/notices/count').subscribe({next:d=>this.accountNotices=d.count,error:()=>{this.accountNotices=0;}});}
+  refreshAccountNotices(){if(!this.auth.validToken()||!this.auth.isStaff){this.accountNotices=0;return;}if(Date.now()-this.lastNoticeCheck<15000)return;this.lastNoticeCheck=Date.now();this.http.get<any>('/api/account/notices/count').subscribe({next:d=>this.accountNotices=d.count,error:()=>{this.accountNotices=0;}});}
   workspaceLabel = '';
   menuOpen=false;
   sidebarCollapsed=false;
@@ -37,7 +38,7 @@ export class AppComponent implements OnInit {
   private flyoutClose:ReturnType<typeof setTimeout>|undefined;
   flyoutTop=100;
   staffNavigation:NavItem[]=[
-    {id:'members',label:'Members',icon:'members',path:'/memberlist',children:[{label:'All members',path:'/memberlist'},{label:'Overdue',path:'/overdue'},{label:'Waivers',path:'/waivers'}]},
+    {id:'members',label:'Members',icon:'members',path:'/memberlist',children:[{label:'All members',path:'/memberlist'},{label:'Overdue',path:'/overdue'},{label:'Waivers',path:'/waivers'},{label:'Org management',path:'/organization',administration:true}]},
     {label:'Payment matching',icon:'payment-matching',path:'/payments'},
     {label:'Access log',icon:'access',path:'/accessLog'},
     {label:'Audit log',icon:'audit',path:'/audit'},
@@ -45,7 +46,7 @@ export class AppComponent implements OnInit {
     {id:'settings',label:'Settings & automation',icon:'settings',path:'/automation',children:[{label:'Billing & processing',path:'/automation'},{label:'Plan catalog',path:'/plans'},{label:'Backups & recovery',path:'/automation',fragment:'backups'}]},
     {label:'My portal',icon:'portal',path:'/portal'},
   ];
-  constructor(public auth: AuthService, public router: Router, private http: HttpClient, public navigation:ListNavigationService) {
+  constructor(public organization:OrganizationService,public auth: AuthService, public router: Router, private http: HttpClient, public navigation:ListNavigationService) {
     try {const saved=JSON.parse(localStorage.getItem('cubit.navigation')||'null');if(saved){this.sidebarCollapsed=saved.compact===true;for(const id of ['members','settings'])if(typeof saved.groups?.[id]==='boolean')this.expandedGroups[id]=saved.groups[id];}}catch{}
     router.events.subscribe(e=>{if(e instanceof NavigationEnd){this.refreshAccountNotices();this.menuOpen=false;this.compactGroup=null;const active=this.staffNavigation.find(item=>item.children&&this.groupCurrent(item));if(active){this.expandedGroups[active.id]=true;this.saveNavigation();}}});
   }
@@ -78,7 +79,7 @@ export class AppComponent implements OnInit {
   @HostListener('document:pointerdown',['$event']) closeOutside(event:PointerEvent){if(!(event.target as Element).closest('.nav-group'))this.compactGroup=null;}
   @HostListener('window:resize') closeOnResize(){this.compactGroup=null;this.hoverLabel='';}
   @HostListener('document:keydown.escape',['$event']) closeOnEscape(event:KeyboardEvent){if(this.compactGroup){const button=document.querySelector('.nav-group-button[aria-controls="nav-'+this.compactGroup+'"]') as HTMLElement;button?.focus();this.compactGroup=null;this.hoverLabel='';event.preventDefault();}else if(this.hoverLabel){this.hoverLabel='';event.preventDefault();}else if(this.menuOpen){this.menuOpen=false;(document.querySelector('.mobile-menu') as HTMLElement)?.focus();}}
-  get sectionName(){const p=this.router.url.split(/[?#]/)[0];if(p==='/member/New')return 'Add Member';if(p.startsWith('/account/access/'))return 'Sign-in Access';return ({'/memberlist':'Members','/overdue':'Overdue Memberships','/accessLog':'Access Log','/reports':'Reports','/automation':'Settings & Automation','/audit':'Audit Log','/staff/settings':'Notification Settings','/account/security':'Account Security','/payments':'Payment Matching','/plans':'Plan Catalog','/waivers':'Waivers','/portal':'My Membership','/portal/profile':'My Details','/portal/billing':'Billing History','/portal/waivers':'My Waivers'})[p]||(p.startsWith('/member/')?'Member Profile':'Cubit');}
+  get sectionName(){const p=this.router.url.split(/[?#]/)[0];if(p==='/member/New')return 'Add Member';if(p.startsWith('/account/access/'))return 'Sign-in Access';return ({'/memberlist':'Members','/overdue':'Overdue Memberships','/accessLog':'Access Log','/reports':'Reports','/automation':'Settings & Automation','/audit':'Audit Log','/organization':'Org Management','/staff/settings':'Notification Settings','/account/security':'Account Security','/payments':'Payment Matching','/plans':'Plan Catalog','/waivers':'Waivers','/portal':'My Membership','/portal/profile':'My Details','/portal/billing':'Billing History','/portal/waivers':'My Waivers'})[p]||(p.startsWith('/member/')?'Member Profile':'Cubit');}
   get headerBack(){
     const path=this.router.url.split(/[?#]/)[0],q=this.router.parseUrl(this.router.url).queryParams;
     if(path.startsWith('/member/')){
@@ -95,7 +96,7 @@ export class AppComponent implements OnInit {
   get headerBackLabel(){return this.headerBack?.label;}
   get billingSection(){return ['/automation','/plans'].includes(this.router.url.split(/[?#]/)[0]);}
   skip(event:Event){event.preventDefault();document.getElementById('main')?.focus();}
-  get portalView() { return !this.auth.isAdmin || this.router.url.startsWith('/portal'); }
+  get portalView() { return !this.auth.isStaff || this.router.url.startsWith('/portal'); }
 
   async logout() {
     if(this.auth.signingOut)return;
@@ -114,7 +115,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     this.auth.isAuthenticated$.pipe(switchMap(signedIn=>{
-      this.isAuthenticated=signedIn;this.lastNoticeCheck=0;this.refreshAccountNotices();this.workspaceLabel='';this.dataMode='';
+      this.organization.load();this.isAuthenticated=signedIn;this.lastNoticeCheck=0;this.refreshAccountNotices();this.workspaceLabel='';this.dataMode='';
       return this.http.get<any>('/health').pipe(catchError(()=>of({dataMode:'',workspaceLabel:this.auth.isDemo?'Synthetic demo unavailable':'Workspace unavailable'})));
     })).subscribe(d=>{this.dataMode=d.dataMode;this.workspaceLabel=d.mode==='hosted-review'?'':d.workspaceLabel||'Workspace';});
   }

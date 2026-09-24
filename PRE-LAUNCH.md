@@ -30,6 +30,12 @@ by the makerspace; target dates and sign-off dates must not be invented.
   Manual links do not prove email ownership or complete staff enrollment.
 - [x] Upgrade the frontend to Angular 22 with production builds and Vitest in CI.
   Full screen/workflow acceptance and the end-to-end CI layer remain below.
+- [x] Implement Administration, Staff User and Member permission boundaries and
+  organization/staff management. Codex verified on 2026-09-24 with isolated
+  database regressions, production builds and component tests: stale updates,
+  duplicate addresses, self-demotion protection, session revocation and legacy-API
+  permission bypass attempts. This does not replace the operational staff-account
+  review or independent authorization review below.
 
 These are implementation checks, not independent security or operational approval.
 

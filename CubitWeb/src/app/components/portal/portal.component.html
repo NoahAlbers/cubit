@@ -24,8 +24,8 @@
       <span> · Ends {{p.finalBillingDate | date:'MMM d, y':'UTC'}}</span>
       }</p></div><b>{{p.monthlyRate | currency}} / month</b></div>
       }@if (!currentPlans.length) {
-      <p class="muted">You do not have a current plan. <a href="mailto:webmaster@melbournemakerspace.org">Contact staff</a> to get set up.</p>
-      }<p class="muted">For plan, payment or sign-in help, <a href="mailto:webmaster@melbournemakerspace.org">contact staff</a>.</p></section>
+      <p class="muted">You do not have a current plan. @if(organization.supportEmail){<a [href]="organization.contactUrl">Contact staff</a>}@else{Contact your organization’s staff} to get set up.</p>
+      }<p class="muted">For plan, payment or sign-in help, @if(organization.supportEmail){<a [href]="organization.contactUrl">contact staff</a>}@else{contact your organization’s staff}.</p></section>
       <section class="panel detail-panel"><h2>Your details</h2><p>{{data.profile.email}}</p><p class="muted">Emergency contact: {{data.profile.emergencyContact || 'Not added yet'}}</p><a class="button secondary" routerLink="/portal/profile">Update my details</a></section>
     }
     @if (section==='billing') {

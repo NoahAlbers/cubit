@@ -149,6 +149,7 @@ router.put(
         await rejectDuplicateContact(manager, values.email, member.id);
       await manager.update(Member, member.id, {
         ...values,
+        staffVersion: member.staffVersion + 1,
         ...(values.email !== member.email ? { tokenVersion: member.tokenVersion + 1 } : {}),
       });
       if (values.email !== member.email)

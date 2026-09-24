@@ -23,7 +23,7 @@
     @if(state.sharedDemo){<p>The shared demo login cannot change its password or enroll an authenticator.</p>}
     @else {
       <p>Signing out ends your sessions on every device. For a password reset, contact staff.</p>
-      @if(auth.isAdmin){
+      @if(auth.isStaff){
         <h3>Authenticator app</h3>
         @if(state.mfaEnabled){<p>Enabled. Use your authenticator or an unused recovery code when signing in.</p>}
         @else if(!state.mfaAvailable){<p>The operator needs to configure the private encryption key before authenticator enrollment is available.</p>}

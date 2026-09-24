@@ -15,12 +15,15 @@ export class AuthService  {
     catch { return false; }
   }
   get isAdmin() { try { return JSON.parse(atob(this.authToken.split('.')[1])).role === 'admin'; } catch { return false; } }
+  get isStaff() { try { return ['admin','staff'].includes(JSON.parse(atob(this.authToken.split('.')[1])).role); } catch { return false; } }
+  get roleLabel(){return this.isAdmin?'Administration':this.isStaff?'Staff User':'Member';}
   get isDemo() { try { return JSON.parse(atob(this.authToken.split('.')[1])).aud === 'cubit-demo'; } catch { return false; } }
-  get home() { return this.isAdmin ? '/memberlist' : '/portal'; }
+  get home() { return this.isStaff ? '/memberlist' : '/portal'; }
   get accountLabel(){try{return JSON.parse(atob(this.authToken.split('.')[1])).email||'Signed in';}catch{return '';}}
   canActivate(route: ActivatedRouteSnapshot) {
     if (this.validToken()) {
-      if (!route.data['portal'] && !this.isAdmin) return this.router.parseUrl('/portal');
+      if(route.data['administration']&&!this.isAdmin)return this.router.parseUrl(this.home);
+      if (!route.data['portal'] && !this.isStaff) return this.router.parseUrl('/portal');
       return true;
     }
     this.logout(); return false;

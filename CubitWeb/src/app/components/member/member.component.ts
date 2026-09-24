@@ -1,3 +1,4 @@
+import { AuthService } from '../../services/security/auth.service';
 import { formatPhone } from '../../services/contact-format';
 import { Component, OnInit, OnDestroy, NgZone, ElementRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -139,6 +140,7 @@ export class MemberComponent implements OnInit, OnDestroy {
   memberBalance = '';
 
   constructor(
+    public auth:AuthService,
     private drafts:DraftGuard,
     private router: Router,
     private zone: NgZone,
@@ -368,7 +370,7 @@ export class MemberComponent implements OnInit, OnDestroy {
       this.memberPicture = data.picture || '';
       this.navigation.rememberMember(memberId,`${data.firstName} ${data.lastName}`.trim());
       this.originalContact={...this.form.getRawValue()};this.form.markAsPristine();
-      this.form.enable();this.contactLoading=false;
+      this.form.enable();if(!this.auth.isAdmin&&data.role!=='member')this.form.disable();this.contactLoading=false;
       this.sectionLoaded('member');
     },error:()=>{this.saveError='Could not load contact details. Refresh before editing.';}});
   }
@@ -386,7 +388,7 @@ export class MemberComponent implements OnInit, OnDestroy {
   async save(navigateAfterCreate=true):Promise<boolean> {
     this.form.markAllAsTouched();if(this.form.invalid||this.saving||this.contactLoading)return false;
     this.saving=true;this.saveError='';
-    const submitted=this.form.getRawValue();this.form.disable();
+    const submitted=this.form.getRawValue();delete submitted.role;this.form.disable();
     try{
       const data=await this.memberService.saveMember(submitted).pipe(take(1)).toPromise();
       const isNew=this.memberId==='New';this.form.patchValue(data);this.originalContact={...this.form.getRawValue()};this.form.markAsPristine();

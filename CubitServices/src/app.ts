@@ -79,6 +79,7 @@ app.get(
     '/plans',
     '/audit',
     '/staff/settings',
+    '/organization',
     '/waivers',
     '/portal',
     '/portal/:section',
@@ -109,6 +110,7 @@ app.use((req, res, next) => {
 });
 
 //routes
+app.use('/api/organization', require('./api/routes/organization'));
 app.use('/api/account', require('./api/routes/account-security'));
 app.use('/api/backups', require('./api/routes/backups'));
 app.use('/api/portal', require('./api/routes/portal'));

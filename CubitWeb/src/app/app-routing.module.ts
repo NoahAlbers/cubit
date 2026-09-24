@@ -1,3 +1,4 @@
+import { OrganizationComponent } from './components/organization/organization.component';
 import { AuditLogComponent } from './components/audit-log/audit-log.component';
 import { AccountSecurityComponent } from './components/account-security/account-security.component';
 import { StaffSettingsComponent } from './components/staff-settings/staff-settings.component';
@@ -19,6 +20,7 @@ import { PaymentMatchingComponent } from './components/payment-matching/payment-
 import { PlanCatalogComponent } from './components/plan-catalog/plan-catalog.component';
 
 const routes: Routes = [
+  {path:'organization',component:OrganizationComponent,canActivate:[AuthService],canDeactivate:[DraftGuard],data:{administration:true}},
   {path:'account/activate',component:AccountSecurityComponent,data:{mode:'activate'}},
   {path:'account/security',component:AccountSecurityComponent,canActivate:[AuthService],canDeactivate:[DraftGuard],data:{portal:true}},
   {path:'account/access/:id',component:AccountSecurityComponent,canActivate:[AuthService]},

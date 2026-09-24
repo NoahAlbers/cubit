@@ -30,8 +30,10 @@ Cubit brings member records, billing, access history, reports, and member self-s
 - A combined charge-and-payment history shows dated entries, corrections, refunds, and outstanding amounts. Staff can record payments and correct charges with a reason.
 - Charges retain their recorded amounts and membership rate snapshots. Corrections are explicit rather than silently rewriting history when a catalog price changes.
 - Staff choose a final billing date when ending a plan. The panel shows the last payment and last entry for context. Earlier unpaid charges remain; later charges stop. Activity dates do not automatically determine cancellation.
+- A guided profile panel walks through ending, replacing or activating a plan. Staff preview and save the cutoff before choosing a replacement, then confirm its start date and rate. PayPal subscription changes remain a separate manual step.
 - Payments cover the oldest charges first. The grace period is configurable and can be switched off. Payment can restore eligibility once the oldest remaining unpaid charge falls within the grace window.
 - Staff access blocks and individually disabled keys remain under staff control; payment processing does not remove a manual block.
+- Saving a different grace period immediately changes subsequent eligibility checks. Restoring the previous rule reverses its effect; it does not remove manual blocks, enable disabled keys or reopen canceled memberships.
 - The overdue view helps staff review members who are behind, contact them manually, and decide how to handle membership and access.
 - Processing offers a preview, an explicit apply action, and run history.
 
@@ -79,6 +81,14 @@ Members can view their status, current plan, charges and payments, and waiver re
 
 Staff handle sign-in help and contact requests manually. From a member's **Sign-in & staff permissions**, staff can prepare a single-use invitation or password reset link, valid for 24 hours, and share it privately with the verified account owner. Cubit does not send these links automatically. Login credentials currently remain associated with member records.
 
+### Organization and staff administration
+
+**Members → Org Management** is available to Administration accounts. Administrators can create staff accounts or explicitly grant access to an existing member, change staff details and roles, disable logins, and prepare private invitation/reset links. Staff Users have operational tools but cannot manage staff accounts or organization settings. Members retain portal-only access. Staff changes require a reason, reject stale edits, revoke existing sessions and record an audit event. The shared demo account and the last enabled administrator are protected.
+
+Organization name and help email are editable here and feed the login page, browser title and member help links. Changing them does not rename historical signed documents or configure domains, time zones or mail delivery. Login identities still share the member-record model; separating those identities remains planned.
+
+### Account security
+
 Sessions are checked against the account on every authenticated request. Password,
 role, and login-email changes invalidate prior sessions; **Sign out** revokes sessions
 on all devices. Newly assigned passwords require at least 12 characters, reject the
@@ -100,6 +110,8 @@ not yet verification that the member owns the new email address.
 Waiver management uses normal staff and member account permissions, with no additional preview password. The foundation includes versioned templates, required and optional documents, signing history, and a view of active members missing required waivers.
 
 Members can sign through a separately hosted DocuSeal signing page or upload a signed PDF, JPG, or PNG. Staff can attach files or use a phone camera on a member profile. Uploads remain pending until staff checks and accepts them; rejected and superseded files remain available. The active-member compliance list counts the current required version only.
+
+Member profiles group each waiver with that member's signed or uploaded records, including historical versions. Selecting an unsigned current waiver opens attachment controls; signed and pending waivers expand to show their associated documents.
 
 With DocuSeal explicitly configured, Cubit verifies completion server-to-server and saves the signed PDF and signing audit certificate in its private database. Pending submissions are checked every five minutes, with retries if downloading fails. Original templates, file hashes, upload dates, review notes, and audit history are retained. Downloads require authentication and are restricted to staff or the owning member. Files are limited to 10 MB each; member-facing forms accept up to five files per upload batch.
 
@@ -209,7 +221,7 @@ need this step. Native startup refuses an unconverted data directory.
 
 Production dependency audits run for both projects in CI and reject high or critical
 findings. Dependabot checks the backend, frontend, and GitHub Actions weekly.
-The backend uses patched Express 4, TypeORM 0.3, mysql2 3, bcrypt 6, and JWT 9
+The backend uses Express 5, TypeORM 1, mysql2 3, bcrypt 6, and JWT 9
 dependencies. The removed legacy PayPal importer and task API are not available;
 the PayPal route remains explicitly blocked.
 
@@ -282,10 +294,6 @@ Provide invite-only officer and staff accounts with password recovery and approp
 ### Verified payment imports
 
 Connect verified PayPal events to the existing offline matching queue after provider authentication, currency handling, reconciliation, and recovery have been reviewed. Live imports must retain explicit matching for unknown payers and duplicate-payment protection.
-
-### Future membership price transitions
-
-Catalog administration is available. A future workflow may help staff schedule an existing member's transition to a new plan or rate, with an explicit effective date and change history. Editing a catalog price will never perform that transition implicitly.
 
 ### Member photo uploads
 

@@ -1,3 +1,4 @@
+import { OrganizationService } from '../../../services/organization.service';
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -43,7 +44,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   private stopMotion = () => { this.freeze(); this.scheduleStory(); };
   private visibilityChanged = () => this.scheduleStory();
 
-  constructor(
+  constructor(public organization:OrganizationService,
     private fb: UntypedFormBuilder,
     private auth: AuthService,
     private router: Router,

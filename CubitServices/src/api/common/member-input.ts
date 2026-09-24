@@ -29,8 +29,8 @@ export function memberInput(body: unknown, creating = false): any {
     (creating ? input.id !== 'New' : input.id === 'New')
   )
     invalid(creating ? 'Use New when creating a member.' : 'A member ID is required.');
-  if ('role' in input && !['member', 'admin'].includes(input.role as string))
-    invalid('Choose Member or Staff administrator.');
+  if ('role' in input && !['member', 'staff', 'admin'].includes(input.role as string))
+    invalid('Choose Member, Staff User, or Administration.');
   if ('picture' in input && input.picture !== null && typeof input.picture !== 'string')
     invalid('Picture must be a string or null.');
   if ('password' in input && typeof input.password !== 'string') invalid('Password must be text.');

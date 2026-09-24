@@ -16,6 +16,7 @@ const DUMMY_PASSWORD_HASH = '$2b$12$etWikrT3xEJPL7DXZ..CDuATVnJVB83CY7WMf64hktKU
 export enum ROLES {
   MEMBER = 'member',
   ADMIN = 'admin',
+  STAFF = 'staff',
 }
 
 @Entity()
@@ -53,6 +54,8 @@ export class Member {
 
   @Column({ type: 'int', unsigned: true, default: 0 })
   tokenVersion: number = 0;
+
+  @Column({ type: 'int', unsigned: true, default: 0 }) staffVersion: number = 0;
 
   @Column({ default: false })
   loginDisabled: boolean = false;

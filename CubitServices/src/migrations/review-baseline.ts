@@ -1,3 +1,4 @@
+import { OrganizationManagement1790260000000 } from './organization';
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import { baselineTables } from './baseline-schema';
 import { staffToolsSql, normalizeLoginEmailsSql } from './legacy-data';
@@ -142,4 +143,5 @@ export const migrations = [
   StaffHistory1790250000006,
   NormalizeLoginEmails1790250000007,
   StableIndexNames1790250000008,
+  OrganizationManagement1790260000000,
 ];

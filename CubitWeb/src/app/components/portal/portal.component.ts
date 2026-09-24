@@ -1,3 +1,4 @@
+import { OrganizationService } from '../../services/organization.service';
 import { formatPhone } from '../../services/contact-format';
 import { DraftGuard } from '../../services/draft-guard';
 import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -24,7 +25,7 @@ export class PortalComponent implements OnInit, OnDestroy {
   async closeSigning(){if(this.hasUnsavedChanges()&&!await this.drafts.confirmDiscard())return;this.signing=null;}
   data:any; profile:any; rows:any[]=[]; section='overview'; order='desc'; error=''; saved=''; busy=false;
   signing:any=null; signName=''; acknowledged=false; private subscription:Subscription;
-  constructor(private drafts:DraftGuard,private http:HttpClient,private route:ActivatedRoute){}
+  constructor(public organization:OrganizationService,private drafts:DraftGuard,private http:HttpClient,private route:ActivatedRoute){}
   ngOnInit(){this.section=this.route.snapshot.data.section||'overview';this.load();}
   ngOnDestroy(){this.subscription?.unsubscribe();}
   load(){this.http.get<any>('/api/portal').subscribe({next:d=>{this.data=d;this.profile={...d.profile,phone:formatPhone(d.profile.phone)??d.profile.phone,emergencyPhone:formatPhone(d.profile.emergencyPhone)??d.profile.emergencyPhone};this.originalProfile=JSON.stringify(this.profile);this.sort();},error:e=>this.error=e.error?.message||'Unable to load your membership.'});}
