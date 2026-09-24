@@ -60,6 +60,11 @@ Owner: **Unassigned — account administrator**. Target: **Unassigned**. Sign-of
 
 Owner: **Unassigned — server/backup operator**. Target: **Unassigned**. Sign-off: **Pending**.
 
+Latest local evidence: on 2026-09-24, review release `ecbae54` successfully restored
+the selected retained snapshot `ad410909d18c` into an isolated database, checking
+tables, waiver files and checksums. The deployed inventory shows retained copies,
+creation times and captured sizes. This is **not** an off-server or fresh-VPS rehearsal.
+
 - [ ] Choose a private off-server destination, budget, schedule and retention policy.
   No off-server destination has been supplied; same-VPS copies are not disaster recovery.
 - [ ] Enable immutable/versioned off-server retention under separate administrative
