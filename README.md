@@ -1,4 +1,6 @@
 <p align="center">
+
+**Launch status:** review only. See the maintained [pre-launch checklist](PRE-LAUNCH.md) for required work, verification evidence, ownership and cutover sign-off.
   <img src="CubitWeb/src/assets/cubit-logo.png" alt="Cubit — Melbourne Makerspace membership management" width="620">
 </p>
 
@@ -103,7 +105,7 @@ Publishing a DocuSeal version requires the same original PDF used in its templat
 
 Self-hosted setup uses the free template builder and submission API, without paid embedding. Set `DOCUSEAL_ENABLED=true`, `DOCUSEAL_API_KEY`, `DOCUSEAL_API_URL`, and `DOCUSEAL_PUBLIC_URL` in the private service environment. Hosted review permits only `http://127.0.0.1:3000/api`; its public signing URL must use HTTPS. Keep SMTP unconfigured, submission email/SMS disabled, and DocuSeal on an internal Docker network behind the HTTPS proxy. Credentials, waiver PDFs, and signed records do not belong in Git.
 
-**Settings & Automation → Backups & recovery** controls manual, daily, weekly, or monthly encrypted backups, retention, and isolated restore tests. Snapshots include both Cubit databases, uploaded waivers, DocuSeal files and SQLite, and private service configuration. An operator connects a private S3-compatible destination separately; until then, backups remain local to the VPS. See [backup and recovery operations](deploy/BACKUPS.md) for setup, key custody, and replacement-server recovery. Same-server backups alone do not protect against losing the VPS.
+**Settings & Automation → Backups & recovery** controls manual, daily, weekly, or monthly encrypted backups, retention, and isolated restore tests. The saved-backup inventory shows creation times and captured sizes, supports testing a selected local copy, and lets staff apply local retention after confirmation. Snapshots include both Cubit databases, uploaded waivers, DocuSeal files and SQLite, and private service configuration. An operator connects a private S3-compatible destination separately; until then, backups remain local to the VPS. See [backup and recovery operations](deploy/BACKUPS.md) for setup, key custody, and replacement-server recovery. Same-server backups alone do not protect against losing the VPS.
 
 ## Interface and branding
 
@@ -216,7 +218,7 @@ Member edits reject invalid IDs, unsupported roles, and unexpected fields before
 database access. See [security upgrade and launch status](SECURITY.md) for the
 remaining phases and requirements; these controls do not constitute launch approval.
 
-GitHub Actions installs frozen dependencies, builds both projects, validates deployment shell syntax, and runs frontend, safety and billing tests. Angular's Vitest checks cover billing form validation, duplicate-submit prevention, refunds, draft cancellation, SVG rendering and authentication headers. Business-rule coverage includes billing-date boundaries, grace periods, payment allocation, staff blocks, review isolation, calendar averages, and the waiver preview gate. Additional tests cover reports, directory behavior, and member isolation.
+GitHub Actions installs frozen dependencies, builds both projects, validates deployment shell syntax, and runs frontend, safety and billing tests. Angular's Vitest checks cover billing form validation, duplicate-submit prevention, refunds, draft cancellation, SVG rendering and authentication headers. Business-rule coverage includes billing-date boundaries, grace periods, payment allocation, staff blocks, review isolation, calendar averages, and staff/member waiver authorization. Additional tests cover reports, directory behavior, and member isolation.
 
 For a checkout with Node and pnpm available:
 

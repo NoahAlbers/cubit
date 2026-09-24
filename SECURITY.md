@@ -3,6 +3,9 @@
 Cubit remains a review deployment. Production door access and payment imports are disabled.
 Changes to this repository must not connect to or modify the existing membership system.
 
+The maintained [pre-launch checklist](PRE-LAUNCH.md) records required gates,
+evidence, missing owners, and sign-off. Update it with each completed milestone.
+
 The September 2026 specification contains eight numbered phases (its introduction
 and some cross-references say nine). Work follows the numbered phases below.
 
@@ -11,7 +14,7 @@ and some cross-references say nine). Work follows the numbered phases below.
 | 1 | Patched runtime dependencies, dependency alerts, CI audits | Verified locally and in CI; review deployed and healthy |
 | 2 | Headers, login hardening, legacy-route validation and removal | Verified locally and in CI; review deployed |
 | 3 | Node 22 and MySQL 8.4 alignment | Local logical upgrade, CI, and review deployment verified |
-| 4 | Revocable sessions, account recovery, MFA, identity cleanup | Sessions deployed; single-use links, TOTP, account notices and audited email trimming verified locally; staff enrollment, duplicate reconciliation and email ownership verification remain launch requirements |
+| 4 | Revocable sessions, account recovery, MFA, identity cleanup | Sessions, single-use links, TOTP, account notices and audited email trimming verified in CI and deployed; staff enrollment, duplicate reconciliation and email ownership verification remain launch requirements |
 | 5 | Backup confidentiality, immutable offsite recovery, DocuSeal boundary | Pending; offsite storage not configured |
 | 6 | Angular modernization and frontend regression coverage | Angular 22 already implemented; expanded checks pending |
 | 7 | Versioned schema migrations, backend major upgrades, request validation | Pending |
