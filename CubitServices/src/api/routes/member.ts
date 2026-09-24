@@ -165,7 +165,7 @@ router.get('/plans/:memberId', (req, res, next) => {
   AppDataSource.manager
     .find(MemberPlan, {
       where: { member: { id: req.params.memberId } },
-      relations: ['plan'],
+      relations: { plan: true },
     })
     .then((memberPlans) => {
       res.status(200).json(memberPlans)

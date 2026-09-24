@@ -3,7 +3,6 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  Timestamp,
   ManyToOne,
   Between,
   MoreThanOrEqual,

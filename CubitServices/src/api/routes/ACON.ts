@@ -11,7 +11,7 @@ router.get('/doorLockCheck/:keySerial', async (req, res, next) => {
   AppDataSource.manager
     .findOneOrFail(MemberKey, {
       where: { serialNumber: req.params.keySerial, status: 'Active' },
-      relations: ['member'],
+      relations: { member: true },
     })
     .then(
       async (result: MemberKey) => {
@@ -73,7 +73,7 @@ router.get('/logDoorAccess', async (req, res, next) => {
   var repo = AppDataSource.manager
     .findOneOrFail(MemberKey, {
       where: { serialNumber: req.query.rfid?.toString() },
-      relations: ['member'],
+      relations: { member: true },
     })
     .then(
       async (result: MemberKey) => {
