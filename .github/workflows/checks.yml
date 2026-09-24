@@ -37,6 +37,8 @@ jobs:
       - run: pnpm --dir CubitWeb audit --prod --audit-level=high
       - run: node dev/build-web.cjs
       - run: pnpm --dir CubitWeb test
+      - run: pnpm --dir CubitWeb exec playwright install --with-deps chromium
+      - run: node dev/verify-login.cjs
       - run: pnpm --dir CubitServices build
       - run: node tests/security-hardening.cjs
         working-directory: CubitServices
@@ -48,6 +50,7 @@ jobs:
         working-directory: CubitServices
         env:
           CUBIT_TEST_EMPTY_DATABASE: 'yes'
+          CUBIT_BROWSER_TESTS: 'yes'
           CUBIT_MODE: hosted-demo
           LOCAL_DEVELOPMENT: 'false'
           HOST: 127.0.0.1

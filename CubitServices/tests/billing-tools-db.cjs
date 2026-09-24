@@ -210,6 +210,13 @@ async function main(){
  const adminCurrent=await freshToken(staff.id);
  assert.equal((await request('/logout',{},'POST',adminCurrent)).status,204);
  assert.equal((await request('/api/cubit/audit',null,'GET',adminCurrent)).status,401);
+ if(process.env.CUBIT_BROWSER_TESTS==='yes'){
+  const password='Synthetic-browser-workflow-passphrase';
+  const hash=await require('bcrypt').hash(password,12);
+  const staff=await db.manager.save(Member,db.manager.create(Member,{firstName:'Browser',lastName:'Staff',email:'browser.staff@example.test',paypalEmail:'browser.staff@example.test',role:'admin',password:hash}));
+  const member=await db.manager.save(Member,db.manager.create(Member,{firstName:'Browser',lastName:'Member',email:'browser.member@example.test',paypalEmail:'browser.member@example.test',role:'member',password:hash}));
+  await require('../../dev/verify-workflows.cjs')({base,staff,member,password});
+ }
  console.log('PASS: password policy, next-request password/role/logout revocation, disabled logins, legacy-token rejection and ambiguous normalized email protection.');
  console.log('PASS: retained legacy history, transactional audit attribution/snapshots, payment/plan/fob/note/profile history, password redaction, audit filters/pagination, private preferences, stale edits and no-send alert preview.');
  console.log('PASS: explicit matching, ambiguity, atomic member creation, duplicate/concurrent capture and identity guards, refunds, permissions, catalog changes/retirement/restoration, stale edits and preserved historical/future rates and charges.');

@@ -218,7 +218,7 @@ Member edits reject invalid IDs, unsupported roles, and unexpected fields before
 database access. See [security upgrade and launch status](SECURITY.md) for the
 remaining phases and requirements; these controls do not constitute launch approval.
 
-GitHub Actions installs frozen dependencies, builds both projects, validates deployment shell syntax, and runs frontend, safety and billing tests. Angular's Vitest checks cover billing form validation, duplicate-submit prevention, refunds, draft cancellation, SVG rendering and authentication headers. Business-rule coverage includes billing-date boundaries, grace periods, payment allocation, staff blocks, review isolation, calendar averages, and staff/member waiver authorization. Additional tests cover reports, directory behavior, and member isolation.
+GitHub Actions installs frozen dependencies, builds both projects, validates deployment shell syntax, and runs frontend, safety and billing tests. Angular's Vitest checks cover login/MFA, directory state, member-profile drafts, portal contact saves, billing forms, SVG rendering, authentication headers, account recovery and backup selection. The synthetic Playwright layer tests the built login at mobile/desktop widths and walks staff/portal screens against an isolated disposable MySQL database, including profile → audit → profile → directory navigation and persisted contact updates. It blocks external requests and never reads imported datasets. Business-rule coverage includes billing-date boundaries, grace periods, payment allocation, staff blocks, review isolation, calendar averages, and staff/member waiver authorization.
 
 For a checkout with Node and pnpm available:
 
@@ -236,7 +236,7 @@ node tests/activity-patterns.cjs
 node tests/review-controls.cjs
 ```
 
-Integration tests require an appropriate local dataset and may create or modify test records. A successful build does not prove the imported history is correct or live integrations are ready.
+The CI database suite requires an explicitly empty disposable `cubit_demo` schema and the guarded settings shown in `.github/workflows/checks.yml`; it creates synthetic test records. Set `CUBIT_BROWSER_TESTS=yes` to include the database-backed browser walkthrough. Install its browser with `pnpm --dir CubitWeb exec playwright install chromium`; `PLAYWRIGHT_CHANNEL=msedge` optionally uses an installed Edge browser locally. `node dev/verify-login.cjs` runs the separate mocked login checks. Older import-verification scripts require private local datasets and are deliberately excluded from CI. A successful build does not prove imported history is correct or live integrations are ready.
 
 ### Hosted review configuration
 

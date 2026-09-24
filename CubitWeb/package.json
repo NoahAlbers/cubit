@@ -36,6 +36,7 @@
     "@angular/language-service": "22.2.0",
     "@types/node": "^22.0.0",
     "jsdom": "28.1.0",
+    "playwright": "1.63.0",
     "typescript": "~6.0.3",
     "vitest": "4.1.11"
   },

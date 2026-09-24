@@ -123,8 +123,12 @@ Owner: **Unassigned — technical release owner**. Target: **Unassigned**. Sign-
 - [ ] Add typed request validation throughout operations, staff tools, waivers and
   backups. Enforce linting/formatting in CI and resolve material findings.
 - [ ] Cover login, member directory/profile and portal with frontend smoke tests;
-  run isolated end-to-end verification in CI. Walk every sidebar and portal screen
-  on the review VPS, including saves, cancellation, keyboard/mobile use and errors.
+  run isolated end-to-end verification in CI. Local evidence: 13 component tests,
+  mocked login at 320–2560px, and a browser → API → disposable MySQL walkthrough
+  passed on 2026-09-24. CI confirmation for this addition is pending.
+- [ ] Walk every sidebar and portal screen on the review VPS, including saves,
+  cancellation, keyboard/mobile use and errors. Record staff acceptance separately
+  from the automated synthetic checks.
 - [ ] Run the full backend/database/frontend/backup suite and production dependency
   audits against the release candidate. Resolve high/critical runtime findings;
   document any accepted lower-severity findings with an owner and review date.

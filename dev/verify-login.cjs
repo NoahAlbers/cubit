@@ -3,7 +3,7 @@
 const assert = require('node:assert/strict')
 const path = require('node:path')
 const fs = require('node:fs')
-const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright')
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || '../CubitWeb/node_modules/playwright')
 const express = require('../CubitServices/node_modules/express')
 const app = express()
 app.use(express.json())
@@ -23,11 +23,12 @@ async function main() {
   const server = await new Promise(resolve => { const s = app.listen(0, '127.0.0.1', () => resolve(s)) })
   let browser
   try {
-    browser = await chromium.launch({headless: true, channel: 'msedge'})
+    browser = await chromium.launch({headless: true, ...(process.env.PLAYWRIGHT_CHANNEL ? {channel: process.env.PLAYWRIGHT_CHANNEL} : {})})
     const page = await browser.newPage({viewport: {width: 1915, height: 940}})
     const errors = []
     page.on('pageerror', error => errors.push(error.message))
     const base = `http://127.0.0.1:${server.address().port}`
+    await page.route('**/*', route => route.request().url().startsWith(base + '/') ? route.continue() : route.abort())
     const out = path.resolve(__dirname, '../tmp/login-review')
     fs.mkdirSync(out, {recursive: true})
     await page.goto(base)
