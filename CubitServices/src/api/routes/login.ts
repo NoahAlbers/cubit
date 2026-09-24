@@ -5,6 +5,7 @@ import { jwtHelper } from '../common/jwtHelper';
 import { createRememberedGreeting } from '../common/remembered-greeting';
 import { localConfig } from '../../dev/config';
 import { AppDataSource } from '../../app';
+import { authenticateSecondFactor } from '../../security/accounts';
 
 const router = express.Router();
 const greeting = createRememberedGreeting({
@@ -21,22 +22,23 @@ const greeting = createRememberedGreeting({
 router.post('/greeting', greeting.greet);
 
 router.post('/', async (req, res, next) => {
-  if (!validEmail(req.body.email) || typeof req.body.password !== 'string' || req.body.email.length > 254 || req.body.password.length > 1024) {
+  if (!validEmail(req.body?.email) || typeof req.body?.password !== 'string' || req.body.email.length > 254 || req.body.password.length > 1024) {
     return res.status(401).json({ message: 'Invalid email or password.' });
   }
   let memberClass = new Member();
 
-  memberClass.GetMemberByEmailAndPass(req.body.email.trim().toLowerCase(), req.body.password).then(
-    (member) => {
-      const token = jwtHelper.GenerateJWT(member);
+  try {
+      const passwordMember=await memberClass.GetMemberByEmailAndPass(req.body.email.trim().toLowerCase(), req.body.password);
+      const member=await authenticateSecondFactor(passwordMember,req.body.code);
+      const token = jwtHelper.GenerateJWT(member,member.mfaVerified);
       res.setHeader('Cache-Control', 'no-store');
       greeting.remember(res, member);
       res.status(200).json({ token, member: { id: member.id, email: member.email, role: member.role, firstName: member.firstName, lastName: member.lastName } });
-    },
-    (err) => {
-      res.status(401).json({ message: 'Invalid email or password.' });
-    }
-  );
+  } catch (err:any) {
+      if(err?.code==='MFA_REQUIRED')return res.status(401).json({message:err.message,code:'MFA_REQUIRED'});
+      if(err?.status===403)return res.status(403).json({message:err.message});
+      res.status(401).json({ message: 'Invalid email, password, or authenticator code.' });
+  }
 });
 
 module.exports = router;

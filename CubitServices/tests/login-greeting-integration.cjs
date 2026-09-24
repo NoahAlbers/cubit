@@ -7,6 +7,7 @@ require('ts-node/register')
 const { app, AppDataSource } = require('../src/app')
 const { Member } = require('../src/entity/member')
 const { jwtHelper } = require('../src/api/common/jwtHelper')
+require('../src/security/accounts').authenticateSecondFactor = async member => member // MFA/session locking is covered with a disposable database.
 let lookups = 0
 Member.prototype.GetMemberByEmailAndPass = async (email, password) => {
   if (email !== 'noah@example.test' || password !== 'test-password') throw Error('Invalid')

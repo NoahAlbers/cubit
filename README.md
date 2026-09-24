@@ -73,15 +73,23 @@ Historical membership counts are estimates reconstructed from available billing 
 
 Members can view their status, current plan, charges and payments, and waiver records, and update their own contact and emergency-contact information. The billing-history page is a record of entries without balance, past-due, or total-paid summary cards.
 
-Staff handle sign-in help and contact requests manually. Invite-based accounts and self-service recovery are planned. Login credentials currently remain associated with member records.
+Staff handle sign-in help and contact requests manually. From a member's **Sign-in & staff permissions**, staff can prepare a single-use invitation or password reset link, valid for 24 hours, and share it privately with the verified account owner. Cubit does not send these links automatically. Login credentials currently remain associated with member records.
 
 Sessions are checked against the account on every authenticated request. Password,
 role, and login-email changes invalidate prior sessions; **Sign out** revokes sessions
 on all devices. Newly assigned passwords require at least 12 characters, reject the
 bundled common-password dictionary, and cannot exceed bcrypt's 72-byte input limit.
 Ambiguous imported login emails are rejected until staff resolves the duplicates.
-Existing review credentials are retained. Account recovery and staff MFA remain
-unfinished launch requirements.
+Existing review credentials are retained. Staff can enroll an authenticator from
+**Account security** (the account-name link in the top bar), once the operator
+provisions the private encryption key. TOTP codes and recovery codes cannot be
+reused, and password resets preserve enrolled MFA. Mandatory staff enrollment,
+external recovery-key custody, and verified email delivery remain launch requirements.
+See [account security operations](deploy/ACCOUNT-SECURITY.md).
+
+Portal login-email changes generate in-app staff notices and remain in the audit
+log. Staff can review and acknowledge them from Notification Settings. This is
+not yet verification that the member owns the new email address.
 
 ### Digital and uploaded waivers
 

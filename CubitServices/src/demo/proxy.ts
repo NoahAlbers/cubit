@@ -9,13 +9,14 @@ import { demoAudience, demoEmail } from './identity'
 export function demoProxy(enabled: boolean, port = 5002): RequestHandler {
   return (req, res, next) => {
     const login = req.method === 'POST' && /^\/login\/?$/.test(req.path)
-    let demo = login && typeof req.body?.email === 'string' && req.body.email.trim().toLowerCase() === demoEmail
+    let demo = login && (req.body?.workspace==='demo' || typeof req.body?.email === 'string' && req.body.email.trim().toLowerCase() === demoEmail)
     // Always route login by the submitted identity, not a leftover session token.
     if (!login) {
       const token = req.headers.authorization?.match(/^Bearer (.{1,8192})$/)?.[1]
       try { const claims = token ? jwt.decode(token) : null
         demo = !!claims && typeof claims !== 'string' && (claims.aud === demoAudience || Array.isArray(claims.aud) && claims.aud.includes(demoAudience))
       } catch { /* Invalid tokens are rejected by the ordinary auth middleware. */ }
+      if(req.method==='POST'&&/^\/api\/account\/redeem\/?$/.test(req.path))demo=typeof req.body?.token==='string'&&req.body.token.startsWith('d.')
     }
     if (!demo) return next()
     res.setHeader('Cache-Control', 'no-store')

@@ -11,7 +11,7 @@ and some cross-references say nine). Work follows the numbered phases below.
 | 1 | Patched runtime dependencies, dependency alerts, CI audits | Verified locally and in CI; review deployed and healthy |
 | 2 | Headers, login hardening, legacy-route validation and removal | Verified locally and in CI; review deployed |
 | 3 | Node 22 and MySQL 8.4 alignment | Local logical upgrade, CI, and review deployment verified |
-| 4 | Revocable sessions, account recovery, MFA, identity cleanup | In progress: session revocation and password-policy milestone; recovery/MFA pending |
+| 4 | Revocable sessions, account recovery, MFA, identity cleanup | Sessions deployed; single-use links, TOTP, account notices and audited email trimming verified locally; staff enrollment, duplicate reconciliation and email ownership verification remain launch requirements |
 | 5 | Backup confidentiality, immutable offsite recovery, DocuSeal boundary | Pending; offsite storage not configured |
 | 6 | Angular modernization and frontend regression coverage | Angular 22 already implemented; expanded checks pending |
 | 7 | Versioned schema migrations, backend major upgrades, request validation | Pending |

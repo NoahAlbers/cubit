@@ -5,8 +5,8 @@ import { localConfig } from '../../dev/config'
 import { demoAudience } from '../../demo/identity'
 
 export class jwtHelper {
-  public static GenerateJWT(member: Member): string {
-    const payload = { email: member.email, id: member.id, role: member.role, tokenVersion: member.tokenVersion ?? 0 }
+  public static GenerateJWT(member: Member, mfaVerified = false): string {
+    const payload = { email: member.email, id: member.id, role: member.role, tokenVersion: member.tokenVersion ?? 0, mfaVerified }
 
     try {
       return jwt.sign(payload, environment.jwtSecret, {
@@ -33,6 +33,7 @@ export class jwtHelper {
 
   public static sessionMatches(identity: any, member: Member | null): boolean {
     return !!member && !member.loginDisabled && Number.isSafeInteger(identity?.tokenVersion) &&
-      identity.tokenVersion >= 0 && identity.tokenVersion === member.tokenVersion
+      identity.tokenVersion >= 0 && identity.tokenVersion === member.tokenVersion &&
+      (member.role!=='admin'||process.env.REQUIRE_STAFF_MFA!=='true'||identity.mfaVerified===true)
   }
 }

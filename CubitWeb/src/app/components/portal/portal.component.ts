@@ -36,7 +36,7 @@ export class PortalComponent implements OnInit, OnDestroy {
     this.details?.form.markAllAsTouched();if(this.busy||!this.details?.valid)return false;
     this.busy=true;this.error='';this.saved='';
     const submitted={...this.profile};
-    try{await this.http.put('/api/portal/profile',submitted).toPromise();this.originalProfile=JSON.stringify(submitted);this.details.form.markAsPristine();this.saved='Your contact details have been saved.';return true;}
+    try{await this.http.put('/api/portal/profile',submitted).toPromise();this.originalProfile=JSON.stringify(submitted);this.details.form.markAsPristine();this.saved=submitted.email!==this.data.profile.email?'Your login email has changed. Staff have been notified in Cubit. Please sign in again using your new email.':'Your contact details have been saved.';return true;}
     catch(e){this.error=e.error?.message||'Unable to save. Please try again.';return false;}finally{this.busy=false;}
   }
   private save(url:string,value:any,message:string){this.busy=true;this.saved='';this.error='';this.http.put(url,value).subscribe({next:()=>{this.busy=false;this.saved=message;this.load();},error:e=>{this.busy=false;this.error=e.error?.message||'Unable to save. Please try again.';}});}

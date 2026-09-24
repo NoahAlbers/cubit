@@ -5,6 +5,7 @@ import express from 'express'
 import { AppDataSource } from '../../app'
 import { signedIn } from '../common/member-auth'
 import { Member } from '../../entity/member'
+import { AccountNotice } from '../../entity/accountSecurity'
 import { MemberKey } from '../../entity/memberKey'
 import { OperationsAudit, OperationsSettings } from '../../entity/cubitOperations'
 import { lockMember, ensureBilling } from '../../billing/store'
@@ -58,6 +59,7 @@ router.put('/profile',route(async(req:any,res:any)=>{
     const member=await lockMember(manager,req.member.id)
     if(values.email!==member.email)await rejectDuplicateContact(manager,values.email,member.id)
     await manager.update(Member,member.id,{...values,...(values.email!==member.email?{tokenVersion:member.tokenVersion+1}:{})})
+    if(values.email!==member.email)await manager.save(AccountNotice,{memberId:member.id,previousEmail:member.email,newEmail:values.email})
     await recordAudit(manager,{memberId:member.id,kind:'Member updated contact details',author:member.email,actorType:'member',entityId:member.id,before:snapshot(member,[...profileFields]),after:values})
   })
   res.json({profile:values})

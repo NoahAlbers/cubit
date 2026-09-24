@@ -25,6 +25,9 @@ export class AppComponent implements OnInit {
   photoURL: string;
 
   dataMode = '';
+  accountNotices=0;
+  private lastNoticeCheck=0;
+  refreshAccountNotices(){if(!this.auth.validToken()||!this.auth.isAdmin){this.accountNotices=0;return;}if(Date.now()-this.lastNoticeCheck<15000)return;this.lastNoticeCheck=Date.now();this.http.get<any>('/api/account/notices/count').subscribe({next:d=>this.accountNotices=d.count,error:()=>{this.accountNotices=0;}});}
   workspaceLabel = '';
   menuOpen=false;
   sidebarCollapsed=false;
@@ -42,7 +45,7 @@ export class AppComponent implements OnInit {
   ];
   constructor(public auth: AuthService, public router: Router, private http: HttpClient, public navigation:ListNavigationService) {
     try {const saved=JSON.parse(localStorage.getItem('cubit.navigation')||'null');if(saved){this.sidebarCollapsed=saved.compact===true;for(const id of ['members','settings'])if(typeof saved.groups?.[id]==='boolean')this.expandedGroups[id]=saved.groups[id];}}catch{}
-    router.events.subscribe(e=>{if(e instanceof NavigationEnd){this.menuOpen=false;this.compactGroup=null;const active=this.staffNavigation.find(item=>item.children&&this.groupCurrent(item));if(active){this.expandedGroups[active.id]=true;this.saveNavigation();}}});
+    router.events.subscribe(e=>{if(e instanceof NavigationEnd){this.refreshAccountNotices();this.menuOpen=false;this.compactGroup=null;const active=this.staffNavigation.find(item=>item.children&&this.groupCurrent(item));if(active){this.expandedGroups[active.id]=true;this.saveNavigation();}}});
   }
   get compactNavigation(){return this.sidebarCollapsed&&window.innerWidth>800;}
   navCurrent(item:NavItem){const url=this.router.parseUrl(this.router.url),path=this.router.url.split(/[?#]/)[0];if(item.path==='/memberlist'&&path.startsWith('/member/'))return true;if(item.path!==path)return false;return item.fragment?url.fragment===item.fragment:item.path!=='/automation'||url.fragment!=='backups';}
@@ -60,7 +63,7 @@ export class AppComponent implements OnInit {
   @HostListener('document:pointerdown',['$event']) closeOutside(event:PointerEvent){if(!(event.target as Element).closest('.nav-group'))this.compactGroup=null;}
   @HostListener('window:resize') closeOnResize(){this.compactGroup=null;}
   @HostListener('document:keydown.escape',['$event']) closeOnEscape(event:KeyboardEvent){if(this.compactGroup){const button=document.querySelector('.nav-group-button[aria-controls="nav-'+this.compactGroup+'"]') as HTMLElement;this.compactGroup=null;button?.focus();event.preventDefault();}else if(this.menuOpen){this.menuOpen=false;(document.querySelector('.mobile-menu') as HTMLElement)?.focus();}}
-  get sectionName(){const p=this.router.url.split(/[?#]/)[0];if(p==='/member/New')return 'Add Member';return ({'/memberlist':'Members','/overdue':'Overdue Memberships','/accessLog':'Access Log','/reports':'Reports','/automation':'Settings & Automation','/audit':'Audit Log','/staff/settings':'Notification Settings','/payments':'Payment Matching','/plans':'Plan Catalog','/waivers':'Waivers','/portal':'My Membership','/portal/profile':'My Details','/portal/billing':'Billing History','/portal/waivers':'My Waivers'})[p]||(p.startsWith('/member/')?'Member Profile':'Cubit');}
+  get sectionName(){const p=this.router.url.split(/[?#]/)[0];if(p==='/member/New')return 'Add Member';if(p.startsWith('/account/access/'))return 'Sign-in Access';return ({'/memberlist':'Members','/overdue':'Overdue Memberships','/accessLog':'Access Log','/reports':'Reports','/automation':'Settings & Automation','/audit':'Audit Log','/staff/settings':'Notification Settings','/account/security':'Account Security','/payments':'Payment Matching','/plans':'Plan Catalog','/waivers':'Waivers','/portal':'My Membership','/portal/profile':'My Details','/portal/billing':'Billing History','/portal/waivers':'My Waivers'})[p]||(p.startsWith('/member/')?'Member Profile':'Cubit');}
   get headerBack(){
     const path=this.router.url.split(/[?#]/)[0],q=this.router.parseUrl(this.router.url).queryParams;
     if(path.startsWith('/member/')){
@@ -68,6 +71,7 @@ export class AppComponent implements OnInit {
       return {target:url.split(/[?#]/)[0],query:this.router.parseUrl(url).queryParams,label:this.navigation.label(url)};
     }
     if(path==='/audit'&&q.memberId)return {target:'/member/'+q.memberId,query:{returnTo:this.navigation.memberReturn(q.memberReturnTo,q.memberId)},label:this.navigation.memberName(q.memberId)};
+    if(path.startsWith('/account/access/')){const id=path.split('/')[3];return {target:'/member/'+id,query:{returnTo:this.navigation.memberReturn(q.memberReturnTo,id)},label:this.navigation.memberName(id)};}
     if(path==='/plans')return {target:'/automation',query:this.navigation.query('/automation'),label:'Settings & automation'};
     return null;
   }
@@ -95,7 +99,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     this.auth.isAuthenticated$.pipe(switchMap(signedIn=>{
-      this.isAuthenticated=signedIn;this.workspaceLabel='';this.dataMode='';
+      this.isAuthenticated=signedIn;this.lastNoticeCheck=0;this.refreshAccountNotices();this.workspaceLabel='';this.dataMode='';
       return this.http.get<any>('/health').pipe(catchError(()=>of({dataMode:'',workspaceLabel:this.auth.isDemo?'Synthetic demo unavailable':'Workspace unavailable'})));
     })).subscribe(d=>{this.dataMode=d.dataMode;this.workspaceLabel=d.mode==='hosted-review'?'':d.workspaceLabel||'Workspace';});
   }

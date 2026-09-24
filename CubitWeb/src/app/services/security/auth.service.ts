@@ -39,8 +39,8 @@ export class AuthService  {
     await firstValueFrom(this.http.post('/logout', {}));
     this.logout();
   }
-  login(email: string, password: string) {
-    return this.http.post<any>('/login', { email, password }).pipe(tap(result => {
+  login(email: string, password: string, code = '', workspace = '') {
+    return this.http.post<any>('/login', { email, password, code, workspace }).pipe(tap(result => {
       sessionStorage.removeItem('cubit-waiver-preview');
       this.authToken = result.token;
       sessionStorage.setItem('cubit-token', result.token);

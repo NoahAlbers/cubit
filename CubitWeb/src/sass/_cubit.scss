@@ -276,6 +276,7 @@ select:not([multiple]):not([size]){appearance:none;-webkit-appearance:none;paddi
 .topbar .account-controls{flex-wrap:nowrap;gap:12px;margin-left:auto}
 .topbar .notification-button{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;min-width:40px;padding:0;background:var(--blue);border:1px solid var(--blue);border-radius:7px;flex-shrink:0}
 .notification-button img{display:block;width:26px;height:26px}
+.notification-button{position:relative}.account-notice-count{position:absolute;right:-6px;top:-6px;min-width:18px;height:18px;padding:0 3px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:#b81820;color:white;font-size:10px;border:2px solid white}
 .topbar .notification-button:hover,.topbar .notification-button.current{background:#063c80;border-color:#063c80}
 .topbar .sign-out-button{height:40px;line-height:20px;white-space:nowrap}
 .member-page .member-sticky{position:static}

@@ -27,6 +27,7 @@ async function main(){
   let reviewCalls=0
   const demo=express();demo.use(express.json())
   demo.post('/login',(req,res)=>res.json({workspace:'synthetic',email:req.body.email}))
+  demo.post('/api/account/redeem',(req,res)=>res.json({workspace:'synthetic'}))
   demo.use((req,res,next)=>{try{jwt.verify(req.headers.authorization?.slice(7),config.JWT_SECRET,{audience:'cubit-demo',algorithms:['HS256']});next()}catch{res.status(401).json({message:'Unauthorized'})}})
   demo.get('/reports.csv',(req,res)=>res.type('text/csv').attachment('demo.csv').send('name\nFictional Member\n'))
   demo.post('/upload',express.raw({type:'application/octet-stream'}),(req,res)=>res.type('application/octet-stream').send(req.body))
@@ -38,6 +39,8 @@ async function main(){
   const headers={Authorization:'Bearer '+token,'Content-Type':'application/json'}
   try{
     let r=await fetch(base+'/login',{method:'POST',headers,body:JSON.stringify({email:' TEST@test.example ',password:'fixture'})});assert.equal((await r.json()).workspace,'synthetic')
+    r=await fetch(base+'/login',{method:'POST',headers,body:JSON.stringify({email:'new-demo@example.test',workspace:'demo',password:'fixture'})});assert.equal((await r.json()).workspace,'synthetic','Invited demo accounts remain in the isolated workspace')
+    r=await fetch(base+'/api/account/redeem',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:'d.'+'x'.repeat(43)})});assert.equal((await r.json()).workspace,'synthetic','Anonymous demo redemption never reaches review')
     for(const route of ['/api/cubit/members','/member/real-id','/api/portal','/api/waivers','/health','/key']){
       r=await fetch(base+route,{headers});assert.equal((await r.json()).workspace,'synthetic')
     }

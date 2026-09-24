@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../services/security/auth.service';
 import { take, timeout } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
@@ -17,6 +17,8 @@ export class LoginComponent implements OnInit, OnDestroy {
   @ViewChild('gear') gear?: ElementRef<HTMLImageElement>;
   form: UntypedFormGroup;
   loginError = '';
+  mfaRequired = false;
+  demoWorkspace = false;
   showPassword = false;
   pending = false;
   demoAvailable = false;
@@ -45,15 +47,18 @@ export class LoginComponent implements OnInit, OnDestroy {
     private fb: UntypedFormBuilder,
     private auth: AuthService,
     private router: Router,
-    private http: HttpClient
+    private http: HttpClient,
+    private route: ActivatedRoute
   ) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required],
+      code: [''],
     });
   }
 
   ngOnInit() {
+    this.demoWorkspace=this.route.snapshot.queryParams['workspace']==='demo';
     this.healthRequest = this.http.get<any>('/health').subscribe({
       next: d => this.demoAvailable = d.mode === 'local-development' && d.dataMode === 'demo',
       error: () => this.demoAvailable = false,
@@ -117,7 +122,7 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   demo(member: boolean) {
     if (this.pending || !this.demoAvailable) return;
-    this.form.setValue({email: member ? 'alex@example.test' : 'admin@example.test',password:'LocalDemoOnly!2026'});
+    this.form.setValue({email: member ? 'alex@example.test' : 'admin@example.test',password:'LocalDemoOnly!2026',code:''});
     this.login();
   }
 
@@ -129,7 +134,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     const formValues = this.form.value;
 
     this.request = this.auth
-      .login(formValues.email, formValues.password)
+      .login(formValues.email, formValues.password, formValues.code, this.demoWorkspace?'demo':'')
       .pipe(take(1))
       .subscribe(
         () => {
@@ -138,7 +143,8 @@ export class LoginComponent implements OnInit, OnDestroy {
         },
         (err) => {
           this.pending = false;
-          this.loginError = err.status === 401 ? 'Invalid email or password.' : 'Unable to sign in. Please try again.';
+          if(err.error?.code==='MFA_REQUIRED')this.mfaRequired=true;
+          this.loginError = err.error?.code==='MFA_REQUIRED' ? 'Enter your authenticator or recovery code to finish signing in.' : err.status === 401 ? 'Invalid email, password, or authenticator code.' : err.error?.message || 'Unable to sign in. Please try again.';
           this.resultMotion(false);
         }
       );

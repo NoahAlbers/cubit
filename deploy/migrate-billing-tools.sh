@@ -5,6 +5,7 @@ set -euo pipefail
 # schema before invoking this script. App database users keep CRUD-only grants.
 for schema in cubit_review cubit_demo; do
   [[ $(mysql -N -B -e "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='$schema'") == 1 ]] || continue
+  mysql "$schema" < "$(dirname "$0")/../CubitServices/src/dev/account-security.sql"
   for definition in 'tokenVersion:int unsigned NOT NULL DEFAULT 0' 'loginDisabled:tinyint NOT NULL DEFAULT 0'; do
     name=${definition%%:*}; column_type=${definition#*:}
     if [[ $(mysql -N -B -e "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$schema' AND TABLE_NAME='member' AND COLUMN_NAME='$name'") == 0 ]]; then
@@ -31,4 +32,5 @@ for schema in cubit_review cubit_demo; do
       mysql "$schema" -e "CREATE INDEX $name ON operations_audit ($columns)"
     fi
   done
+  mysql "$schema" < "$(dirname "$0")/../CubitServices/src/dev/normalize-login-emails.sql"
 done

@@ -1,0 +1,39 @@
+@if(loading){<p role="status">Loading account security…</p>}
+@if(error){<p class="error" role="alert">{{error}}</p>}
+@if(message){<p role="status">{{message}}</p>}
+@if(mode==='activate'){
+  <section class="panel"><h1>Set your password</h1>
+    @if(token&&!message){
+      <p>Use at least 12 characters. Common passwords are not accepted. This link works once and expires after 24 hours.</p>
+      <form (ngSubmit)="redeem()"><label>New password<input type="password" name="password" [(ngModel)]="password" autocomplete="new-password" minlength="12" required></label>
+      <label>Confirm new password<input type="password" name="confirmPassword" [(ngModel)]="confirmPassword" autocomplete="new-password" required></label>
+      <label>Authenticator or recovery code (if enabled)<input name="code" [(ngModel)]="code" autocomplete="one-time-code" maxlength="64"></label>
+      <button class="primary" type="submit" [disabled]="busy||password.length<12||password!==confirmPassword">{{busy?'Saving…':'Save password'}}</button></form>
+    }
+    <p><a routerLink="/app-login" [queryParams]="demoWorkspace?{workspace:'demo'}:{}">Return to sign in</a></p>
+  </section>
+} @else if(memberId&&!loading){
+  <section class="panel"><h2>Sign-in access · {{memberName}}</h2><p>{{email}}</p>
+    <p>After verifying the member's identity, prepare an invitation for a new login or a reset for an existing login. Share the link privately with that person. Cubit does not send an email.</p>
+    <div class="actions"><button class="secondary" [disabled]="busy" (click)="prepare('invite')">Create invitation</button><button class="secondary" [disabled]="busy" (click)="prepare('reset')">Create password reset</button></div>
+    @if(link){<label>Private sign-in link<textarea readonly rows="3" [value]="link" aria-label="Private sign-in link"></textarea></label><p>Expires {{expiresAt|date:'medium'}}. Creating another link cancels the previous one. Password resets keep any enrolled authenticator in place.</p>}
+  </section>
+} @else if(state){
+  <section class="panel"><h2>Account security</h2>
+    @if(state.sharedDemo){<p>The shared demo login cannot change its password or enroll an authenticator.</p>}
+    @else {
+      <p>Signing out ends your sessions on every device. For a password reset, contact staff.</p>
+      @if(auth.isAdmin){
+        <h3>Authenticator app</h3>
+        @if(state.mfaEnabled){<p>Enabled. Use your authenticator or an unused recovery code when signing in.</p>}
+        @else if(!state.mfaAvailable){<p>The operator needs to configure the private encryption key before authenticator enrollment is available.</p>}
+        @else {
+          <form (ngSubmit)="setup?confirmMfa():startMfa()"><label>Current password<input name="password" type="password" [(ngModel)]="password" autocomplete="current-password" required></label>
+          @if(setup){<p>Add a time-based account named Cubit in your authenticator app using this setup key:</p><code>{{setup.secret}}</code><p>Use a six-digit code with a 30-second period.</p><label>Authenticator code<input name="code" [(ngModel)]="code" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required></label>}
+          <button class="primary" type="submit" [disabled]="busy||!password">{{busy?'Working…':setup?'Confirm authenticator':'Set up authenticator'}}</button></form>
+        }
+      }
+      @if(recoveryCodes.length){<h3>Save your recovery codes</h3><p>Each code works once if your authenticator is unavailable. Store them in your password manager; they will not be shown again.</p><ul>@for(value of recoveryCodes;track value){<li><code>{{value}}</code></li>}</ul><button class="primary" (click)="finishSetup()">I saved my codes · Sign in again</button>}
+    }
+  </section>
+}

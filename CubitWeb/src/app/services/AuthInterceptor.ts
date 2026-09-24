@@ -26,7 +26,7 @@ export class AuthInterceptor implements HttpInterceptor {
         (err: any) => {
           if (err instanceof HttpErrorResponse) {
             if(err.error?.code==='WAIVER_PREVIEW_LOCKED')sessionStorage.removeItem('cubit-waiver-preview');
-            if (err.status !== 401) {
+            if (err.status !== 401 || req.url==='/login' || req.url==='/api/account/redeem') {
               return;
             }
             this.auth.logout();

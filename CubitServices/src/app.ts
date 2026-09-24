@@ -66,7 +66,7 @@ if (localConfig.runtimeMode !== 'local') {
 }
 
 // Browser navigation serves the Angular shell; JSON calls keep the legacy API URLs.
-app.get(['/', '/memberlist', '/overdue', '/member/:memberId', '/accessLog', '/reports', '/automation', '/payments', '/plans', '/audit', '/staff/settings', '/waivers', '/portal', '/portal/:section', '/app-login'], (req, res, next) => {
+app.get(['/', '/memberlist', '/overdue', '/member/:memberId', '/accessLog', '/reports', '/automation', '/payments', '/plans', '/audit', '/staff/settings', '/waivers', '/portal', '/portal/:section', '/account/:section', '/account/access/:id', '/app-login'], (req, res, next) => {
   if ((req.headers.accept || '').includes('text/html')) {
     return res.sendFile(path.resolve('public/index.html'))
   }
@@ -88,6 +88,7 @@ app.use((req, res, next) => {
 })
 
 //routes
+app.use('/api/account',require('./api/routes/account-security'))
 app.use('/api/backups',require('./api/routes/backups'))
 app.use('/api/portal', require('./api/routes/portal'))
 app.use('/api/waivers', require('./api/routes/waivers'))
@@ -124,7 +125,7 @@ app.use(express.static('public'))
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   console.error('Request failed:', err.message)
-  res.status(err.status || 500).json({ message: err.status ? err.message : 'The request could not be completed.' })
+  res.status(err.status || 500).json({ message: err.status ? err.message : 'The request could not be completed.',...(err.code==='MFA_REQUIRED'?{code:err.code}:{}) })
 })
 
 //catch bad routes here
@@ -162,6 +163,7 @@ export async function startLocalApp() {
   await seedWaivers()
   }
   await (await import('./dev/upgrade-staff-tools')).upgradeStaffTools(AppDataSource,localConfig.runtimeMode==='local')
+  if(localConfig.runtimeMode==='local')await (await import('./dev/upgrade-account-security')).normalizeLoginEmails(AppDataSource)
   const { upgradeKeyHistory } = await import('./dev/upgrade-key-history')
   await upgradeKeyHistory(AppDataSource)
   const { startAutomationScheduler } = await import('./billing/automation')

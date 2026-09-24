@@ -1,4 +1,5 @@
 import { AuditLogComponent } from './components/audit-log/audit-log.component';
+import { AccountSecurityComponent } from './components/account-security/account-security.component';
 import { StaffSettingsComponent } from './components/staff-settings/staff-settings.component';
 import { NgModule } from '@angular/core';
 import { DraftGuard } from './services/draft-guard';
@@ -18,6 +19,9 @@ import { PaymentMatchingComponent } from './components/payment-matching/payment-
 import { PlanCatalogComponent } from './components/plan-catalog/plan-catalog.component';
 
 const routes: Routes = [
+  {path:'account/activate',component:AccountSecurityComponent,data:{mode:'activate'}},
+  {path:'account/security',component:AccountSecurityComponent,canActivate:[AuthService],canDeactivate:[DraftGuard],data:{portal:true}},
+  {path:'account/access/:id',component:AccountSecurityComponent,canActivate:[AuthService]},
   { path: '', component: LoginComponent },
   { path: 'home', redirectTo: 'memberlist', pathMatch: 'full' },
   { path: 'memberlist', component: DirectoryComponent, canActivate: [AuthService] },
