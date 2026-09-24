@@ -236,7 +236,8 @@ export class MemberComponent implements OnInit, OnDestroy {
   ngOnDestroy() { this.anchorScroll?.unsubscribe(); }
 
   async openCutoff(plan: any, goal: 'change'|'cancel'='cancel') {
-    if(this.cutoffPlan&&this.cutoffOriginal!==JSON.stringify([this.cutoffDate,this.cutoffReason])&&!await this.drafts.confirmDiscard())return;
+    if(this.planBusy||this.cutoffBusy)return;
+    if((this.pendingPlanDraft||(this.cutoffPlan&&this.cutoffOriginal!==JSON.stringify([this.cutoffDate,this.cutoffReason])))&&!await this.drafts.confirmDiscard())return;
     this.changingPlan=true;this.planGoal=goal;this.planStep='cutoff';
     this.cutoffPlan = plan;
     this.cutoffDate = plan.finalBillingDate || (plan.endDate ? plan.endDate.slice(0, 10) : '');
@@ -351,6 +352,7 @@ export class MemberComponent implements OnInit, OnDestroy {
       });
   }
 
+  async endMembershipPlan(){const plan=this.memberPlans.data.find(p=>!p.endDate&&!p.finalBillingDate);if(!plan||this.planBusy||this.cutoffBusy)return;await this.openCutoff(plan,'cancel');this.jump('membership-billing');}
   async addEditPlan(Id) {
     if(this.changingPlan){this.jump('membership-billing');return;}
     const ongoing=this.memberPlans.data.find(p=>!p.endDate&&!p.finalBillingDate);

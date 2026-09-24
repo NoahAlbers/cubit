@@ -476,3 +476,5 @@ select:not([multiple]):not([size]){appearance:none;-webkit-appearance:none;paddi
 .sidebar-portal-switch .portal-identicon{width:28px;height:28px;flex-basis:28px}
 
 .member-sticky .profile-toolbar{gap:8px}.member-sticky .profile-quick-actions,.member-sticky .section-nav{gap:8px}
+
+.plan-header-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.plan-summary>.section-heading{align-items:flex-start;flex-wrap:wrap}.plan-workflow .cutoff-box{padding:22px;border:1px solid #dce7f6;border-radius:8px}.plan-workflow .cutoff-box>.section-heading{margin-bottom:18px}.plan-workflow .cutoff-box .cutoff-context{gap:16px;margin-bottom:20px}.plan-workflow .cutoff-box>.actions{flex-wrap:wrap;gap:10px}.plan-workflow .cutoff-box .form-grid{gap:16px}.plan-workflow .cutoff-box label{margin:0}.plan-workflow .cutoff-box>p{margin:18px 0;line-height:1.7}@media(max-width:600px){.plan-header-actions{justify-content:flex-start}.plan-workflow .cutoff-box{padding:16px}}
