@@ -50,9 +50,19 @@ Check `journalctl -u cubit-backup` for operator diagnostics.
 ## Connect private off-server storage later
 
 Off-server storage is deliberately unconfigured until an operator supplies a
-private S3-compatible bucket. Configure least-privilege access limited to its
-backup prefix (list/read/write/delete for retention); block public access.
-Provider versioning or object lock may affect deletion and storage costs.
+private S3-compatible bucket. Block public access and limit the VPS credential
+to the backup prefix. Restic needs list/read/write access; it cannot use a
+literally write-only credential. Deny deletion of backup data and object versions,
+and deny changes to bucket versioning, lifecycle, and retention. Restic lock
+objects may need a narrowly scoped delete exception for `locks/*`; test this
+against the chosen provider before enabling copies.
+
+Use provider-enforced immutable or versioned retention that a compromised VPS
+cannot shorten. A separate operator identity outside this server owns expiry
+and maintenance. Test that the VPS credential cannot delete a saved snapshot,
+its data, or protected previous versions. Record those results and the retention
+window before setting `retentionProtected: true`; that setting is an operator
+attestation, not a substitute for a bucket policy. No provider is configured yet.
 
 Add a `remote` object to the root-only config (never application settings):
 
@@ -61,7 +71,8 @@ Add a `remote` object to the root-only config (never application settings):
   "repository": "s3:https://YOUR_S3_ENDPOINT/PRIVATE_BUCKET/cubit",
   "accessKey": "SUPPLY_PRIVATELY",
   "secretKey": "SUPPLY_PRIVATELY",
-  "region": "YOUR_REGION"
+  "region": "YOUR_REGION",
+  "retentionProtected": true
 }
 ```
 
@@ -76,15 +87,31 @@ both operations succeeded. No off-server protection exists until these pass.
 
 Each snapshot includes consistent exports of both MySQL schemas (including
 uploaded waiver BLOBs), a consistent DocuSeal SQLite snapshot, its retained
-files, private service configuration, and deployment scripts. Databases are
-individually consistent; they do not form one distributed transaction. Code is
-recovered from the recorded Git release. The external encryption key is not
-included inside its own backup.
+files, a checksummed manifest, and recovery requirements. Databases are
+individually consistent; they do not form one distributed transaction. Code and
+deployment scripts are recovered from the recorded Git release.
 
-Only snapshots tagged `cubit-managed-v1` are pruned. Retention keeps the latest
-configured number (3–365) in each location, after a new backup/copy succeeds.
-Remote copy failure prevents retention cleanup for that run. Old-style archives
-are untouched. Do not share this dedicated repository with unrelated services.
+New `cubit-backup-v2` snapshots exclude private service configuration and storage
+credentials. Retain the restic password, each workspace's MFA encryption key,
+and DocuSeal encryption/session secrets in independent secure custody. Data
+backups still contain sensitive member records and authentication data, so they
+remain encrypted and private. Recreate database credentials, JWT secrets and
+integration credentials during recovery; new JWT secrets end existing sessions.
+The worker writes a secret-free `recovery-requirements.json` with these requirements.
+
+Previously retained v1 snapshots include private configuration. They remain
+restorable and sensitive; this update does not rewrite or remove them. Review
+their retention and rotate affected credentials if a repository/key was exposed.
+
+Only local snapshots tagged `cubit-managed-v1` are pruned. Local retention keeps
+the latest configured number (3–365) after a new backup/copy succeeds. Remote
+copy failure prevents local retention cleanup for that run. The VPS worker
+rejects remote deletion/maintenance commands; the former remote copy-count
+setting is retained only for settings compatibility and does not control expiry.
+Off-server retention belongs to the independently protected provider/operator
+policy. Avoid relying only on keep-last counts: a compromised writer could add
+many new snapshots to push good ones outside a count-based policy. Old-style
+archives are untouched. Keep this repository dedicated to Cubit.
 
 ## Recovery tests and replacement-server procedure
 
@@ -107,10 +134,11 @@ For replacement-server recovery, a server operator must:
    into a root-only staging directory using `restic restore ID --target DIR
    --verify`. Run `restic check --read-data` first. Never restore directly over
    the current server's directories.
-3. Verify `manifest.json` hashes and inspect the configuration archive before
-   applying it. Keep the replacement application stopped and external
+3. Verify `manifest.json` hashes and read `recovery-requirements.json` for v2
+   snapshots. Retrieve the independently held secrets and recreate private
+   configuration. Keep the replacement application stopped and external
    integrations disabled. Import each compressed SQL dump into its matching
-   empty schema; recreate database users/grants from private configuration.
+   empty schema; recreate database users/grants with fresh credentials.
 4. Restore the DocuSeal files under `/var/lib/docuseal/docuseal`, put the saved
    `docuseal.sqlite3` at `db.sqlite3`, and restore the correct service ownership.
    Restore service secrets and networking restrictions; do not expose MySQL or
@@ -132,6 +160,16 @@ Provide it through a private Caddy systemd EnvironmentFile; validate the Caddy
 configuration with that environment, then reload. Caddy obtains/renews trusted
 certificates and redirects HTTP to HTTPS. Keep ports 80 and 443 reachable, and
 8443 for the separately protected DocuSeal signing service.
+
+The DocuSeal proxy exposes only signing routes and their assets publicly.
+Administration and other API routes return 404 unless the connection originates
+from loopback. An operator can use an SSH tunnel with the original hostname
+and normal TLS verification, or add a narrowly scoped approved administrator
+source IP in Caddy. Never expose port 3000 or disable certificate checks to
+work around this restriction. Cubit's server-to-server API stays on loopback.
+After changes, verify public signing assets still load and `/sign_in`, `/settings`,
+and `/api/templates` remain inaccessible publicly. Administrator password/MFA
+setup and an actual member signing rehearsal remain launch checks.
 
 The backup status checks the public health endpoint with normal certificate
 verification and checks its HTTP redirect hourly. Before operational launch,

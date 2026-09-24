@@ -8,6 +8,7 @@ confined to a networkless temporary MySQL container, with no host bind mounts.
 import base64, calendar, datetime as dt, gzip, hashlib, json, os, pathlib
 import re, secrets, shutil, sqlite3, subprocess, sys, tarfile, tempfile, time, uuid
 import threading
+from contextlib import closing
 from zoneinfo import ZoneInfo
 from urllib.parse import urlparse
 
@@ -17,6 +18,7 @@ REPO='/var/backups/cubit/repository'
 KEY='/etc/cubit-backup/repository.password'
 CONFIG='/etc/cubit-backup/config.json'
 TAG='cubit-managed-v1'
+DOCUSEAL_DATA=pathlib.Path('/var/lib/docuseal/docuseal')
 DEFAULTS=dict(frequency='daily',time='02:15',timezone='America/New_York',weekday=0,monthday=1,localKeep=7,remoteKeep=30,offsiteEnabled=False,verifyDays=30)
 
 def validate(s):
@@ -53,6 +55,8 @@ def run(args,*,env=None,input=None,timeout=1800,cwd=None):
 def literal(value): return "CONVERT(0x"+str(value).encode().hex()+" USING utf8mb4)" if str(value) else "''"
 def sql(query): return run(['mysql','--batch','--skip-column-names','--raw',cfg['database'],'-e',query],timeout=30).decode().strip()
 def nowstr(): return dt.datetime.now(UTC).isoformat()
+def digest_file(path,algorithm='sha256'):
+    with pathlib.Path(path).open('rb') as source: return hashlib.file_digest(source,algorithm).digest()
 def event(kind,author,detail):
     payload=json.dumps(dict(version=1,actorType='system',entityId=detail.get('job'),before=None,after=detail,reason=''))
     sql('INSERT INTO operations_audit (id,kind,author,detail) VALUES ('+','.join(map(literal,[str(uuid.uuid4()),kind,author,payload]))+')')
@@ -69,12 +73,15 @@ def private_config():
         r=c['remote'];u=urlparse(r['repository'][3:])
         if not r['repository'].startswith('s3:https://') or not u.hostname or u.username or u.password or u.query or u.fragment or u.path in ('','/'): raise ValueError('Use a private HTTPS S3 repository')
         if not r.get('accessKey') or not r.get('secretKey'): raise ValueError('Missing storage credentials')
+        if r.get('retentionProtected') is not True: raise ValueError('Confirm independent immutable/versioned retention before connecting off-server storage')
     return c
 
 def restic(args,remote=False,cwd=None):
     env={**os.environ,'RESTIC_PASSWORD_FILE':KEY,'RESTIC_CACHE_DIR':str(STATE/'cache')}
     repo=REPO
     if remote:
+        if not args or args[0] not in ('copy','snapshots','restore','check','init'):
+            raise ValueError('Remote deletion and maintenance are forbidden on this VPS')
         r=cfg.get('remote')
         if not r: raise RuntimeError('Off-server storage is not configured')
         repo=r['repository'];env.update(AWS_ACCESS_KEY_ID=r['accessKey'],AWS_SECRET_ACCESS_KEY=r['secretKey'],AWS_DEFAULT_REGION=r.get('region','us-east-1'))
@@ -117,19 +124,21 @@ def capture():
     if payload.exists(): shutil.rmtree(payload)
     payload.mkdir(mode=0o700)
     for schema in cfg['schemas']: dump(schema,payload/(schema+'.sql.gz'))
-    source=pathlib.Path('/var/lib/docuseal/docuseal')
-    with sqlite3.connect('file:'+str(source/'db.sqlite3')+'?mode=ro',uri=True) as origin, sqlite3.connect(payload/'docuseal.sqlite3') as target:
+    source=DOCUSEAL_DATA
+    with closing(sqlite3.connect('file:'+str(source/'db.sqlite3')+'?mode=ro',uri=True)) as origin, closing(sqlite3.connect(payload/'docuseal.sqlite3')) as target:
         origin.backup(target)
         if target.execute('PRAGMA integrity_check').fetchone()[0]!='ok': raise RuntimeError('DocuSeal snapshot failed')
     def keep_file(info): return None if pathlib.PurePosixPath(info.name).name.startswith('db.sqlite3') else info
     with tarfile.open(payload/'docuseal-files.tgz','w:gz') as archive: archive.add(source,arcname='docuseal',filter=keep_file)
-    with tarfile.open(payload/'configuration.tgz','w:gz') as archive:
-        for location in ['/etc/cubit','/etc/docuseal','/etc/caddy','/etc/systemd/system/caddy.service.d','/etc/systemd/system/cubit-docuseal-proxy.service','/etc/systemd/system/cubit-docuseal-proxy.socket']:
-            if pathlib.Path(location).exists(): archive.add(location,arcname=location.lstrip('/'))
-        archive.add(CONFIG,arcname='etc/cubit-backup/config.json')
-        archive.add('/opt/cubit/current/deploy',arcname='deployment')
-    manifest={'format':'cubit-backup-v1','createdAt':nowstr(),'schemas':cfg['schemas'],'release':str(pathlib.Path('/opt/cubit/current').resolve()),'files':{}}
-    for file in payload.iterdir(): manifest['files'][file.name]=hashlib.file_digest(file.open('rb'),'sha256').hexdigest()
+    # Private service configuration is deliberately outside the data backup.
+    # Recover secrets from independent custody, not from the compromised VPS's key.
+    (payload/'recovery-requirements.json').write_text(json.dumps({
+        'serviceConfigurationIncluded':False,
+        'requiredFromIndependentCustody':['restic repository password','Cubit MFA encryption keys','DocuSeal encryption/session secrets'],
+        'recreate':['database users and passwords','Cubit JWT secrets (existing sessions end)','DocuSeal API access','S3 credentials and immutable-retention policy','hostname/TLS and service configuration'],
+        'instructions':'Use the recorded release deploy/BACKUPS.md. Never enable live integrations during restoration.'}))
+    manifest={'format':'cubit-backup-v2','createdAt':nowstr(),'schemas':cfg['schemas'],'release':str(pathlib.Path('/opt/cubit/current').resolve()),'serviceConfigurationIncluded':False,'files':{}}
+    for file in payload.iterdir(): manifest['files'][file.name]=digest_file(file).hex()
     (payload/'manifest.json').write_text(json.dumps(manifest))
     return payload
 
@@ -145,7 +154,6 @@ def backup(settings):
             remote=True
         # Never prune after a failed capture or copy; only this worker's snapshots.
         restic(['forget','--tag',TAG,'--group-by','host,tags','--keep-last',str(settings['localKeep']),'--prune'])
-        if remote: restic(['forget','--tag',TAG,'--group-by','host,tags','--keep-last',str(settings['remoteKeep']),'--prune'],True)
         return {'snapshot':snapshot[:12],'remote':remote,'message':'Encrypted backup saved'+(' locally and off-server.' if remote else ' locally. Off-server copies are not enabled.')}
     finally: shutil.rmtree(payload,ignore_errors=True)
 
@@ -168,19 +176,19 @@ def verify(settings,selected=None):
     with tempfile.TemporaryDirectory(prefix='recovery-',dir=STATE) as directory:
         stage=pathlib.Path(directory);restic(['restore',selected,'--target',str(stage),'--verify'],remote)
         manifests=list(stage.rglob('manifest.json'))
-        manifests=[p for p in manifests if json.loads(p.read_text()).get('format')=='cubit-backup-v1']
+        manifests=[p for p in manifests if json.loads(p.read_text()).get('format') in ('cubit-backup-v1','cubit-backup-v2')]
         if len(manifests)!=1: raise RuntimeError('Backup manifest missing')
         base=manifests[0].parent;manifest=json.loads(manifests[0].read_text())
         if manifest['schemas']!=cfg['schemas']: raise RuntimeError('Backup schemas do not match this deployment')
         for name,digest in manifest['files'].items():
-            if pathlib.Path(name).name!=name or hashlib.file_digest((base/name).open('rb'),'sha256').hexdigest()!=digest: raise RuntimeError('Backup file checksum mismatch')
+            if pathlib.Path(name).name!=name or digest_file(base/name).hex()!=digest: raise RuntimeError('Backup file checksum mismatch')
         safe_extract(base/'docuseal-files.tgz',stage/'documents')
-        with sqlite3.connect(base/'docuseal.sqlite3') as db:
+        with closing(sqlite3.connect(base/'docuseal.sqlite3')) as db:
             if db.execute('PRAGMA integrity_check').fetchone()[0]!='ok': raise RuntimeError('DocuSeal database failed integrity check')
             for key,checksum in db.execute('SELECT key,checksum FROM active_storage_blobs'):
                 if not re.fullmatch('[a-zA-Z0-9_-]+',key): raise RuntimeError('Invalid document storage key')
                 file=stage/'documents/docuseal/attachments'/key[:2]/key[2:4]/key
-                if not file.is_file() or base64.b64encode(hashlib.file_digest(file.open('rb'),'md5').digest()).decode()!=checksum: raise RuntimeError('Retained DocuSeal file failed verification')
+                if not file.is_file() or base64.b64encode(digest_file(file,'md5')).decode()!=checksum: raise RuntimeError('Retained DocuSeal file failed verification')
         container='cubit-recovery-'+secrets.token_hex(6);password=secrets.token_urlsafe(32)
         env={**os.environ,'MYSQL_ROOT_PASSWORD':password,'MYSQL_PWD':password}
         try:

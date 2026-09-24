@@ -20,7 +20,8 @@ by the makerspace; target dates and sign-off dates must not be invented.
   legacy routes. Evidence: `5e4035f`; review verified. `/ACON` and `/paypal` stay blocked.
 - [x] Align local, CI and review application runtime on Node 22 and MySQL 8.4;
   local database migration backed up and table counts checked. Evidence: `1f12083`.
-  The actual backup recovery image still needs its version/digest recorded below.
+  The configured recovery image was also inspected on 2026-09-24: MySQL 8.4.11,
+  digest `sha256:0744ee5ef89ce6ccfa13de3e579fe6b9e27f93dd70da9c06d2c908b1b193fb8d`.
 - [x] Revoke sessions on password, role, login-email and sign-out changes; reject
   weak newly assigned passwords. Evidence: `fb25a74`, isolated database regressions.
 - [x] Implement and test single-use 24-hour invite/reset links, encrypted TOTP,
@@ -71,8 +72,10 @@ creation times and captured sizes. This is **not** an off-server or fresh-VPS re
   control. The VPS credential must not be able to destroy recovery history. Prove
   a VPS-side remote deletion attempt is denied. Remote pruning belongs on a
   separately trusted machine, never in the VPS backup worker.
-- [ ] Remove service secrets from ordinary backup payloads, or separately encrypt
-  configuration with a public key whose private key is held outside the VPS.
+- [x] Remove private service configuration from new ordinary backup payloads.
+  Evidence: `cubit-backup-v2` capture regression, 11 worker tests passing,
+  reviewed by Codex on 2026-09-24. Previous v1 snapshots remain sensitive and
+  restorable; their retention and independent secret custody need operator review.
 - [ ] Put the restic repository password and any configuration-decryption key in
   independent secure custody. Record named primary and fallback custodians privately.
 - [ ] Verify the configured recovery image's immutable digest and actual MySQL 8.4
@@ -93,6 +96,8 @@ Owner: **Unassigned — waiver administrator and server operator**. Target: **Un
 - [ ] Restrict the public DocuSeal proxy to necessary signing/file/assets paths;
   verify its admin sign-in returns 404 externally or is behind an approved allowlist.
   Prove actual member signing and downloads still work through that restriction.
+  Proposed Caddy boundary validated on the review VPS; the installed signing
+  page's asset routes were inspected. Deployment and complete signing proof pending.
 - [ ] Give the DocuSeal administrator an individual strong password and MFA; store
   recovery credentials privately. Keep its API/database ports private.
 - [ ] Have the makerspace approve the actual waiver document, required signer

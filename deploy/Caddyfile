@@ -21,5 +21,17 @@ https://{$CUBIT_HOSTNAME}:8443 {
     request_body {
         max_size 15MB
     }
-    reverse_proxy 127.0.0.1:3000
+    # Local operator access (for example an SSH tunnel) keeps the admin UI private.
+    # Add an approved administrator IP here only through the operator's change process.
+    @private_admin remote_ip 127.0.0.1 ::1
+    handle @private_admin {
+        reverse_proxy 127.0.0.1:3000
+    }
+    @signing path /s/* /submit_form* /p/* /success /file/* /blobs_proxy/* /rails/active_storage/* /preview/* /assets/* /packs/* /js/* /favicon* /apple-touch-icon* /apple-icon* /api/attachments /api/submitter_form_views /api/submitter_email_clicks
+    handle @signing {
+        reverse_proxy 127.0.0.1:3000
+    }
+    handle {
+        respond 404
+    }
 }
