@@ -22,7 +22,7 @@ jobs:
           --health-cmd="mysqladmin ping -h 127.0.0.1 -pci-root-only"
           --health-interval=10s --health-timeout=5s --health-retries=12
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: bash -n deploy/update-review.sh
       - run: bash -n deploy/install-build-node.sh
       - run: bash -n deploy/migrate-billing-tools.sh
