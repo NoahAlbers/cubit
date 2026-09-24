@@ -1,4 +1,5 @@
 import { recordAudit, snapshot } from '../../staff/audit'
+import { rejectDuplicateContact } from '../../billing/member-identity'
 import { normalizeContact } from '../../contact/validation'
 import express from 'express'
 import { AppDataSource } from '../../app'
@@ -55,8 +56,8 @@ router.put('/profile',route(async(req:any,res:any)=>{
     // A shared lock serializes portal email changes to prevent duplicate login addresses.
     await manager.findOneOrFail(OperationsSettings,{where:{id:'default'},lock:{mode:'pessimistic_write'}})
     const member=await lockMember(manager,req.member.id)
-    if(await manager.createQueryBuilder(Member,'m').where('LOWER(m.email) = :email AND m.id != :id',{email:values.email,id:member.id}).getCount())fail('That email is already in use.',409)
-    await manager.update(Member,member.id,values)
+    if(values.email!==member.email)await rejectDuplicateContact(manager,values.email,member.id)
+    await manager.update(Member,member.id,{...values,...(values.email!==member.email?{tokenVersion:member.tokenVersion+1}:{})})
     await recordAudit(manager,{memberId:member.id,kind:'Member updated contact details',author:member.email,actorType:'member',entityId:member.id,before:snapshot(member,[...profileFields]),after:values})
   })
   res.json({profile:values})

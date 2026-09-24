@@ -75,6 +75,14 @@ Members can view their status, current plan, charges and payments, and waiver re
 
 Staff handle sign-in help and contact requests manually. Invite-based accounts and self-service recovery are planned. Login credentials currently remain associated with member records.
 
+Sessions are checked against the account on every authenticated request. Password,
+role, and login-email changes invalidate prior sessions; **Sign out** revokes sessions
+on all devices. Newly assigned passwords require at least 12 characters, reject the
+bundled common-password dictionary, and cannot exceed bcrypt's 72-byte input limit.
+Ambiguous imported login emails are rejected until staff resolves the duplicates.
+Existing review credentials are retained. Account recovery and staff MFA remain
+unfinished launch requirements.
+
 ### Digital and uploaded waivers
 
 Waiver management is a work-in-progress preview with an additional password gate for staff. The foundation includes versioned templates, required and optional documents, signing history, and a view of active members missing required waivers.

@@ -1,5 +1,6 @@
 import { recordAudit, snapshot, profileFields } from '../../staff/audit'
 import { memberInput } from '../common/member-input'
+import { validateNewPassword } from '../../security/password-policy'
 import { AppDataSource } from './../../app'
 import express from 'express'
 import { Member, ROLES } from '../../entity/member'
@@ -43,7 +44,8 @@ router.put('/', async (req, res, next) => {
     return res.status(403).json({message:'The shared demo sign-in email, password and role cannot be changed.'})
 
   if (typeof postedMemberData.password === 'string' && postedMemberData.password.length > 0) {
-    postedMemberData.password = await hash(postedMemberData.password, 10)
+    validateNewPassword(postedMemberData.password)
+    postedMemberData.password = await hash(postedMemberData.password, 12)
   } else {
     //Since a new pwd was not submitted, leave as it is
     delete postedMemberData.password //typeorm does not update if it's missing.
@@ -51,9 +53,12 @@ router.put('/', async (req, res, next) => {
 
   await AppDataSource.transaction(async manager=>{
     await lockIdentities(manager)
-    const before=await manager.findOneByOrFail(Member,{id:postedMemberData.id})
+    const before=await manager.findOneOrFail(Member,{where:{id:postedMemberData.id},lock:{mode:'pessimistic_write'}})
     if(typeof postedMemberData.email==='string'&&postedMemberData.email.trim().toLowerCase()!==before.email.trim().toLowerCase())
       await rejectDuplicateContact(manager,postedMemberData.email,postedMemberData.id)
+    if(postedMemberData.password || (postedMemberData.role!==undefined && postedMemberData.role!==before.role) ||
+      (postedMemberData.email!==undefined && postedMemberData.email!==before.email))
+      postedMemberData.tokenVersion=before.tokenVersion+1
     const saved=await manager.save(Member,postedMemberData)
     const after={...before,...saved}, oldValues=snapshot(before,profileFields),newValues=snapshot(after,profileFields)
     if(JSON.stringify(oldValues)!==JSON.stringify(newValues))await recordAudit(manager,{memberId:before.id,kind:'Member details updated',author:req.member!.email,entityId:before.id,before:oldValues,after:newValues})
@@ -90,7 +95,10 @@ router.post('/', async (req, res, next) => {
   }
 
   if (typeof member.password === 'string' && member.password.length > 0) {
-    member.password = await hash(member.password, 10)
+    validateNewPassword(member.password)
+    member.password = await hash(member.password, 12)
+  } else {
+    delete (member as Partial<Member>).password
   }
 
   member.role = ROLES.MEMBER

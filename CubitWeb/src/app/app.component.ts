@@ -79,7 +79,18 @@ export class AppComponent implements OnInit {
   get portalView() { return !this.auth.isAdmin || this.router.url.startsWith('/portal'); }
 
   async logout() {
-    if(await this.router.navigateByUrl('/')){this.navigation.clear();this.auth.logout();}
+    if(this.auth.signingOut)return;
+    this.auth.signingOut=true;
+    const previous=this.router.url;
+    try { if(await this.router.navigateByUrl('/')){
+      try { await this.auth.signOutEverywhere(); this.navigation.clear(); }
+      catch {
+        if(this.auth.validToken()){
+          await this.router.navigateByUrl(previous);
+          window.alert('Sign-out could not reach the server. Your sessions have not been revoked. Please try again.');
+        }
+      }
+    } } finally {this.auth.signingOut=false;}
   }
 
   ngOnInit() {

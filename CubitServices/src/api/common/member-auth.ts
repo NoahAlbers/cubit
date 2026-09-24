@@ -10,7 +10,7 @@ export async function signedIn(req: Request, res: Response, next: NextFunction) 
     const identity = jwtHelper.ValidateJWT(token)
     if (typeof identity.id !== 'string') throw Error('Invalid identity')
     const member = await AppDataSource.manager.findOneBy(Member, { id: identity.id })
-    if (!member) throw Error('Missing member')
+    if (!member || !jwtHelper.sessionMatches(identity, member)) throw Error('Expired session')
     req.member = member
     next()
   } catch { res.status(401).json({ message: 'Please sign in again.' }) }

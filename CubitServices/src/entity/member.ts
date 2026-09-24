@@ -58,6 +58,12 @@ export class Member {
   @Column({ default: 'Not Set' })
   password: string
 
+  @Column({ type: 'int', unsigned: true, default: 0 })
+  tokenVersion: number = 0
+
+  @Column({ default: false })
+  loginDisabled: boolean = false
+
   @Column({ nullable: true })
   phone: string
 
@@ -100,8 +106,13 @@ export class Member {
     password: string
   ): Promise<Member> {
     const started = performance.now()
-    const member = await AppDataSource.manager.findOneBy(Member, { email })
-    const hasPassword = !!member && /^\$2[aby]\$\d{2}\$/.test(member.password || '')
+    // Imported records can collide after normalization. Never choose an arbitrary
+    // identity, even when one of the records has a matching password.
+    const matchesByEmail = await AppDataSource.manager.find(Member, {
+      where: { email: Raw(alias => `LOWER(REGEXP_REPLACE(${alias}, '^[[:space:]]+|[[:space:]]+$', '')) = :loginEmail`, { loginEmail: email.trim().toLowerCase() }) }, take: 2,
+    })
+    const member = matchesByEmail.length === 1 ? matchesByEmail[0] : null
+    const hasPassword = !!member && !member.loginDisabled && /^\$2[aby]\$\d{2}\$/.test(member.password || '')
     const matches = await compare(password, hasPassword ? member!.password : DUMMY_PASSWORD_HASH)
     // Imported accounts have different bcrypt costs. Equalize ordinary failures
     // as well as running bcrypt; the request limiter bounds this extra work.

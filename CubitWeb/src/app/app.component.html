@@ -55,7 +55,7 @@
           }<h1 class="page-title">{{sectionName}}</h1></div>
           <div class="account-controls"><div class="account-identity"><span>{{auth.accountLabel}}</span><small>{{auth.isDemo?'Demo administrator':auth.isAdmin?'Staff administrator':'Member'}}</small></div>@if (auth.isAdmin) {
           <a class="button notification-button" routerLink="/staff/settings" routerLinkActive="current" aria-label="Notification settings" title="Notification settings"><img src="assets/icons/notification.svg" alt="" width="24" height="24"></a>
-          }<button class="secondary sign-out-button" (click)="logout()">Sign out</button></div>
+          }<button class="secondary sign-out-button" (click)="logout()" [disabled]="auth.signingOut" title="Sign out on all devices">Sign out</button></div>
         </header>
       }
       @if (isAuthenticated && auth.isDemo) {

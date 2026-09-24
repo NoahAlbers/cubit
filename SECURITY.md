@@ -10,8 +10,8 @@ and some cross-references say nine). Work follows the numbered phases below.
 | --- | --- | --- |
 | 1 | Patched runtime dependencies, dependency alerts, CI audits | Verified locally and in CI; review deployed and healthy |
 | 2 | Headers, login hardening, legacy-route validation and removal | Verified locally and in CI; review deployed |
-| 3 | Node 22 and MySQL 8.4 alignment | Local logical upgrade verified; CI/deployment verification pending |
-| 4 | Revocable sessions, account recovery, MFA, identity cleanup | Pending |
+| 3 | Node 22 and MySQL 8.4 alignment | Local logical upgrade, CI, and review deployment verified |
+| 4 | Revocable sessions, account recovery, MFA, identity cleanup | In progress: session revocation and password-policy milestone; recovery/MFA pending |
 | 5 | Backup confidentiality, immutable offsite recovery, DocuSeal boundary | Pending; offsite storage not configured |
 | 6 | Angular modernization and frontend regression coverage | Angular 22 already implemented; expanded checks pending |
 | 7 | Versioned schema migrations, backend major upgrades, request validation | Pending |
@@ -40,3 +40,8 @@ staff reconciliation of imported billing records, authenticated door integration
 verified payment imports, an independent security review, monitoring, and a named
 on-call owner. Each requires an owner and a dated sign-off before cutover.
 The shared review administrator password is outside this upgrade's scope.
+
+Imported contact-email collisions require staff reconciliation before a unique
+normalized-email index can be installed. Ambiguous login addresses fail closed;
+accounts and financial history must not be merged automatically. The generated
+portal test login is intentionally retained for testing at the owner's request.

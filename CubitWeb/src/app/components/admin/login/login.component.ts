@@ -67,7 +67,7 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.reducedMotion.addEventListener('change', this.stopMotion);
     document.addEventListener('visibilitychange', this.visibilityChanged);
     this.scheduleStory();
-    if (this.auth.validToken()) this.router.navigateByUrl(this.auth.home);
+    if (this.auth.validToken() && !this.auth.signingOut) this.router.navigateByUrl(this.auth.home);
   }
   ngOnDestroy() {
     this.request?.unsubscribe();
@@ -122,7 +122,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   login() {
-    if (this.pending || this.form.invalid) return;
+    if (this.pending || this.auth.signingOut || this.form.invalid) return;
     this.freeze();
     this.pending = true;
     this.loginError = '';

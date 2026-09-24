@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, firstValueFrom } from 'rxjs';
 import { Router, ActivatedRouteSnapshot } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 
 @Injectable()
 export class AuthService  {
+  signingOut = false;
   authToken = sessionStorage.getItem('cubit-token') || '';
   isAuthenticated$ = new BehaviorSubject<boolean>(this.validToken());
   constructor(private router: Router, private http: HttpClient) {}
@@ -31,6 +32,12 @@ export class AuthService  {
     localStorage.removeItem('token');
     this.isAuthenticated$.next(false);
     this.router.navigateByUrl('/');
+  }
+  async signOutEverywhere() {
+    // Leave the token in place until the authenticated server revocation finishes.
+    // Automatic handling of an expired token still uses local-only logout().
+    await firstValueFrom(this.http.post('/logout', {}));
+    this.logout();
   }
   login(email: string, password: string) {
     return this.http.post<any>('/login', { email, password }).pipe(tap(result => {

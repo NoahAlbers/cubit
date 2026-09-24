@@ -17,7 +17,8 @@ async function main(){
   const response=await fetch(`http://127.0.0.1:${server.address().port}/member`,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});assert.equal(response.status,400,JSON.stringify(body));assert.doesNotMatch(await response.text(),/private database/);
  }assert.equal(lookups,0,'Invalid input is rejected before any identity lookup');}finally{await new Promise(r=>server.close(r))}
  const hash=await bcrypt.hash('correct-test-password',10),timings=[];
- for(const member of [null,{password:'Not Set'},{password:hash}]){const samples=[];AppDataSource.manager.findOneBy=async()=>member;for(let i=0;i<3;i++){const start=performance.now();await assert.rejects(new Member().GetMemberByEmailAndPass('a@example.test','wrong-test-password'));samples.push(performance.now()-start)}timings.push(samples.sort((a,b)=>a-b)[1])}
+ for(const member of [null,{password:'Not Set'},{password:hash}]){const samples=[];AppDataSource.manager.find=async()=>member?[member]:[];for(let i=0;i<3;i++){const start=performance.now();await assert.rejects(new Member().GetMemberByEmailAndPass('a@example.test','wrong-test-password'));samples.push(performance.now()-start)}timings.push(samples.sort((a,b)=>a-b)[1])}
+ AppDataSource.manager.find=async()=>[{password:hash},{password:hash}];await assert.rejects(new Member().GetMemberByEmailAndPass('a@example.test','correct-test-password'),'Ambiguous identity must not authenticate');
  assert.ok(Math.max(...timings)-Math.min(...timings)<50,`Failure timing spread: ${timings.map(Math.round)}`);
  console.log('PASS: rejected invalid member IDs/roles/unknown fields before lookup, bounded IP eviction, per-account cooldown, and comparable login failure timing. No database connected.');
 }

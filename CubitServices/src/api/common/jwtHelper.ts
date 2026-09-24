@@ -1,15 +1,12 @@
-import { stat } from 'fs'
-
 import * as jwt from 'jsonwebtoken'
 import { Member } from '../../entity/member'
 import { environment } from '../configuration'
-import { AppDataSource } from '../../app'
 import { localConfig } from '../../dev/config'
 import { demoAudience } from '../../demo/identity'
 
 export class jwtHelper {
   public static GenerateJWT(member: Member): string {
-    const payload = { email: member.email, id: member.id, role: member.role }
+    const payload = { email: member.email, id: member.id, role: member.role, tokenVersion: member.tokenVersion ?? 0 }
 
     try {
       return jwt.sign(payload, environment.jwtSecret, {
@@ -34,24 +31,8 @@ export class jwtHelper {
     }
   }
 
-  public static async GetMemberFromJWT(token: string): Promise<Member> {
-    try {
-      const decoded: any = this.ValidateJWT(token)
-
-      const p = await AppDataSource.manager
-        .findOneOrFail(Member, decoded.email)
-        .then(
-          (member) => {
-            return Promise.resolve(member)
-          },
-          (err) => {
-            return Promise.reject(err)
-          }
-        )
-
-      return p
-    } catch (error) {
-      throw 'Auth Failed'
-    }
+  public static sessionMatches(identity: any, member: Member | null): boolean {
+    return !!member && !member.loginDisabled && Number.isSafeInteger(identity?.tokenVersion) &&
+      identity.tokenVersion >= 0 && identity.tokenVersion === member.tokenVersion
   }
 }

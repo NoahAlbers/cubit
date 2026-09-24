@@ -11,7 +11,7 @@ import { DraftGuard } from './services/draft-guard';
 import { TransactionService } from './services/transaction.service';
 import { AuthInterceptor } from './services/AuthInterceptor';
 import { AuthService } from './services/security/auth.service';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 
 describe('Angular 22 billing form compatibility', () => {
   let close: ReturnType<typeof vi.fn>;
@@ -75,6 +75,20 @@ describe('Angular 22 billing form compatibility', () => {
 });
 
 describe('Angular 22 shared rendering and authentication', () => {
+  it('revokes the session before clearing browser credentials, and retains them if revocation fails', async () => {
+    TestBed.configureTestingModule({providers:[AuthService,provideHttpClient(withXhr()),provideHttpClientTesting(),
+      {provide:Router,useValue:{navigateByUrl:vi.fn()}}]});
+    const auth=TestBed.inject(AuthService), http=TestBed.inject(HttpTestingController);
+    auth.authToken='test-session';sessionStorage.setItem('cubit-token','test-session');
+    const failed=auth.signOutEverywhere();const rejection=expect(failed).rejects.toBeDefined();
+    http.expectOne('/logout').flush({}, {status:503,statusText:'Unavailable'});await rejection;
+    expect(auth.authToken).toBe('test-session');
+    const pending=auth.signOutEverywhere();
+    const request=http.expectOne('/logout');expect(request.request.method).toBe('POST');
+    expect(sessionStorage.getItem('cubit-token')).toBe('test-session');
+    request.flush(null,{status:204,statusText:'No Content'});await pending;
+    expect(auth.authToken).toBe('');expect(sessionStorage.getItem('cubit-token')).toBeNull();http.verify();
+  });
   it('keeps SVG sprite links intact through template compilation', async () => {
     await TestBed.configureTestingModule({imports:[AppModule]}).compileComponents();
     const fixture=TestBed.createComponent(ArrowComponent);

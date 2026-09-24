@@ -112,6 +112,38 @@ async function main(){
  const otherPrefs=await request('/api/cubit/staff/preferences',null,'GET',jwtHelper.GenerateJWT(admin2));assert.equal(otherPrefs.data.preferences.enabled,false,'Preferences isolated per staff member');
  const preview=await ok('/api/cubit/staff/preferences/preview',{});assert.equal(preview.deliveryEnabled,false);assert.deepEqual(preview.results.map(r=>r.decision),['Would alert','Duplicate suppressed','Would alert','Successful entry \u2014 no email','Would alert']);
  assert.equal((await request('/api/cubit/audit',{kind:'Forged entry'})).status,404,'Audit has no mutation API');
+ // Revocation is enforced by both staff and portal middleware on the next request.
+ const freshToken=async id=>jwtHelper.GenerateJWT(await db.manager.findOneByOrFail(Member,{id}));
+ const oldMemberToken=await freshToken(existing.id);
+ assert.equal((await request('/api/portal',null,'GET',oldMemberToken)).status,200);
+ assert.equal((await request('/member',{id:existing.id,password:'short'},'PUT')).status,400);
+ const commonLong=require('fs').readFileSync(require('path').join(__dirname,'../src/security/common-passwords.txt'),'utf8').split(/\r?\n/).find(p=>p.length>=12);assert.ok(commonLong);
+ assert.equal((await request('/member',{id:existing.id,password:commonLong},'PUT')).status,400,'Long common passwords are rejected');
+ assert.equal((await request('/member',{id:existing.id,password:'x'.repeat(73)},'PUT')).status,400,'No silent bcrypt truncation');
+ await ok('/member',{id:existing.id,password:'another-strong-fixture-phrase'},'PUT');
+ assert.equal((await request('/api/portal',null,'GET',oldMemberToken)).status,401,'Password change revokes the old portal session');
+ const currentMemberToken=await freshToken(existing.id);
+ assert.equal((await request('/api/portal',null,'GET',currentMemberToken)).status,200);
+ const adminBefore=await freshToken(admin2.id);
+ await ok('/member',{id:admin2.id,role:'member'},'PUT');
+ assert.equal((await request('/api/cubit/audit',null,'GET',adminBefore)).status,401,'Role change revokes old staff sessions');
+ assert.equal((await request('/logout',{},'POST',currentMemberToken)).status,204);
+ assert.equal((await request('/api/portal',null,'GET',currentMemberToken)).status,401,'Logout revokes every token with the prior version');
+ assert.equal((await request('/logout',{},'POST',currentMemberToken)).status,401,'Revoked token cannot sign out newer sessions');
+ const legacyToken=require('jsonwebtoken').sign({id:staff.id,email:staff.email,role:'admin'},process.env.JWT_SECRET,{algorithm:'HS256',audience:'cubit-demo',expiresIn:'1h'});
+ assert.equal((await request('/api/cubit/audit',null,'GET',legacyToken)).status,401,'Pre-version tokens fail closed');
+ const disabledToken=await freshToken(existing.id);await db.manager.update(Member,existing.id,{loginDisabled:true});
+ assert.equal((await request('/api/portal',null,'GET',disabledToken)).status,401,'Disabling login also revokes sessions');
+ await assert.rejects(new Member().GetMemberByEmailAndPass(existing.email,'another-strong-fixture-phrase'));
+ await db.manager.update(Member,existing.id,{loginDisabled:false});
+ const collision=await db.manager.save(Member,db.manager.create(Member,{firstName:'Duplicate',lastName:'Fixture',email:'\t'+existing.email+'\t',paypalEmail:'duplicate.billing@example.test',role:'member',password:'Not Set'}));
+ await assert.rejects(new Member().GetMemberByEmailAndPass(existing.email,'another-strong-fixture-phrase'),'Normalized collisions reject otherwise valid passwords');
+ await db.manager.delete(Member,collision.id);
+ assert.equal((await new Member().GetMemberByEmailAndPass(existing.email,'another-strong-fixture-phrase')).id,existing.id);
+ const adminCurrent=await freshToken(staff.id);
+ assert.equal((await request('/logout',{},'POST',adminCurrent)).status,204);
+ assert.equal((await request('/api/cubit/audit',null,'GET',adminCurrent)).status,401);
+ console.log('PASS: password policy, next-request password/role/logout revocation, disabled logins, legacy-token rejection and ambiguous normalized email protection.');
  console.log('PASS: retained legacy history, transactional audit attribution/snapshots, payment/plan/fob/note/profile history, password redaction, audit filters/pagination, private preferences, stale edits and no-send alert preview.');
  console.log('PASS: explicit matching, ambiguity, atomic member creation, duplicate/concurrent capture and identity guards, refunds, permissions, catalog changes/retirement/restoration, stale edits and preserved historical/future rates and charges.');
 }

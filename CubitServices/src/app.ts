@@ -103,6 +103,7 @@ app.use('/member', memberRoutes)
 
 const loginRoutes = require('./api/routes/login')
 app.use('/login', loginRoutes)
+app.use('/logout', require('./api/routes/logout'))
 
 const accessLogRoutes = require('./api/routes/accessLog')
 app.use('/accessLog', accessLogRoutes)
@@ -133,6 +134,7 @@ app.use('*', (req, res, next) => {
 
 export async function startLocalApp() {
   await AppDataSource.initialize()
+  await (await import('./dev/upgrade-account-security')).upgradeAccountSecurity(AppDataSource,localConfig.runtimeMode==='local')
   await (await import('./dev/upgrade-waiver-documents')).upgradeWaiverDocuments(AppDataSource,localConfig.runtimeMode==='local')
   await (await import('./dev/upgrade-backups')).upgradeBackups(AppDataSource,localConfig.runtimeMode==='local')
   await (await import('./dev/upgrade-billing-tools')).upgradeBillingTools(AppDataSource,localConfig.runtimeMode==='local')

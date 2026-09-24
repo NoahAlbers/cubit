@@ -5,6 +5,12 @@ set -euo pipefail
 # schema before invoking this script. App database users keep CRUD-only grants.
 for schema in cubit_review cubit_demo; do
   [[ $(mysql -N -B -e "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='$schema'") == 1 ]] || continue
+  for definition in 'tokenVersion:int unsigned NOT NULL DEFAULT 0' 'loginDisabled:tinyint NOT NULL DEFAULT 0'; do
+    name=${definition%%:*}; column_type=${definition#*:}
+    if [[ $(mysql -N -B -e "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$schema' AND TABLE_NAME='member' AND COLUMN_NAME='$name'") == 0 ]]; then
+      mysql "$schema" -e "ALTER TABLE member ADD COLUMN $name $column_type"
+    fi
+  done
   mysql "$schema" < "$(dirname "$0")/../CubitServices/src/dev/waiver-documents.sql"
   mysql "$schema" < "$(dirname "$0")/../CubitServices/src/dev/backups.sql"
   if [[ $(mysql -N -B -e "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='$schema' AND TABLE_NAME='waiver_version' AND COLUMN_NAME='providerFingerprint'") == 0 ]]; then
