@@ -442,3 +442,8 @@ select:not([multiple]):not([size]){appearance:none;-webkit-appearance:none;paddi
 @media(max-width:600px){.profile-contact-actions{width:100%;align-items:flex-start}.profile-contact-actions .actions{width:100%;justify-content:flex-start}.profile-contact-actions button{flex:1;min-height:42px}.member-sticky .profile-toolbar .section-nav{display:flex}.member-sticky .profile-toolbar button,.member-sticky .profile-toolbar .button{white-space:normal}}
 
 :is(.directory-page,.access-log-page) .directory-pagination .page-buttons{flex-shrink:0;max-width:100%;justify-content:flex-start}
+
+/* Keep profile totals close to their labels, with restrained balance cues. */
+.member-page .stat strong{margin-top:4px;line-height:1.15}
+.member-page .stat strong.balance-settled{color:#183d31}
+.member-page .stat strong.balance-owing{color:#572b30}
