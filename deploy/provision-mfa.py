@@ -8,12 +8,14 @@ from pathlib import Path
 def main():
     if os.geteuid() != 0:
         raise SystemExit('Run as the deployment operator.')
-    for name in ('review', 'demo'):
-        path = Path('/etc/cubit') / (name + '.env')
+    for name, filename in (('review', '/etc/cubit/review.env'), ('demo', '/etc/cubit-demo/demo.env')):
+        path = Path(filename)
         if not path.exists():
             continue
         if path.is_symlink() or not path.is_file():
             raise SystemExit('Refusing an unexpected environment-file target.')
+        if path.stat().st_uid != 0 or path.stat().st_mode & 0o027:
+            raise SystemExit('Environment files must be root-owned, not group-writable or world-accessible.')
         text = path.read_text()
         existing = re.findall(r'^MFA_ENCRYPTION_KEY=(.*)$', text, re.MULTILINE)
         if existing:
