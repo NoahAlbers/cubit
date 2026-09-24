@@ -34,6 +34,8 @@ jobs:
       - run: pnpm --dir CubitWeb install --frozen-lockfile
       - run: node dev/build-web.cjs
       - run: pnpm --dir CubitServices build
+      - run: node tests/remembered-greeting.cjs && node tests/login-greeting-integration.cjs
+        working-directory: CubitServices
       - run: node tests/backup-settings.cjs && node tests/contact-validation.cjs && node tests/local-safety.cjs && node tests/hosted-safety.cjs && node tests/hosted-demo.cjs && node tests/billing.cjs && node tests/activity-patterns.cjs && node tests/review-controls.cjs
         working-directory: CubitServices
       - run: node tests/billing-tools-db.cjs

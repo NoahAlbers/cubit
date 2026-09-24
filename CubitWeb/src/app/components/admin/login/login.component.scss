@@ -24,12 +24,23 @@
     .reveal { position: absolute; right: 6px; top: 6px; width: 44px; height: 44px; border: 0; display: grid; place-items: center; color: #75869a; background: transparent; cursor: pointer; border-radius: 4px; }
     button:focus-visible { outline: 3px solid #6aaff0; outline-offset: 3px; }
     .submit { width: 100%; border: none; border-radius: 8px; height: 56px; background: #0055a4; color: #fff; font: inherit; font-weight: 600; font-size: 15px; cursor: pointer; margin-top: 8px; display: flex; gap: 12px; align-items: center; justify-content: center; transition: background .15s; }
-    .submit:hover { background: #00488b; }
+    .submit.ready:hover { background: #00488b; }
     .submit app-arrow { width:24px; height:24px; flex-basis:24px; }
     .help { margin: 30px 0 0; color: #637387; font-size: 12px; text-align: center; line-height: 1.7; }
     .notice { margin-top: 18px; color: #0055a4; font-size: 13px; line-height: 1.5; }
     .notice.error { color: #a52c38; }
-    .submit:disabled { cursor: wait; opacity: .75; }
+    .submit:disabled { cursor: not-allowed; opacity: 1; background: #e5edf5; color: #52687f; }
+    .submit.pending:disabled { cursor: wait; background: #0055a4; color: #fff; }
+    .submit.ready app-arrow { animation: arrow-arrive .2s ease-out; }
+    .signing-spinner { width: 16px; height: 16px; border: 2px solid #ffffff55; border-top-color: #fff; border-radius: 50%; animation: sign-in-spin .8s linear infinite; }
+    .story-word { display: inline-block; transition: opacity .2s, transform .2s; }
+    .story-word.fading { opacity: 0; transform: translateY(3px); }
+    h1 { overflow-wrap: anywhere; }
+    .help a { color: #0055a4; text-decoration: underline; text-underline-offset: 3px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @keyframes arrow-arrive { from { opacity: 0; transform: translateX(-5px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes sign-in-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .submit, .story-word { transition: none; } .submit.ready app-arrow, .signing-spinner { animation: none; } }
     .watermark { transform-origin: center; }
     @media (max-width: 1200px) and (min-width: 701px) { .splash { padding: 42px 40px; } .login-brand { width: 205px; } .story { max-width: 255px; margin-top: 68px; } .story h2 { font-size: 30px; } .story p { max-width: 245px; } .art { object-fit: contain; height: auto; top: auto; bottom: 0; } .sign-in { padding: 48px 38px; } }
     @media (max-width: 700px) { main { display: flex; flex-direction: column; } .splash { padding: 24px 28px; min-height: 232px; } .login-brand { width: 144px; border-radius: 8px; } .art { width: 160px; height: 154px; left: auto; right: 8px; top: -12px; object-fit: contain; } .story { margin-top: 48px; max-width: 240px; } .story h2 { font-size: 24px; letter-spacing: -.65px; line-height: 1.2; } .story p { display: none; } .sign-in { padding: 42px 28px 40px; flex: 1; align-items: flex-start; } .form-wrap { max-width: 380px; } h1 { font-size: 29px; margin-bottom: 31px; } .field { margin-bottom: 22px; } .help { font-size: 11px; margin-top: 26px; } .watermark { width: 580px; right: -300px; bottom: -290px; } }

@@ -16,19 +16,24 @@
 </svg>
 
       <div class="login-brand"><img class="logo" src="assets/login/cubit-logo-concept.png" alt="Cubit CRM Software"></div>
-      <div class="story"><h2>A place for people<br>who make things.</h2><p>Members, access, billing, and the details that keep the Melbourne Makerspace moving.</p></div>
+      <div class="story"><h2><span class="sr-only">A place for people who make things.</span><span aria-hidden="true">A place for people<br>who <span class="story-word" [class.fading]="storyFading">{{storyWord}}</span> things.</span></h2><p>Members, access, billing, and the details that keep the Melbourne Makerspace moving.</p></div>
     </section>
     <section class="sign-in" aria-labelledby="welcome">
       <img class="watermark" src="assets/login/cubit-gear-watermark.svg" #gear alt="" aria-hidden="true">
       <div class="form-wrap">
-        <h1 id="welcome">Welcome back.</h1>
+        <h1 id="welcome" aria-live="polite" aria-atomic="true">{{firstName ? 'Welcome back, ' + firstName + '.' : 'Welcome back.'}}</h1>
         <form id="login" [formGroup]="form" (ngSubmit)="login()" [attr.aria-busy]="pending" (input)="onInput($event)">
-          <div class="field"><label for="email">Email</label><input id="email" name="email" formControlName="email" type="email" autocomplete="username" placeholder="you@example.com" required></div>
+          <div class="field"><label for="email">Email</label><input id="email" name="email" formControlName="email" type="email" autocomplete="username" placeholder="you@example.com" (blur)="recognizeBrowser()" [readOnly]="pending" required></div>
           <div class="field"><label for="password">Password</label><div class="password"><input id="password" name="password" formControlName="password" [type]="showPassword ? 'text' : 'password'" autocomplete="current-password" required><button class="reveal" type="button" [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'" [attr.aria-pressed]="showPassword" (click)="showPassword = !showPassword"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
-          <button class="submit" type="submit" [disabled]="pending || form.invalid">{{pending ? 'Signing in…' : 'Sign in'}} <app-arrow name="arrow-right"></app-arrow></button>
+          <button class="submit" type="submit" [class.ready]="form.valid && !pending" [class.pending]="pending" [disabled]="pending || form.invalid">
+            <span *ngIf="pending" class="signing-spinner" aria-hidden="true"></span>
+            <span>{{pending ? 'Signing in…' : 'Sign in'}}</span>
+            <app-arrow *ngIf="form.valid && !pending" name="arrow-right" aria-hidden="true"></app-arrow>
+          </button>
+          <span class="sr-only" role="status">{{pending ? 'Signing in. Please wait.' : ''}}</span>
           <p *ngIf="loginError" class="notice error" role="alert">{{loginError}}</p>
         </form>
-        <p class="help">Need access or a password reset? <a href="mailto:webmaster@melbournemakerspace.org?subject=Cubit%20sign-in%20help">Contact staff</a> at webmaster@melbournemakerspace.org. Staff will arrange access manually.</p>
+        <p class="help">Need access or a password reset? <a href="mailto:webmaster@melbournemakerspace.org?subject=Cubit%20sign-in%20help">Contact staff</a> here.</p>
 <details class="demo-access" *ngIf="demoAvailable"><summary>Try the local demo</summary><div class="actions"><button type="button" class="secondary" [disabled]="pending" (click)="demo(true)">Demo member</button><button type="button" class="secondary" [disabled]="pending" (click)="demo(false)">Demo staff</button></div><small>Uses synthetic accounts only.</small></details>
       </div>
     </section>

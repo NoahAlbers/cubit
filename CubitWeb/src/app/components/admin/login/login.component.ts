@@ -2,7 +2,7 @@ import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/co
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../services/security/auth.service';
-import { take } from 'rxjs/operators';
+import { take, timeout } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 
@@ -18,13 +18,26 @@ export class LoginComponent implements OnInit, OnDestroy {
   showPassword = false;
   pending = false;
   demoAvailable = false;
+  firstName: string | null = null;
+  storyWord = 'make';
+  storyFading = false;
+  private readonly storyWords = ['make', 'build', 'fix'];
+  private storyIndex = 0;
+  private storyTimer?: ReturnType<typeof setInterval>;
+  private storyFadeTimer?: ReturnType<typeof setTimeout>;
+  private greetingAttempted = false;
+  private greetingEmail = '';
+  private greetingRequest?: Subscription;
+  private emailChanges?: Subscription;
+  private healthRequest?: Subscription;
   private request?: Subscription;
   private animation?: Animation;
   private angle = 0;
   private target = 0;
   private motion = 'idle';
   private reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  private stopMotion = () => this.freeze();
+  private stopMotion = () => { this.freeze(); this.scheduleStory(); };
+  private visibilityChanged = () => this.scheduleStory();
 
   constructor(
     private fb: UntypedFormBuilder,
@@ -39,14 +52,65 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.http.get<any>('/health').subscribe(d=>this.demoAvailable=d.mode==='local-development'&&d.dataMode==='demo');
+    this.healthRequest = this.http.get<any>('/health').subscribe({
+      next: d => this.demoAvailable = d.mode === 'local-development' && d.dataMode === 'demo',
+      error: () => this.demoAvailable = false,
+    });
+    this.emailChanges = this.form.controls['email'].valueChanges.subscribe(value => {
+      if (this.greetingAttempted && value !== this.greetingEmail) {
+        this.firstName = null;
+        this.greetingRequest?.unsubscribe();
+      }
+    });
     this.reducedMotion.addEventListener('change', this.stopMotion);
+    document.addEventListener('visibilitychange', this.visibilityChanged);
+    this.scheduleStory();
     if (this.auth.validToken()) this.router.navigateByUrl(this.auth.home);
   }
   ngOnDestroy() {
     this.request?.unsubscribe();
+    this.healthRequest?.unsubscribe();
+    this.greetingRequest?.unsubscribe();
+    this.emailChanges?.unsubscribe();
+    clearInterval(this.storyTimer);
+    clearTimeout(this.storyFadeTimer);
     this.animation?.cancel();
     this.reducedMotion.removeEventListener('change', this.stopMotion);
+    document.removeEventListener('visibilitychange', this.visibilityChanged);
+  }
+
+  recognizeBrowser() {
+    const email = this.form.controls['email'];
+    if (this.greetingAttempted || email.invalid || this.pending) return;
+    this.greetingAttempted = true;
+    this.greetingEmail = email.value;
+    // One attempt after leaving the email field. Editing it cancels stale responses.
+    this.greetingRequest = this.http.post<{firstName: string | null}>('/login/greeting', {
+      email: email.value.trim().toLowerCase(),
+    }).pipe(take(1), timeout(3000)).subscribe({
+      next: result => {
+        if (email.value === this.greetingEmail && typeof result.firstName === 'string') {
+          this.firstName = result.firstName.slice(0, 40);
+        }
+      },
+      error: () => { this.firstName = null; },
+    });
+  }
+
+  private scheduleStory() {
+    clearInterval(this.storyTimer);
+    clearTimeout(this.storyFadeTimer);
+    this.storyFading = false;
+    if (this.reducedMotion.matches) { this.storyWord = 'make'; this.storyIndex = 0; return; }
+    if (document.hidden) return;
+    this.storyTimer = setInterval(() => {
+      this.storyFading = true;
+      this.storyFadeTimer = setTimeout(() => {
+        this.storyIndex = (this.storyIndex + 1) % this.storyWords.length;
+        this.storyWord = this.storyWords[this.storyIndex];
+        this.storyFading = false;
+      }, 200);
+    }, 8000);
   }
 
   demo(member: boolean) {
