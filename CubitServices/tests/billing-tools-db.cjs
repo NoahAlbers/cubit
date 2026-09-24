@@ -127,6 +127,7 @@ async function main(){
  const admin2=await db.manager.save(Member,db.manager.create(Member,{firstName:'Other',lastName:'Staff',email:'staff2@example.test',paypalEmail:'staff2@example.test',role:'admin',password:'Not Set'}));
  const otherPrefs=await request('/api/cubit/staff/preferences',null,'GET',jwtHelper.GenerateJWT(admin2));assert.equal(otherPrefs.data.preferences.enabled,false,'Preferences isolated per staff member');
  const preview=await ok('/api/cubit/staff/preferences/preview',{});assert.equal(preview.deliveryEnabled,false);assert.deepEqual(preview.results.map(r=>r.decision),['Would alert','Duplicate suppressed','Would alert','Successful entry \u2014 no email','Would alert']);
+ await require('./notification-options.cjs')({db,request,ok,Member,jwtHelper});
  assert.equal((await request('/api/cubit/audit',{kind:'Forged entry'})).status,404,'Audit has no mutation API');
  // Waivers need normal staff authorization, without an extra preview token.
  assert.equal((await request('/api/waivers',null,'GET',null)).status,401);

@@ -7,6 +7,27 @@ import {AuthService} from '../../services/security/auth.service';
 import {StaffSettingsComponent} from './staff-settings.component';
 
 describe('Staff settings and authenticator enrollment',()=>{
+  it('saves grouped alert choices and quiet hours without enabling delivery',async()=>{
+    await TestBed.configureTestingModule({imports:[AppModule],providers:[provideHttpClient(withXhr()),provideHttpClientTesting(),{provide:AuthService,useValue:{isStaff:true,isAdmin:true,accountLabel:'staff@example.test',roleLabel:'Administration'}}]}).compileComponents();
+    const fixture=TestBed.createComponent(StaffSettingsComponent),c=fixture.componentInstance,http=TestBed.inject(HttpTestingController);
+    const topics=[{id:'backupFailed',group:'Operations & recovery',label:'Backup failed',description:'A backup needs attention.'}];
+    fixture.detectChanges();
+    http.expectOne('/api/cubit/staff/preferences').flush({email:'staff@example.test',topics,preferences:{enabled:false,unknownFobs:false,refusedFobs:false,dedupeMinutes:15,revision:1}});
+    http.expectOne('/api/account/notices').flush({rows:[]});
+    http.expectOne('/api/account').flush({email:'staff@example.test',mfaEnabled:false,mfaAvailable:true,sharedDemo:false,passwordResetEmailAvailable:false});
+    await fixture.whenStable();fixture.detectChanges();
+    expect(c.topicGroups).toEqual(['Operations & recovery']);
+    const p=c.preferences!;p.enabled=true;p.topics['backupFailed']=true;p.delivery={quietHours:true,start:'22:00',end:'08:00',timezone:'America/New_York'};
+    expect(c.selectedCount('Operations & recovery')).toBe(1);
+    c.previewAlerts();http.expectNone('/api/cubit/staff/preferences/preview');
+    p.delivery.timezone='Invalid/Zone';c.save();http.expectNone('/api/cubit/staff/preferences');
+    p.delivery.timezone='America/New_York';c.save();
+    const saving=http.expectOne('/api/cubit/staff/preferences');expect(saving.request.body.topics.backupFailed).toBe(true);expect(saving.request.body.delivery.quietHours).toBe(true);
+    saving.flush({email:'staff@example.test',topics,preferences:{...p,revision:2},deliveryEnabled:false});
+    expect(c.preferencesDirty()).toBe(false);expect(c.message).toContain('delivery remains off');
+    c.previewAlerts();http.expectOne('/api/cubit/staff/preferences/preview').flush({results:[],examples:[{topic:'Backup failed',group:'Operations & recovery',decision:'Quiet hours: defer'}]});
+    expect(c.topicPreview[0].decision).toContain('Quiet hours');http.verify();fixture.destroy();
+  });
   it('keeps recovery codes visible and blocks other requests after MFA revokes the session',async()=>{
     await TestBed.configureTestingModule({imports:[AppModule],providers:[provideHttpClient(withXhr()),provideHttpClientTesting(),{provide:AuthService,useValue:{isStaff:true,isAdmin:true,accountLabel:'staff@example.test',roleLabel:'Administration',logout:vi.fn()}}]}).compileComponents();
     const fixture=TestBed.createComponent(StaffSettingsComponent),c=fixture.componentInstance,http=TestBed.inject(HttpTestingController);

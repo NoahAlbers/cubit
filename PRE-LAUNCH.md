@@ -65,6 +65,9 @@ Owner: **Unassigned — account administrator**. Target: **Unassigned**. Sign-of
   delivery and login-email confirmation. Verify delivery, expiry, resend limits,
   failures and address ownership. Until then staff share links manually and
   email changes generate staff notices; no automatic emails are sent.
+  Staff settings now includes a disabled email-self reset control and locally
+  generated authenticator QR/manual-key setup. Provider connection remains a
+  deliberate later step; saved alert choices cannot enable delivery by themselves.
 - [ ] Review every test/imported login before operational access. The generated
   portal test login stays enabled on **review** by explicit owner request; that
   is not approval to carry it into production. Keep synthetic demo data isolated.
@@ -193,6 +196,11 @@ Target: **Unassigned**. Sign-off: **Pending**.
   and transport after testing durable 15-minute duplicate suppression, retries and
   no emails for successful entries. Otherwise record that alerts remain disabled;
   do not replay historical scans into email delivery.
+- [ ] Before enabling any broader staff alerts, verify each selected event source,
+  recipient role and opt-in, quiet-hour/time-zone behavior, duplicate suppression,
+  retries and unsubscribe behavior. The grouped preferences and fictional preview
+  are implemented; payment/controller/monitoring sources and an email worker are
+  not. Never treat a saved checkbox as evidence that delivery is operational.
 
 ## 6. Hosting, privacy and operational sign-off
 

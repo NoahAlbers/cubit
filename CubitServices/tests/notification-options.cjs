@@ -1,0 +1,24 @@
+const assert=require('node:assert/strict');
+module.exports=async({db,request,ok,Member,jwtHelper})=>{
+ const {inQuietHours,defaultDelivery,previewNotifications}=require('../src/staff/notification-options');
+ const quiet={quietHours:true,start:'22:00',end:'08:00',timezone:'UTC'};
+ assert.equal(inQuietHours(Date.parse('2026-09-24T23:00:00Z'),quiet),true);
+ assert.equal(inQuietHours(Date.parse('2026-09-24T08:00:00Z'),quiet),false);
+ assert.equal(inQuietHours(Date.parse('2026-09-24T21:59:00Z'),quiet),false);
+ assert.equal(previewNotifications(true,{backupFailed:true},quiet,'admin',Date.parse('2026-09-24T23:00:00Z')).find(t=>t.topic==='Backup failures').decision,'Quiet hours — defer');
+ const current=await ok('/api/cubit/staff/preferences');
+ const choices={enabled:true,unknownFobs:true,refusedFobs:true,dedupeMinutes:15,revision:current.preferences.revision,topics:{backupFailed:true,waiverUploaded:true,staffPermissionsChanged:true},delivery:defaultDelivery};
+ const saved=await ok('/api/cubit/staff/preferences',choices,'PUT');assert.equal(saved.deliveryEnabled,false);assert.equal(saved.preferences.topics.waiverUploaded,true);
+ const preview=await ok('/api/cubit/staff/preferences/preview',{});assert.equal(preview.examples.find(t=>t.topic==='Backup failures').decision,'Would alert');assert.equal(preview.examples.find(t=>t.topic==='Payments recorded').decision,'Not selected');
+ const fresh={...choices,revision:saved.preferences.revision};
+ for(const bad of [{topics:{invented:true}},{topics:{backupFailed:'yes'}},{delivery:{...quiet,timezone:'invalid/timezone'}},{delivery:{...quiet,end:'22:00'}}])assert.equal((await request('/api/cubit/staff/preferences',{...fresh,...bad},'PUT')).status,400);
+ assert.equal((await ok('/api/cubit/staff/preferences')).preferences.revision,saved.preferences.revision,'Invalid options do not save');
+ const operator=await db.manager.save(Member,db.manager.create(Member,{firstName:'Alert',lastName:'Operator',email:'alert.operator@example.test',paypalEmail:'',role:'staff',password:'Not Set'}));
+ const jwt=jwtHelper.GenerateJWT(operator);
+ const options=await request('/api/cubit/staff/preferences',null,'GET',jwt);assert.equal(options.status,200);assert.equal(options.data.topics.some(t=>t.administration),false);assert.equal(options.data.preferences.topics.staffPermissionsChanged,undefined);
+ assert.equal((await request('/api/cubit/staff/preferences',{...choices,revision:0},'PUT',jwt)).status,403,'Staff users cannot subscribe to administration-only alerts');
+ assert.equal((await request('/api/cubit/staff/preferences',{...choices,revision:0,topics:{backupFailed:true}},'PUT',jwt)).status,200);
+ assert.equal((await request('/api/account/password-reset/request',{},'POST',jwt)).status,503);
+ assert.equal((await request('/api/account/password-reset/request',{},'POST',null)).status,401);
+ console.log('PASS: alert topic persistence, role restrictions, quiet-hour boundaries, invalid-option rejection and disabled password-reset delivery.');
+};

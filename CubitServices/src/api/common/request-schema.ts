@@ -1,3 +1,4 @@
+import { notificationTopics } from '../../staff/notification-options';
 import { Request, Response, RequestHandler } from 'express';
 import { z } from 'zod';
 import { validDay } from '../../billing/ledger';
@@ -68,6 +69,30 @@ export const bodies = {
     unknownFobs: z.boolean(),
     refusedFobs: z.boolean(),
     dedupeMinutes: z.number().int().min(1).max(1440),
+    topics: z.partialRecord(z.enum(notificationTopics.map((t) => t.id)), z.boolean()).optional(),
+    delivery: z
+      .strictObject({
+        quietHours: z.boolean(),
+        start: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+        end: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+        timezone: z
+          .string()
+          .min(1)
+          .max(64)
+          .refine((value) => {
+            try {
+              new Intl.DateTimeFormat('en', { timeZone: value });
+              return true;
+            } catch {
+              return false;
+            }
+          }, 'Choose a valid time zone.'),
+      })
+      .refine(
+        (value) => !value.quietHours || value.start !== value.end,
+        'Quiet hours need different start and end times.',
+      )
+      .optional(),
     revision,
   }),
   waiver: z.strictObject({

@@ -23,7 +23,7 @@ Cubit brings member records, billing, access history, reports, and member self-s
 - View contact and emergency-contact details, plans, access keys, billing history, and staff notes in a compact profile.
 - Save or cancel contact edits beside the member's name. Changed fields are marked until saved or reverted; the save cue respects reduced-motion settings. Copy buttons stay inside contact fields and beside key values.
 - Identify members with consistent identicons and see their last recorded entry. Individual keys show their last recorded use where events can be associated with that key.
-- Add staff notes with an author and date. Members cannot view staff notes or change their own staff permissions.
+- Add staff notes with an author and date. Long notes expand on demand; notes have their own five-entry pagination. Members cannot view staff notes or change their own staff permissions.
 
 ### Membership billing and eligibility
 
@@ -61,8 +61,9 @@ The hosted review displays copied records. It does not receive live door events,
 - Payment recordings/corrections, assigned plans and final billing dates, manual charges/corrections, fob assignments/status/removal, profile changes, notes, catalog/settings changes, waiver administration, processing, and report exports are recorded. Change records keep the acting staff identity, time, selected before/after values, and reasons where applicable. Password changes record the action only, never the password or hash.
 - Account mutations and their audit records commit together. Fob status changes/removal require a reason and reject stale edits. There is no audit editing or deletion API. Direct database/operator changes are outside application auditing.
 - Existing billing and note history is preserved once during migration. Preserved rows are identified, and missing historical values are not invented. Staff actions are the default; system/member activity can also be included. Date filters and displayed audit times use UTC.
-- **Staff user settings** (the gear in the top right) stores preferences for the signed-in staff member only. Unknown and refused fobs are separate choices, with a configurable duplicate window (15 minutes by default). Everything is opted out initially; successful entries never qualify.
-- The fictional-scan preview demonstrates filtering and duplicate suppression. **There is no email transport, delivery worker, live-event subscription, or email queue in this release.** Preferences do not enable sending in local, review, or demo environments. A live rollout still needs authenticated door ingestion, durable suppression across workers/restarts, an explicitly enabled mail transport, and delivery/retry tests. Historical scans must not be replayed as alerts.
+- **Staff user settings** (the Cubit gear in the top right) stores preferences for the signed-in staff member only. Grouped choices cover members/plans, payments, access/keys, waivers, account security, and backup/processing issues. Staff-account security choices are restricted to Administration. Everything is opted out initially; successful door entries never qualify.
+- Unknown and refused fobs remain separate choices, with a configurable repeat window (15 minutes by default). Optional quiet hours support overnight windows and a chosen time zone. Fictional previews demonstrate filtering, duplicate suppression and quiet hours; they do not create email jobs.
+- **There is no email transport, delivery worker, live-event subscription, or email queue in this release.** These are saved preferences and previews, not working notification delivery. Some topics also require future payment, controller or monitoring integrations. A live rollout needs verified event sources, durable per-recipient suppression, current-role checks, retry handling and delivery tests. Historical events must not be replayed as alerts. Recurring payment reminders and weekly digests are not included.
 
 ### Reports
 
@@ -96,7 +97,11 @@ bundled common-password dictionary, and cannot exceed bcrypt's 72-byte input lim
 Ambiguous imported login emails are rejected until staff resolves the duplicates.
 Existing review credentials are retained. Staff can enroll an authenticator from
 **Staff user settings → Sign-in & security**, once the operator
-provisions the private encryption key. TOTP codes and recovery codes cannot be
+provisions the private encryption key. Setup offers a locally generated QR code
+and a manual setup key; neither is sent to an external QR service. Staff settings
+also shows an email-self password-reset control, disabled until a provider is
+connected. The disabled endpoint issues no reset token or email job; administrators
+can still prepare private reset links. TOTP codes and recovery codes cannot be
 reused, and password resets preserve enrolled MFA. Mandatory staff enrollment,
 external recovery-key custody, and verified email delivery remain launch requirements.
 See [account security operations](deploy/ACCOUNT-SECURITY.md).

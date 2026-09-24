@@ -1,3 +1,10 @@
+import {
+  availableTopics,
+  visibleChoices,
+  defaultDelivery,
+  previewNotifications,
+  inQuietHours,
+} from '../../staff/notification-options';
 import { route, bodies } from '../common/request-schema';
 import express from 'express';
 import { AppDataSource } from '../../database';
@@ -100,7 +107,12 @@ router.get(
       staffId: req.member.id,
     });
     res.json({
-      preferences: preference || { ...defaultPreferences, revision: 0 },
+      preferences: {
+        ...(preference || { ...defaultPreferences, revision: 0 }),
+        topics: visibleChoices(preference?.topics, req.member.role),
+        delivery: preference?.delivery || defaultDelivery,
+      },
+      topics: availableTopics(req.member.role),
       email: req.member.email,
       deliveryEnabled: false,
     });
@@ -113,10 +125,16 @@ router.put(
     res.json(
       await AppDataSource.transaction(async (manager) => {
         // Lock the staff identity even before their first preferences row exists.
-        await manager.findOneOrFail(Member, {
+        const actor = await manager.findOneOrFail(Member, {
           where: { id: req.member.id },
           lock: { mode: 'pessimistic_write' },
         });
+        if (
+          actor.loginDisabled ||
+          actor.tokenVersion !== req.member.tokenVersion ||
+          actor.role !== req.member.role
+        )
+          fail('Sign in again before changing preferences.', 401);
         const old = await manager.findOneBy(StaffAlertPreference, { staffId: req.member.id }),
           before = old
             ? {
@@ -124,15 +142,27 @@ router.put(
                 unknownFobs: old.unknownFobs,
                 refusedFobs: old.refusedFobs,
                 dedupeMinutes: old.dedupeMinutes,
+                topics: visibleChoices(old.topics, req.member.role),
+                delivery: old.delivery || defaultDelivery,
               }
             : defaultPreferences;
         if (b.revision !== (old?.revision || 0))
           fail('These preferences changed elsewhere. Reload before saving.', 409);
+        const allowed = new Set(availableTopics(req.member.role).map((t) => t.id));
+        if (
+          b.topics &&
+          Object.entries(b.topics).some(
+            ([id, value]) => value && !Array.from(allowed).some((topic) => topic === id),
+          )
+        )
+          fail('Only Administration can configure staff security alerts.', 403);
         const after = {
           enabled: b.enabled,
           unknownFobs: b.unknownFobs,
           refusedFobs: b.refusedFobs,
           dedupeMinutes: b.dedupeMinutes,
+          topics: visibleChoices(b.topics ?? old?.topics, req.member.role),
+          delivery: b.delivery ?? old?.delivery ?? defaultDelivery,
         };
         const saved = await manager.save(StaffAlertPreference, {
           staffId: req.member.id,
@@ -147,7 +177,12 @@ router.put(
             before,
             after,
           });
-        return { preferences: saved, email: req.member.email, deliveryEnabled: false };
+        return {
+          preferences: saved,
+          topics: availableTopics(req.member.role),
+          email: req.member.email,
+          deliveryEnabled: false,
+        };
       }),
     );
   }),
@@ -155,20 +190,33 @@ router.put(
 router.post(
   '/staff/preferences/preview',
   route(async (req, res) => {
-    const p =
-      (await AppDataSource.manager.findOneBy(StaffAlertPreference, { staffId: req.member.id })) ||
-      defaultPreferences;
+    const p = (await AppDataSource.manager.findOneBy(StaffAlertPreference, {
+      staffId: req.member.id,
+    })) || { ...defaultPreferences, topics: {}, delivery: defaultDelivery };
     const start = Date.now(),
       window = p.dedupeMinutes * 60000;
     res.json({
       deliveryEnabled: false,
+      examples: previewNotifications(
+        p.enabled,
+        p.topics || {},
+        p.delivery || defaultDelivery,
+        req.member.role,
+        start,
+      ),
       results: planAccessAlerts(p, [
         { id: '1', fob: 'DEMO-001', outcome: 'unknown', at: start },
         { id: '2', fob: 'DEMO-001', outcome: 'unknown', at: start + 1000 },
         { id: '3', fob: 'DEMO-002', outcome: 'refused', at: start + 2000 },
         { id: '4', fob: 'DEMO-003', outcome: 'granted', at: start + 3000 },
         { id: '5', fob: 'DEMO-001', outcome: 'unknown', at: start + window },
-      ]),
+      ]).map((row) => ({
+        ...row,
+        decision:
+          row.decision === 'Would alert' && inQuietHours(row.at, p.delivery || defaultDelivery)
+            ? 'Quiet hours — defer'
+            : row.decision,
+      })),
     });
   }),
 );

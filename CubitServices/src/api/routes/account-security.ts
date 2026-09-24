@@ -69,13 +69,11 @@ router.post(
     body(req, []);
     // A future transport must verify the account email and issue a scoped,
     // single-use link. Do not mint a token or queue mail while disconnected.
-    res
-      .status(503)
-      .json({
-        message:
-          'Password-reset email is not connected. Ask an administrator for a private reset link.',
-        deliveryEnabled: false,
-      });
+    res.status(503).json({
+      message:
+        'Password-reset email is not connected. Ask an administrator for a private reset link.',
+      deliveryEnabled: false,
+    });
   }),
 );
 router.get(
