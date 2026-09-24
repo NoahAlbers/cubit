@@ -49,7 +49,7 @@ async function main() {
     assert.equal((await bill()).balance,240,'Changing the catalog must not reprice history')
     const note=await post(`/api/cubit/members/${memberId}/notes`,{text:'Test note <script>never execute</script>',author:'forged'},201)
     assert.equal(note.author,'admin@example.test')
-    assert.equal((await get(`/api/cubit/members/${memberId}/notes`))[0].text,note.text)
+    assert.equal((await get(`/api/cubit/members/${memberId}/notes`)).rows[0].text,note.text)
     assert.equal((await request(`/api/cubit/members/${memberId}/notes`,{token:memberToken})).status,403)
     const body={id:'New',memberId,amount:120,transactionDate:today,method:'Local test',description:'Test',requestKey:randomUUID()}
     const payments=await Promise.all([post('/transaction',body),post('/transaction',body),post('/transaction',body)])

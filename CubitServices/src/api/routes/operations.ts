@@ -28,12 +28,19 @@ router.get(
   route(async (req, res) => {
     if (!(await AppDataSource.manager.findOneBy(Member, { id: req.params.id })))
       fail('Member not found.', 404);
-    res.json(
-      await AppDataSource.manager.find(StaffNote, {
-        where: { memberId: req.params.id },
-        order: { createdAt: 'DESC', id: 'DESC' },
-      }),
-    );
+    const pageSize = 5;
+    const total = await AppDataSource.manager.countBy(StaffNote, { memberId: req.params.id });
+    const pages = Math.max(1, Math.ceil(total / pageSize));
+    const requested = Number(req.query.page || 1);
+    if (!Number.isSafeInteger(requested) || requested < 1) fail('Choose a valid notes page.');
+    const page = Math.min(requested, pages);
+    const rows = await AppDataSource.manager.find(StaffNote, {
+      where: { memberId: req.params.id },
+      order: { createdAt: 'DESC', id: 'DESC' },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
+    res.json({ rows, total, page, pages, pageSize });
   }),
 );
 router.post(

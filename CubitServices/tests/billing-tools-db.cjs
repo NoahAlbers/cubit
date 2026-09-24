@@ -83,7 +83,13 @@ async function main(){
  for(const path of ['/api/cubit/audit','/api/cubit/staff/preferences']){assert.equal((await request(path,null,'GET',null)).status,401);assert.equal((await request(path,null,'GET',jwtHelper.GenerateJWT(existing))).status,403);}
  const beforeNotes=await db.manager.countBy(OperationsAudit,{kind:'Staff note added'});
  await ok('/api/cubit/members/'+existing.id+'/notes',{text:'New audited staff note'});
- assert.equal(await db.manager.countBy(OperationsAudit,{kind:'Staff note added'}),beforeNotes+1);
+ for(let i=0;i<6;i++)await ok('/api/cubit/members/'+existing.id+'/notes',{text:'Pagination fixture '+i});
+ const notesPage1=await ok('/api/cubit/members/'+existing.id+'/notes?page=1'),notesPage2=await ok('/api/cubit/members/'+existing.id+'/notes?page=2');
+ assert.equal(notesPage1.rows.length,5);assert.equal(notesPage1.pages,2);assert.equal(notesPage1.total,8);assert.equal(notesPage2.rows.length,3);
+ assert.equal(new Set([...notesPage1.rows,...notesPage2.rows].map(n=>n.id)).size,8);
+ assert.equal((await ok('/api/cubit/members/'+existing.id+'/notes?page=999')).page,2);
+ assert.equal((await request('/api/cubit/members/'+existing.id+'/notes?page=-1')).status,400);
+ assert.equal(await db.manager.countBy(OperationsAudit,{kind:'Staff note added'}),beforeNotes+7);
  const contactBefore=await db.manager.findOneByOrFail(Member,{id:existing.id});
  const auditBefore=await db.manager.count(OperationsAudit);
  for(const invalid of [{email:'bad..email@example.test'},{paypalEmail:'bad@domain'},{emergencyEmail:'bad@-domain.test'},{phone:'555-0109'},{emergencyPhone:'321-555-0109 ext 4'}])assert.equal((await request('/member',{id:existing.id,...invalid},'PUT')).status,400);
