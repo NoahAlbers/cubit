@@ -16,7 +16,7 @@ const route=(fn:any)=>async(req:any,res:any,next:any)=>{try{await fn(req,res)}ca
 router.get('/payment-matching',route(async(req:any,res:any)=>{
   const state=req.query.state==='processed'?'processed':'pending',q=String(req.query.q||'').trim().slice(0,150)
   const query=AppDataSource.manager.createQueryBuilder(PaymentEvent,'e').where(state==='processed'?'e.status = :status':'e.status != :status',{status:'Processed'})
-  if(q)query.andWhere('(e.payerEmail LIKE :q OR e.payerName LIKE :q OR e.resourceId LIKE :q)',{q:`%${q}%`})
+  if(q)query.andWhere("(e.payerEmail LIKE :q ESCAPE '!' OR e.payerName LIKE :q ESCAPE '!' OR e.resourceId LIKE :q ESCAPE '!')",{q:'%'+q.replace(/[!%_]/g,'!$&')+'%'})
   const total=await query.getCount(),pages=Math.max(1,Math.ceil(total/20)),page=Math.min(pages,Math.max(1,Math.floor(Number(req.query.page))||1))
   const rows=await query.orderBy('e.createdAt','DESC').addOrderBy('e.id','DESC').skip((page-1)*20).take(20).getMany()
   res.json({rows,total,page,pages,state,pending:await AppDataSource.manager.createQueryBuilder(PaymentEvent,'e').where('e.status != :status',{status:'Processed'}).getCount()})
@@ -37,7 +37,7 @@ router.get('/matching-members',route(async(req:any,res:any)=>{
   const q=String(req.query.q||'').trim().slice(0,150)
   if(q.length<2)return res.json([])
   const rows=await AppDataSource.manager.createQueryBuilder(Member,'m').select(['m.id','m.firstName','m.lastName','m.email','m.paypalEmail','m.status'])
-    .where("CONCAT(m.firstName, ' ', m.lastName) LIKE :q OR m.email LIKE :q OR m.paypalEmail LIKE :q",{q:`%${q}%`})
+    .where("CONCAT(m.firstName, ' ', m.lastName) LIKE :q ESCAPE '!' OR m.email LIKE :q ESCAPE '!' OR m.paypalEmail LIKE :q ESCAPE '!'",{q:'%'+q.replace(/[!%_]/g,'!$&')+'%'})
     .orderBy('m.lastName','ASC').addOrderBy('m.firstName','ASC').take(20).getMany()
   res.json(rows)
 }))

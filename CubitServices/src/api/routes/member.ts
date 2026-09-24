@@ -1,11 +1,9 @@
 import { recordAudit, snapshot, profileFields } from '../../staff/audit'
-import { normalizeContact } from '../../contact/validation'
+import { memberInput } from '../common/member-input'
 import { AppDataSource } from './../../app'
 import express from 'express'
 import { Member, ROLES } from '../../entity/member'
 import { hash } from 'bcrypt'
-import { jwtHelper } from '../common/jwtHelper'
-import { VerifyLoggedIn } from '../common/check-auth'
 import { randomUUID } from 'crypto'
 import { MemberPlan } from '../../entity/memberPlan'
 import { localConfig } from '../../dev/config'
@@ -17,7 +15,7 @@ const memberClass = new Member()
 
 //in this file, you don't put the main route
 //(e.g. /member, you just need member)
-router.get('/', VerifyLoggedIn, (req, res, next) => {
+router.get('/', (req, res, next) => {
   //find all members
   AppDataSource.manager
     .find(Member, { order: { status: 'ASC', lastName: 'ASC' } })
@@ -31,20 +29,18 @@ router.get('/', VerifyLoggedIn, (req, res, next) => {
         return res.status(200).json(result)
       },
       (err) => {
-        return res.status(500).json({ error: err })
+        next(err)
       }
     )
 })
 
 router.put('/', async (req, res, next) => {
-  const postedMemberData = req.body
-  try { normalizeContact(postedMemberData) } catch (error:any) { return res.status(400).json({message:error.message}) }
+  try {
+  const postedMemberData = memberInput(req.body)
   if(localConfig.runtimeMode==='hosted-demo' && postedMemberData.id===demoMemberId &&
     ((postedMemberData.email!==undefined && postedMemberData.email!==demoEmail) ||
      (postedMemberData.role!==undefined && postedMemberData.role!==ROLES.ADMIN) || postedMemberData.password))
     return res.status(403).json({message:'The shared demo sign-in email, password and role cannot be changed.'})
-  for (const key of Object.keys(postedMemberData)) if (!['id', 'firstName', 'lastName', 'email', 'paypalEmail', 'phone',
-    'emergencyContact', 'emergencyEmail', 'emergencyPhone', 'picture', 'role', 'password'].includes(key)) delete postedMemberData[key]
 
   if (typeof postedMemberData.password === 'string' && postedMemberData.password.length > 0) {
     postedMemberData.password = await hash(postedMemberData.password, 10)
@@ -53,7 +49,7 @@ router.put('/', async (req, res, next) => {
     delete postedMemberData.password //typeorm does not update if it's missing.
   }
 
-  AppDataSource.transaction(async manager=>{
+  await AppDataSource.transaction(async manager=>{
     await lockIdentities(manager)
     const before=await manager.findOneByOrFail(Member,{id:postedMemberData.id})
     if(typeof postedMemberData.email==='string'&&postedMemberData.email.trim().toLowerCase()!==before.email.trim().toLowerCase())
@@ -74,22 +70,17 @@ router.put('/', async (req, res, next) => {
     })
     .catch((err) => {
       //oh nos! we have an error
-      return res.status(err.status || 500).json({ message: err.status ? err.message : 'Could not save the member.' })
+      next(err)
     })
+  } catch (err) { next(err) }
 })
 
 router.post('/', async (req, res, next) => {
+  try {
   const memberClass = new Member()
 
-  var member: Member = JSON.parse(JSON.stringify(req.body))
-  try { normalizeContact(member,true) } catch (error:any) { return res.status(400).json({message:error.message}) }
-  for (const key of ['accessHold', 'accessHoldReason', 'billingSuspended', 'balance', 'status', 'statusReason']) delete (member as any)[key]
-
-  if (member.id != 'New') {
-    throw 'use put method to update an existing member, not post'
-  } else {
-    member.id = randomUUID()
-  }
+  const member: Member = memberInput(req.body,true)
+  member.id = randomUUID()
 
   if (await memberClass.checkForDuplicateEmail(member.email)) {
     res
@@ -104,7 +95,7 @@ router.post('/', async (req, res, next) => {
 
   member.role = ROLES.MEMBER
 
-  AppDataSource.transaction(async manager=>{
+  await AppDataSource.transaction(async manager=>{
     await lockIdentities(manager)
     await rejectDuplicateContact(manager,member.email)
     const result=await manager.insert(Member,member)
@@ -121,8 +112,9 @@ router.post('/', async (req, res, next) => {
     })
     .catch((err) => {
       //oh nos! we have an error
-      return res.status(err.status || 500).json({ message: err.status ? err.message : 'Could not save the member.' })
+      next(err)
     })
+  } catch (err) { next(err) }
 })
 
 router.get('/refreshStatus', async (req, res, next) => {
@@ -130,7 +122,7 @@ router.get('/refreshStatus', async (req, res, next) => {
     await memberClass.updateAllMemberBalancesAndStatus()
     res.status(200).json({ result: 'completed' })
   } catch (error) {
-    res.status(500).json(error)
+    next(error)
   }
 })
 
@@ -143,22 +135,25 @@ router.get('/:memberId', (req, res, next) => {
       res.status(200).json(member)
     })
     .catch((err) => {
-      res.status(500).send('error:' + err)
+      next(err)
     })
 })
 
 router.get('/balance/:memberId', async (req, res, next) => {
+  try {
   const balance = await memberClass.getCurrentBalance(req.params.memberId)
 
   res.status(200).json(balance)
+  } catch (err) { next(err) }
 })
 
 router.get('/isActive/:memberId', async (req, res, next) => {
+  try {
   res.status(200).json(await memberClass.isMemberActive(req.params.memberId))
+  } catch (err) { next(err) }
 })
 
 router.get('/plans/:memberId', (req, res, next) => {
-  console.log(req.params.memberId)
   AppDataSource.manager
     .find(MemberPlan, {
       where: { member: { id: req.params.memberId } },
@@ -168,7 +163,7 @@ router.get('/plans/:memberId', (req, res, next) => {
       res.status(200).json(memberPlans)
     })
     .catch((err) => {
-      res.status(500).send('error:' + err)
+      next(err)
     })
 })
 

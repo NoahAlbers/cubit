@@ -30,7 +30,9 @@ const app: Application = express()
 app.disable('x-powered-by')
 if (localConfig.runtimeMode !== 'local') app.set('trust proxy', 'loopback')
 
-app.use(morgan('dev')) //nicer console logging and errors
+// Do not persist names, emails or search terms from query strings in access logs.
+morgan.token('safe-path', req => ((req as Request).originalUrl || req.url || '/').split('?')[0])
+app.use(morgan(':method :safe-path :status :response-time ms'))
 
 //nicer output
 app.use(express.urlencoded({ extended: false }))
@@ -38,7 +40,7 @@ app.use(express.json())
 
 // Prevent the copied browser bundle from contacting any other API origin.
 app.use((req, res, next) => {
-  res.setHeader('Content-Security-Policy', "connect-src 'self'")
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; connect-src 'self'")
   res.setHeader('Cache-Control', 'no-store')
   next()
 })
@@ -93,14 +95,11 @@ app.use('/api/cubit', require('./api/routes/cubit'))
 app.use('/api/cubit', require('./api/routes/operations'))
 app.use('/api/cubit', require('./api/routes/billing-tools'))
 app.use('/api/cubit', require('./api/routes/staff-tools'))
-app.use(['/member', '/plan', '/transaction', '/key', '/accessLog', '/task', '/ACON'], staffOnly)
+app.use(['/member', '/plan', '/transaction', '/key', '/accessLog', '/ACON'], staffOnly)
 //this is where to look for the route file
 const memberRoutes = require('./api/routes/member')
 //when a client accesses this path, it forwards to the route file
 app.use('/member', memberRoutes)
-
-const taskRoutes = require('./api/routes/task')
-app.use('/task', taskRoutes)
 
 const loginRoutes = require('./api/routes/login')
 app.use('/login', loginRoutes)
@@ -116,9 +115,6 @@ app.use('/plan', planRoutes)
 
 const memberKeyRoutes = require('./api/routes/memberKey')
 app.use('/key', memberKeyRoutes)
-
-const paypalRoutes = require('./api/routes/paypal')
-app.use('/paypal', paypalRoutes)
 
 const ACONRoutes = require('./api/routes/ACON')
 app.use('/ACON', ACONRoutes)

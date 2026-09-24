@@ -174,6 +174,19 @@ Setup downloads verified portable tools into `.private/tools/`. The Windows comp
 
 ## Checks and deployment
 
+Production dependency audits run for both projects in CI and reject high or critical
+findings. Dependabot checks the backend, frontend, and GitHub Actions weekly.
+The backend uses patched Express 4, TypeORM 0.3, mysql2 3, bcrypt 6, and JWT 9
+dependencies. The removed legacy PayPal importer and task API are not available;
+the PayPal route remains explicitly blocked.
+
+Browser assets, including the Material Icons font, are served locally under a
+Content Security Policy. The HTTPS proxy enables HSTS. Login attempts are limited
+by IP and account, and unknown-account failures perform password hashing work.
+Member edits reject invalid IDs, unsupported roles, and unexpected fields before
+database access. See [security upgrade and launch status](SECURITY.md) for the
+remaining phases and requirements; these controls do not constitute launch approval.
+
 GitHub Actions installs frozen dependencies, builds both projects, validates deployment shell syntax, and runs frontend, safety and billing tests. Angular's Vitest checks cover billing form validation, duplicate-submit prevention, refunds, draft cancellation, SVG rendering and authentication headers. Business-rule coverage includes billing-date boundaries, grace periods, payment allocation, staff blocks, review isolation, calendar averages, and the waiver preview gate. Additional tests cover reports, directory behavior, and member isolation.
 
 For a checkout with Node and pnpm available:

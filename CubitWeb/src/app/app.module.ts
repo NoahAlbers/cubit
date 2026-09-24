@@ -49,7 +49,6 @@ import { AddTransactionComponent } from './components/add-transaction/add-transa
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
 import { AuthInterceptor } from './services/AuthInterceptor';
 import { UploadFileService } from './services/upload-service.service';
-import { QrComponent } from './components/qr/qr.component';
 import { AuthService } from './services/security/auth.service';
 import { PlanService } from './services/plan.service';
 import { KeyService } from './services/key.service';
@@ -72,7 +71,6 @@ import { AccessLogService } from './services/access-log.service';
         AddKeyComponent,
         AddTransactionComponent,
         AccessLogComponent,
-        // QrComponent
     ],
     bootstrap: [AppComponent], imports: [AppRoutingModule,
         AppMaterialModule,

@@ -16,6 +16,10 @@ import { AppDataSource } from '../app'
 import { billingLedger, membershipStatus, day } from '../billing/ledger'
 import { ensureBilling } from '../billing/store'
 
+// Fixed cost-12 hash of a discarded random password. Missing/unprovisioned
+// accounts must still perform password work rather than expose their existence.
+const DUMMY_PASSWORD_HASH = '$2b$12$etWikrT3xEJPL7DXZ..CDuATVnJVB83CY7WMf64hktKUa/B.E7xWe'
+
 export enum ROLES {
   MEMBER = 'member',
   ADMIN = 'admin',
@@ -95,8 +99,14 @@ export class Member {
     email: string,
     password: string
   ): Promise<Member> {
+    const started = performance.now()
     const member = await AppDataSource.manager.findOneBy(Member, { email })
-    if (!member || !await compare(password, member.password)) throw new Error('Invalid email or password')
+    const hasPassword = !!member && /^\$2[aby]\$\d{2}\$/.test(member.password || '')
+    const matches = await compare(password, hasPassword ? member!.password : DUMMY_PASSWORD_HASH)
+    // Imported accounts have different bcrypt costs. Equalize ordinary failures
+    // as well as running bcrypt; the request limiter bounds this extra work.
+    await new Promise(resolve => setTimeout(resolve, Math.max(0, 400 - (performance.now() - started))))
+    if (!member || !hasPassword || !matches) throw new Error('Invalid email or password')
     return member
   }
   public async GetMemberByEmail(email: string): Promise<Member> {

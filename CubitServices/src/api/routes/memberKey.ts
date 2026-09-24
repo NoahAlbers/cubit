@@ -5,18 +5,17 @@ import { fail, reasonText } from '../../billing/payments'
 import express from 'express'
 import { randomUUID } from 'crypto'
 import { MemberKey } from '../../entity/memberKey'
-import { VerifyLoggedIn } from '../common/check-auth'
 import { AppDataSource } from '../../app'
 import { memberActivity } from '../../billing/member-activity'
 
 const router = express.Router()
 
-router.get('/memberActivity/:memberId', VerifyLoggedIn, async (req, res, next) => {
+router.get('/memberActivity/:memberId', async (req, res, next) => {
   try { res.json(await memberActivity(AppDataSource.manager, req.params.memberId)) }
   catch (error) { next(error) }
 })
 
-router.get('/:Id', VerifyLoggedIn, async (req, res) => {
+router.get('/:Id', async (req, res, next) => {
   AppDataSource.manager
     .findOneOrFail(MemberKey, {
       where: { id: req.params.Id },
@@ -26,12 +25,11 @@ router.get('/:Id', VerifyLoggedIn, async (req, res) => {
       return res.status(200).json(memberkey)
     })
     .catch((err) => {
-      console.log(err)
-      return res.status(500).json({ error: err })
+      next(err)
     })
 })
 
-router.post('/', VerifyLoggedIn, async (req,res,next)=>{
+router.post('/', async (req,res,next)=>{
   try {
     const b=req.body, serial=typeof b.serialNumber==='string'?b.serialNumber.trim():''
     if(typeof b.id!=='string'||!b.id||b.id.length>36||!serial||serial.length>100||!['Active','Inactive'].includes(b.status)||typeof b.memberId!=='string')fail('Enter a fob serial number, member and valid status.')
@@ -53,18 +51,18 @@ router.post('/', VerifyLoggedIn, async (req,res,next)=>{
   } catch(e){next(e)}
 })
 
-router.get('/memberKeys/:memberId', VerifyLoggedIn, (req, res) => {
+router.get('/memberKeys/:memberId', (req, res, next) => {
   AppDataSource.manager
     .find(MemberKey, { where: { member: { id: req.params.memberId } } })
     .then((memberkeys) => {
       res.status(200).json(memberkeys)
     })
     .catch((err) => {
-      res.status(500).send('error:' + err)
+      next(err)
     })
 })
 
-router.delete('/:keyId', VerifyLoggedIn, async(req,res,next)=>{
+router.delete('/:keyId', async(req,res,next)=>{
   try {
     const reason=reasonText(req.body.reason)
     await AppDataSource.transaction(async manager=>{

@@ -8,8 +8,8 @@ and some cross-references say nine). Work follows the numbered phases below.
 
 | Phase | Scope | Status |
 | --- | --- | --- |
-| 1 | Patched runtime dependencies, dependency alerts, CI audits | Implemented; deployment verification pending |
-| 2 | Headers, login hardening, legacy-route validation and removal | Pending |
+| 1 | Patched runtime dependencies, dependency alerts, CI audits | Verified locally and in CI; review deployed and healthy |
+| 2 | Headers, login hardening, legacy-route validation and removal | Implemented; verification in progress |
 | 3 | Node 22 and MySQL 8.4 alignment | Pending |
 | 4 | Revocable sessions, account recovery, MFA, identity cleanup | Pending |
 | 5 | Backup confidentiality, immutable offsite recovery, DocuSeal boundary | Pending; offsite storage not configured |

@@ -40,6 +40,7 @@ runuser -u ubuntu -- bash -c '
   node tests/local-safety.cjs
   node tests/hosted-safety.cjs
   node tests/hosted-demo.cjs
+  node tests/security-hardening.cjs
   node tests/remembered-greeting.cjs
   node tests/login-greeting-integration.cjs
   node tests/billing.cjs

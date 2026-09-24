@@ -59,7 +59,7 @@ async function main() {
     assert.equal(JSON.parse(health.body).databaseReady, false)
     const home = await request(port, '/')
     assert.equal(home.status, 200)
-    assert.equal(home.headers['content-security-policy'], "connect-src 'self'")
+    assert.equal(home.headers['content-security-policy'], "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; connect-src 'self'")
     assert.match(home.body, /Cubit/)
     for (const route of ['/memberlist', '/member/demo-id', '/accessLog']) {
       const navigation = await request(port, route, 'GET', { Accept: 'text/html' })

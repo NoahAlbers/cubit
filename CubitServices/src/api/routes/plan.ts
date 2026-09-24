@@ -1,5 +1,4 @@
 import { recordAudit, snapshot, planFields } from '../../staff/audit'
-import { paypalTransactions } from './../../entity/PaypalTransaction'
 import { AppDataSource } from './../../app'
 import express from 'express'
 import { randomUUID } from 'crypto'
@@ -12,25 +11,25 @@ import { sortPlans } from '../../billing/plan-order'
 
 const router = express.Router()
 
-router.get('/', (req, res) => {
+router.get('/', (req, res, next) => {
   AppDataSource.manager
     .find(Plan, { where: req.query.available === 'true' ? { available: true } : {}, order: { monthlyCost: 'ASC', name: 'ASC' } })
     .then((planList) => {
       res.status(200).json(sortPlans(planList))
     })
     .catch((err) => {
-      return res.status(500).json({ error: err })
+      next(err)
     })
 })
 
-router.get('/:Id', async (req, res) => {
+router.get('/:Id', async (req, res, next) => {
   AppDataSource.manager
     .findOneOrFail(MemberPlan, { where: { id: req.params.Id } })
     .then((memberPlan: MemberPlan) => {
       return res.status(200).json(memberPlan)
     })
     .catch((err) => {
-      return res.status(500).json({ error: err })
+      next(err)
     })
 })
 
@@ -73,17 +72,6 @@ router.post('/memberplan', async (req, res, next) => {
   })
   res.json(saved)
   } catch (err) { next(err) }
-})
-
-router.get('/:memberId', (req, res) => {
-  AppDataSource.manager
-    .find(MemberPlan, { where: { member: { id: req.params.memberId } } })
-    .then((memberPlans) => {
-      res.status(200).json(memberPlans)
-    })
-    .catch((err) => {
-      res.status(500).send('error:' + err)
-    })
 })
 
 module.exports = router
