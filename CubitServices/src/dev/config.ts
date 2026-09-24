@@ -3,7 +3,7 @@ import path from 'path'
 
 // Deliberately never load the production .env or .env.prod files.
 if (!['hosted-review', 'hosted-demo'].includes(process.env.CUBIT_MODE || '')) {
-  dotenv.config({ path: path.resolve(__dirname, '../../.env.local') })
+  dotenv.config({ path: path.resolve(__dirname, '../../.env.local'), quiet: true })
 }
 
 export function readLocalConfig(env: NodeJS.ProcessEnv) {
