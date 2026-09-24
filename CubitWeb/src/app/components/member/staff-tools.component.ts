@@ -39,13 +39,13 @@ export class StaffToolsComponent implements OnChanges {
   @Input() memberId=''; @Input() returnTo='/memberlist'; @Output() changed=new EventEmitter<void>(); @Output() ready=new EventEmitter<void>();
   notePage=1;notePages=1;noteTotal=0;notesLoading=false;expandedNotes=new Set<string>();private loadedMember='';
   toggleNote(id:string){if(this.expandedNotes.has(id))this.expandedNotes.delete(id);else this.expandedNotes.add(id);}
-  changeNotePage(page:number){if(this.notesLoading||page<1||page>this.notePages)return;this.notePage=page;this.load();}
+  changeNotePage(page:number){if(this.notesLoading||page<1||page>this.notePages)return;this.load(page);}
   notes:any[]=[]; ops:any; note=''; opsReason=''; busy=false; error=''; message='';
   constructor(private http:HttpClient){}
   ngOnChanges(){if(this.memberId!==this.loadedMember){this.notePage=1;this.notes=[];this.ops=null;this.expandedNotes.clear();this.loadedMember=this.memberId;}if(this.memberId && this.memberId!=='New')this.load();}
-  load(){
-    this.notesLoading=true;const memberId=this.memberId;
-    forkJoin({notes:this.http.get<any>('/api/cubit/members/'+memberId+'/notes?page='+this.notePage),ops:this.http.get<any>('/api/cubit/members/'+this.memberId+'/operations')})
+  load(page=this.notePage){
+    this.notesLoading=true;this.error='';const memberId=this.memberId;
+    forkJoin({notes:this.http.get<any>('/api/cubit/members/'+memberId+'/notes?page='+page),ops:this.http.get<any>('/api/cubit/members/'+this.memberId+'/operations')})
       .subscribe({next:r=>{if(memberId!==this.memberId)return;this.notesLoading=false;this.notes=r.notes.rows;this.notePage=r.notes.page;this.notePages=r.notes.pages;this.noteTotal=r.notes.total;this.expandedNotes.clear();if(!this.ops||(!this.opsReason&&this.ops.accessHold===this.originalHold)){this.ops=r.ops;this.originalHold=!!r.ops.accessHold;}this.ready.emit();},error:e=>{if(memberId!==this.memberId)return;this.notesLoading=false;this.error=e.error?.message||'Could not load staff notes and account controls.';this.ready.emit();}});
   }
   addNote(){if(this.busy)return;this.busy=true;this.error='';this.message='';
