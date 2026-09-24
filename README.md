@@ -145,7 +145,7 @@ Application source, assets, tests, and development tools belong in Git. Database
 | Area | Implementation |
 | --- | --- |
 | Staff interface and member portal | Angular 22, Angular Material 22 and TypeScript 6 |
-| API | Express and TypeScript |
+| API | Express 5, TypeORM 1 and TypeScript 6 |
 | Persistence | MySQL with TypeORM |
 | Authentication | Password hashing, signed sessions, and staff/member API permission checks |
 | Hosted review | Node 22, systemd, and Caddy HTTPS |
@@ -161,7 +161,7 @@ Application source, assets, tests, and development tools belong in Git. Database
 | `deploy/` | Hosted-review service and deployment scripts |
 | `.private/` | Local-only tools, settings, data, archived notes, and backups; excluded from Git |
 
-Existing local database names and legacy export formats remain compatible. They are internal identifiers, not instructions to connect to the operational server. Original private archives remain unchanged for comparison. Runtime/dependency modernization, reviewed database migrations, and a full production security review are still required before operational use.
+Existing local database names and legacy export formats remain compatible. They are internal identifiers, not instructions to connect to the operational server. Original private archives remain unchanged for comparison. Current dependency versions and the TypeScript/Node compatibility constraints are documented in [Dependency maintenance](DEPENDENCIES.md). Versioned operator migrations replace startup schema changes. The remaining production requirements, including independent security review, are tracked in [the pre-launch checklist](PRE-LAUNCH.md).
 
 ## Run locally on Windows
 
