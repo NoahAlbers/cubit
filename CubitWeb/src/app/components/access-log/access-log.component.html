@@ -31,7 +31,7 @@
     <div class="page-settings"><span>{{firstRow}}–{{lastRow}} of {{total}} events · Page {{page}} of {{pages}}</span><label>Events per page<select [attr.aria-label]="'Events per page ('+position+')'" [(ngModel)]="pageSize" (ngModelChange)="apply()">@for (size of sizes; track size) {
     <option [ngValue]="size">{{size}}</option>
   }</select></label></div>
-  <nav class="page-buttons" [attr.aria-label]="'Access log pages ('+position+')'"><button class="secondary" aria-label="First page" [disabled]="page===1" (click)="go(1)"><app-arrow name="first-page"></app-arrow> First</button><button class="secondary" aria-label="Previous page" [disabled]="page===1" (click)="go(page-1)"><app-arrow name="chevron-left"></app-arrow> Prev</button>@for (p of pageNumbers; track p) {
+  <nav class="page-buttons" [attr.aria-label]="'Access log pages ('+position+')'">@if (page > 1) {<button class="secondary" aria-label="First page" [disabled]="page===1" (click)="go(1)"><app-arrow name="first-page"></app-arrow> First</button><button class="secondary" aria-label="Previous page" [disabled]="page===1" (click)="go(page-1)"><app-arrow name="chevron-left"></app-arrow> Prev</button>}@for (p of pageNumbers; track p) {
   <button class="page-number" [class.primary]="p===page" [class.secondary]="p!==page" [attr.aria-label]="'Page '+p" [attr.aria-current]="p===page?'page':null" [disabled]="p===page" (click)="go(p)">{{p}}</button>
   }<button class="secondary" aria-label="Next page" [disabled]="page===pages" (click)="go(page+1)">Next <app-arrow name="chevron-right"></app-arrow></button><button class="secondary" aria-label="Last page" [disabled]="page===pages" (click)="go(pages)">Last <app-arrow name="last-page"></app-arrow></button></nav>
 </div>

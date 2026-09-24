@@ -128,8 +128,10 @@
       <option [ngValue]="size">{{size}}</option>
     }</select></label></div>
     <nav class="page-buttons" [attr.aria-label]="'Member pages ('+position+')'">
+      @if (data.page > 1) {
       <button class="secondary" aria-label="First page" title="First page" [disabled]="loading || data.page===1" (click)="goToPage(1)"><app-arrow name="first-page"></app-arrow> First</button>
       <button class="secondary" aria-label="Previous page" title="Previous page" [disabled]="loading || data.page===1" (click)="goToPage(data.page-1)"><app-arrow name="chevron-left"></app-arrow> Prev</button>
+      }
       @for (p of pageNumbers; track p) {
         <button class="page-number" [class.primary]="p===data.page" [class.secondary]="p!==data.page" [attr.aria-current]="p===data.page?'page':null" [attr.aria-label]="'Page '+p" [disabled]="loading || p===data.page" (click)="goToPage(p)">{{p}}</button>
       }
