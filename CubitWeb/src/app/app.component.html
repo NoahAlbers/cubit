@@ -36,10 +36,16 @@
           <a title="Billing history" routerLink="/portal/billing" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/reports.svg" alt=""> <span class="nav-text">Billing history</span></a>
           <a title="My waivers" routerLink="/portal/waivers" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/waiver.svg" alt=""> <span class="nav-text">My waivers</span></a>
           <a title="My details" routerLink="/portal/profile" routerLinkActive="selected" ariaCurrentWhenActive="page"><img class="nav-icon" src="assets/icons/settings.svg" alt=""> <span class="nav-text">My details</span></a>
-          @if (auth.isStaff) {
-            <a title="Staff workspace" [routerLink]="navigation.target('/memberlist')" [queryParams]="navigation.query('/memberlist')"><app-arrow name="arrow-left"></app-arrow> <span class="nav-text">Staff workspace</span></a>
-          }
         </nav>
+      }
+      @if(auth.isStaff){
+        <div class="sidebar-portal-switch" (pointerover)="previewPortal($event)" (focusin)="previewPortal($event)" (mouseleave)="leaveNavigation()" (focusout)="leaveNavigation()">
+          @if(!portalView){
+            <a title="My portal · Member view" routerLink="/portal"><img class="nav-icon" src="assets/icons/portal.svg" alt=""><span class="nav-text"><strong>My portal</strong><small>Member view</small></span></a>
+          } @else {
+            <a title="Staff workspace" [routerLink]="navigation.target('/memberlist')" [queryParams]="navigation.query('/memberlist')"><app-arrow name="arrow-left"></app-arrow><span class="nav-text"><strong>Staff workspace</strong><small>Return to staff tools</small></span></a>
+          }
+        </div>
       }
       @if(compactNavigation&&hoverLabel){<div class="nav-hover-label" role="tooltip" [style.top.px]="flyoutTop" (mouseenter)="keepNavigation()" (mouseleave)="leaveNavigation()">{{hoverLabel}}</div>}
       <button class="sidebar-toggle" (click)="toggleSidebar()" [attr.aria-label]="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'" [attr.title]="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"><app-arrow [name]="sidebarCollapsed ? 'chevron-right' : 'chevron-left'"></app-arrow><span>Collapse sidebar</span></button>

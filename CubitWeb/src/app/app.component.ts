@@ -44,7 +44,7 @@ export class AppComponent implements OnInit {
     {label:'Audit log',icon:'audit',path:'/audit'},
     {label:'Reports',icon:'reports',path:'/reports'},
     {id:'settings',label:'Settings & automation',icon:'settings',path:'/automation',children:[{label:'Billing & processing',path:'/automation'},{label:'Plan catalog',path:'/plans'},{label:'Backups & recovery',path:'/automation',fragment:'backups'}]},
-    {label:'My portal',icon:'portal',path:'/portal'},
+
   ];
   constructor(public organization:OrganizationService,public auth: AuthService, public router: Router, private http: HttpClient, public navigation:ListNavigationService) {
     try {const saved=JSON.parse(localStorage.getItem('cubit.navigation')||'null');if(saved){this.sidebarCollapsed=saved.compact===true;for(const id of ['members','settings'])if(typeof saved.groups?.[id]==='boolean')this.expandedGroups[id]=saved.groups[id];}}catch{}
