@@ -266,11 +266,15 @@ export class MemberComponent implements OnInit, OnDestroy {
       .pipe(take(1))
       .subscribe((data) => {
         this.openPlan = false;
-        this.memberPlans.data = data;
+        this.memberPlans.data = [...data].sort((a,b)=>{
+          const aEnd=a.finalBillingDate||a.endDate,bEnd=b.finalBillingDate||b.endDate;
+          if(!aEnd&&bEnd)return -1;if(aEnd&&!bEnd)return 1;
+          return String(bEnd||b.startDate).localeCompare(String(aEnd||a.startDate))||String(b.startDate).localeCompare(String(a.startDate))||a.id.localeCompare(b.id);
+        });
         this.sectionLoaded('plans');
         //console.log('plans', data);
         data.forEach((record) => {
-          if (!record.endDate) {
+          if (!record.endDate&&!record.finalBillingDate) {
             this.openPlan = true;
           }
         });
