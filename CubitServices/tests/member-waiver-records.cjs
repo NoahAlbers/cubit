@@ -1,0 +1,26 @@
+const assert=require('node:assert/strict');
+module.exports=async({request,db,member,other,staff})=>{
+ const {publishWaiver}=require('../src/waivers/store');
+ const {uploadDocument}=require('../src/waivers/documents');
+ const {WaiverDocument}=require('../src/entity/waiverDocument');
+ const form={name:'Member records fixture',description:'Synthetic nonbinding test only',provider:'demo',required:false,demoText:'Not a legal waiver.'};
+ const waiver=await publishWaiver(undefined,form,staff.email);
+ const pdf=Buffer.from('%PDF-1.4\nSynthetic fixture only\n%%EOF');
+ const own=await uploadDocument(member.id,waiver.version.id,pdf,'member.pdf',staff,true);
+ const foreign=await uploadDocument(other.id,waiver.version.id,pdf,'other.pdf',staff,true);
+ const template=await uploadDocument(null,null,pdf,'template.pdf',staff,true);
+ await db.manager.update(WaiverDocument,template.id,{versionId:waiver.version.id});
+ const read=async()=>{const r=await request('/api/waivers/members/'+member.id);assert.equal(r.status,200);return r.data;};
+ let data=await read(),record=data.records.find(w=>w.version.id===waiver.version.id);
+ assert.equal(record.status,'Needs review');assert.equal(record.canUpload,false);
+ assert.deepEqual(record.documents.map(d=>d.id),[own.id]);
+ assert.ok(data.documents.every(d=>d.memberId===member.id));
+ assert.ok(!JSON.stringify(data).includes(foreign.id));assert.ok(!JSON.stringify(data).includes(template.id));
+ const accepted=await request('/api/waivers/documents/'+own.id+'/review',{status:'Accepted',reason:'Synthetic review only',revision:own.revision});assert.equal(accepted.status,200);
+ data=await read();record=data.records.find(w=>w.version.id===waiver.version.id);assert.equal(record.complete,true);assert.equal(record.canUpload,false);
+ const updated=await publishWaiver(waiver.id,{...form,revision:waiver.revision},staff.email);
+ data=await read();assert.equal(data.records.find(w=>w.version.id===waiver.version.id).current,false);
+ assert.equal(data.records.find(w=>w.version.id===updated.version.id).canUpload,true);
+ assert.ok(data.records.find(w=>w.version.id===waiver.version.id).documents.some(d=>d.id===own.id),'Superseded waiver retains member documents');
+ console.log('PASS: member waiver records exclude templates and other accounts, preserve old versions, and distinguish unsigned, pending and completed records.');
+};

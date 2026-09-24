@@ -447,3 +447,10 @@ select:not([multiple]):not([size]){appearance:none;-webkit-appearance:none;paddi
 .member-page .stat strong{margin-top:4px;line-height:1.15}
 .member-page .stat strong.balance-settled{color:#183d31}
 .member-page .stat strong.balance-owing{color:#572b30}
+
+.member-waivers .section-heading{flex-wrap:wrap;gap:10px}
+.member-waiver-record{border-top:1px solid var(--line)}
+.waiver-summary{width:100%;background:white;border:0;border-radius:0;text-align:left;justify-content:flex-start;padding:14px 0;white-space:normal;gap:10px;color:var(--ink)}
+.waiver-summary>span:first-child{flex:1;min-width:0}.waiver-summary b{overflow-wrap:anywhere}.waiver-summary .badge{flex-shrink:0}.waiver-summary app-arrow{flex-shrink:0}
+.waiver-record-content{padding:0 0 16px}.waiver-record-content .waiver-files{margin:0}.waiver-record-content .waiver-upload{margin-top:0}
+@media(max-width:480px){.waiver-summary{flex-wrap:wrap}.waiver-summary>span:first-child{flex-basis:65%}}

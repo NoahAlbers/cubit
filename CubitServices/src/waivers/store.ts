@@ -43,7 +43,7 @@ function publicVersion(v: WaiverVersion) {
     createdAt: v.createdAt,
   };
 }
-export async function memberWaivers(memberId: string) {
+export async function memberWaivers(memberId: string, includeTemplates = true) {
   const [waivers, versions, signatures] = await Promise.all([
     AppDataSource.manager.find(Waiver),
     AppDataSource.manager.find(WaiverVersion),
@@ -65,7 +65,7 @@ export async function memberWaivers(memberId: string) {
       };
     });
   const allDocuments = await AppDataSource.manager.find(WaiverDocument, {
-    where: [{ memberId }, { source: 'template' }],
+    where: includeTemplates ? [{ memberId }, { source: 'template' }] : { memberId },
     order: { createdAt: 'DESC' },
   });
   const documents = allDocuments
@@ -82,8 +82,44 @@ export async function memberWaivers(memberId: string) {
         (d) => d.memberId === memberId && d.versionId === w.version.id && d.status === 'Accepted',
       ),
   }));
+  const records = versions
+    .filter(
+      (v) =>
+        items.some((w) => w.version.id === v.id) ||
+        signatures.some((s) => s.versionId === v.id) ||
+        documents.some((d) => d.memberId === memberId && d.versionId === v.id),
+    )
+    .map((v) => {
+      const currentWaiver = items.find((w) => w.version.id === v.id);
+      const signature = signatures.find((s) => s.versionId === v.id);
+      const files = documents.filter((d) => d.memberId === memberId && d.versionId === v.id);
+      const complete = signature?.status === 'Signed' || files.some((d) => d.status === 'Accepted');
+      const pending = files.some((d) => d.status === 'Pending review');
+      return {
+        version: publicVersion(v),
+        current: !!currentWaiver,
+        required: currentWaiver?.required || false,
+        signature: signature ? publicSignature(signature) : null,
+        documents: files,
+        complete,
+        status: pending
+          ? 'Needs review'
+          : complete
+            ? 'Complete'
+            : files.some((d) => d.status === 'Rejected')
+              ? 'Needs replacement'
+              : 'Needs signature',
+        canUpload: !!currentWaiver && !complete && !pending,
+      };
+    })
+    .sort(
+      (a, b) =>
+        Number(b.current) - Number(a.current) ||
+        new Date(b.version.createdAt).getTime() - new Date(a.version.createdAt).getTime(),
+    );
   return {
     current: items,
+    records,
     documents,
     history: signatures
       .filter((s) => s.status === 'Signed')

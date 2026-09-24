@@ -183,7 +183,7 @@ router.post(
 );
 router.get(
   '/members/:id',
-  route(async (req, res) => res.json(await memberWaivers(req.params.id))),
+  route(async (req, res) => res.json(await memberWaivers(req.params.id, false))),
 );
 router.post(
   '/signatures/:id/sync',

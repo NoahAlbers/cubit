@@ -8,6 +8,7 @@ import {AppModule} from './app.module';
 import {LoginComponent} from './components/admin/login/login.component';
 import {DirectoryComponent} from './components/directory/directory.component';
 import {MemberComponent} from './components/member/member.component';
+import {MemberWaiversComponent} from './components/member/member-waivers.component';
 import {PortalComponent} from './components/portal/portal.component';
 import {AuthService} from './services/security/auth.service';
 import {MemberService} from './services/member.service';
@@ -114,6 +115,23 @@ describe('Core workflow rendering and submissions', () => {
     expect(await pending).toBe(true);
     expect(component.hasContactChanges()).toBe(false);
     fixture.destroy();
+  });
+
+  it('opens only the selected waiver and offers uploads only for unsigned current records', () => {
+    const fixture=TestBed.createComponent(MemberWaiversComponent),http=TestBed.inject(HttpTestingController);
+    fixture.componentRef.setInput('memberId','fixture');fixture.detectChanges();
+    const record=(id:string,status:string,canUpload:boolean)=>({version:{id,name:id,number:1},current:true,required:true,status,canUpload,documents:status==='Complete'?[{id:'file',filename:'signed.pdf',status:'Accepted',source:'staff upload'}]:[]});
+    http.expectOne('/api/waivers/members/fixture').flush({records:[record('Unsigned','Needs signature',true),record('Signed','Complete',false),record('Pending','Needs review',false)]});fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.waiver-upload')).toBeNull();
+    fixture.nativeElement.querySelectorAll('.waiver-summary')[0].click();fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.waiver-upload')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.waiver-upload select')).toBeNull();
+    fixture.nativeElement.querySelectorAll('.waiver-summary')[1].click();fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.waiver-upload')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('signed.pdf');
+    fixture.nativeElement.querySelectorAll('.waiver-summary')[2].click();fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.waiver-upload')).toBeNull();
+    expect(fixture.nativeElement.textContent).not.toContain('signed.pdf');fixture.destroy();
   });
 
   it('renders portal contact fields and acknowledges a save only when the API succeeds', async () => {
