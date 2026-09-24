@@ -1,3 +1,8 @@
+import { seedLocalData } from '../dev/seed'
+import { seedScenarios } from '../dev/seed-scenarios'
+import { seedPlanCatalog } from '../dev/seed-plan-catalog'
+import { initializeBilling } from '../billing/store'
+import { seedWaivers } from '../dev/seed-waivers'
 import { hash } from 'bcrypt'
 import { AppDataSource, assertSchemaReady } from '../database'
 import { localConfig } from '../dev/config'
@@ -14,17 +19,17 @@ export async function initializeHostedDemo(password: string) {
   try {
     await assertSchemaReady(AppDataSource)
     if(await AppDataSource.manager.count(Member))throw Error('Demo initialization requires an empty member table; existing data was not changed.')
-    await (await import('../dev/seed')).seedLocalData()
-    await (await import('../dev/seed-scenarios')).seedScenarios()
-    await (await import('../dev/seed-plan-catalog')).seedPlanCatalog()
-    await (await import('../billing/store')).initializeBilling()
+    await seedLocalData()
+    await seedScenarios()
+    await seedPlanCatalog()
+    await initializeBilling()
     await AppDataSource.transaction(async manager=>{
       await manager.createQueryBuilder().update(Member).set({password:'Not Set'}).execute()
       await manager.update(Member,demoMemberId,{email:demoEmail,paypalEmail:demoEmail,
         firstName:'Demo',lastName:'Administrator',role:ROLES.ADMIN,password:await hash(password,12)})
       await manager.update(OperationsSettings,'default',{dailyEnabled:false})
     })
-    await (await import('../dev/seed-waivers')).seedWaivers()
+    await seedWaivers()
     await AppDataSource.query("INSERT INTO cubit_demo_manifest (id, complete) VALUES ('synthetic-v1', TRUE)")
     console.log('Synthetic demo initialized. No imported database was accessed.')
   } finally { await AppDataSource.destroy() }
