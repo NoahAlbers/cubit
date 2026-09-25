@@ -113,6 +113,7 @@ app.use((req, res, next) => {
 app.use('/api/organization', require('./api/routes/organization'));
 app.use('/api/account', require('./api/routes/account-security'));
 app.use('/api/backups', require('./api/routes/backups'));
+app.use('/api/system-health', require('./api/routes/system-health'));
 app.use('/api/portal', require('./api/routes/portal'));
 app.use('/api/waivers', require('./api/routes/waivers'));
 app.use('/api/cubit', require('./api/routes/cubit'));

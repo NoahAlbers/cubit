@@ -331,3 +331,7 @@ Run Cubit on its own VPS so member data and credentials remain separate from oth
 ### A makerspace address for Cubit
 
 Publish the operational application at **`cubit.melbournemakerspace.com`**, subject to domain-owner coordination and DNS configuration, with HTTPS and a reviewed transition from testing. This is a planned address, not the current review URL.
+
+### System health
+
+Settings & Automation includes read-only, manually refreshed diagnostics for VPS storage, memory, CPU load, database responsiveness, backup-worker heartbeat, recovery checks and the existing public HTTPS probe. Results are cached for 30 seconds. The synthetic demo hides real server diagnostics. This dashboard does not send alerts or replace independent monitoring when the application is unavailable.

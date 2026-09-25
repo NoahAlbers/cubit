@@ -28,6 +28,7 @@ import { StaffToolsComponent } from './components/member/staff-tools.component';
 import { EditChargeComponent } from './components/member/edit-charge.component';
 import { ReportsComponent } from './components/reports/reports.component';
 import { AutomationComponent } from './components/automation/automation.component';
+import { SystemHealthComponent } from './components/automation/system-health.component';
 import { BackupsComponent } from './components/automation/backups.component';
 import { PortalComponent } from './components/portal/portal.component';
 import { WaiversComponent } from './components/waivers/waivers.component';
@@ -73,7 +74,7 @@ import { AccessLogService } from './services/access-log.service';
         AddTransactionComponent,
         AccessLogComponent,
     ],
-    bootstrap: [AppComponent], imports: [AccountSecurityComponent, AppRoutingModule,
+    bootstrap: [AppComponent], imports: [SystemHealthComponent, AccountSecurityComponent, AppRoutingModule,
         AppMaterialModule,
         BrowserModule,
         BrowserAnimationsModule,

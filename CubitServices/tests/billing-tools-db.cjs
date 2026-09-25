@@ -26,6 +26,7 @@ async function main(){
  const upgradeStaffTools=async()=>{const runner=db.createQueryRunner();try{await new StaffHistory1790250000006().up(runner);}finally{await runner.release();}};
  await upgradeStaffTools();const legacyCount=await db.manager.count(OperationsAudit);await upgradeStaffTools();assert.equal(await db.manager.count(OperationsAudit),legacyCount,'History migration is idempotent');
  server=await new Promise(resolve=>{const s=app.listen(0,'127.0.0.1',()=>resolve(s))});base=`http://127.0.0.1:${server.address().port}`;
+ await require('./system-health.cjs')({request,staffToken:token,memberToken:jwtHelper.GenerateJWT(existing)});
  await require('./request-schemas.cjs')({request,db,memberId:existing.id});
  await require('./organization-management.cjs')({request,db,administrator:staff,member:existing});
  await require('./grace-reversibility.cjs')({request,db});

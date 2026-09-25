@@ -251,6 +251,8 @@ Target: **Unassigned**. Sign-off: **Pending**.
   upload/download handling, door and payment integration. Run an authorized security
   scan against the release candidate with safe test data; fix and retest findings.
 - [ ] Configure independent health, disk-space and backup-failure monitoring.
+  The Settings & Automation health panel provides cached read-only diagnostics,
+  not out-of-band monitoring or alert delivery. The demo hides real VPS readings.
   Test alert delivery and acknowledgment. Name the on-call person and backup contact,
   with an incident/restore runbook accessible if this VPS is unavailable.
 - [ ] Record final acceptance: release SHA, backup snapshot, recovery evidence,
