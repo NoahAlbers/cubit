@@ -34,7 +34,11 @@ async function main() {
     options[flag] = value
   }
   const envPath = path.resolve(options['--env-file'] || '.env')
-  const env = { ...(fs.existsSync(envPath) ? dotenv.parse(fs.readFileSync(envPath)) : {}), ...process.env }
+  // The scheduled parallel exporter supplies ONLY its dedicated SELECT credential.
+  // Never merge application's credentials into that mode or fall back to .env.
+  const strict = Boolean(process.env.CUBIT_EXPORT_CONFIG_JSON)
+  const env = strict ? JSON.parse(process.env.CUBIT_EXPORT_CONFIG_JSON) : { ...(fs.existsSync(envPath) ? dotenv.parse(fs.readFileSync(envPath)) : {}), ...process.env }
+  if(strict && (env.DATABASE_USERNAME !== 'cubit_export' || env.DATABASE_URI !== 'mysql')) throw Error('Invalid restricted export configuration')
   for (const key of ['DATABASE_URI','DATABASE_NAME','DATABASE_USERNAME','DATABASE_PASSWORD']) if (!env[key]) throw Error('Missing '+key+' in the application environment.')
   const db = await mysql.createConnection({
     host:env.DATABASE_URI, port:Number(env.DATABASE_PORT || 3306), database:env.DATABASE_NAME,
@@ -43,6 +47,7 @@ async function main() {
   })
   let out
   try {
+    if(strict) await db.query('SET SESSION MAX_EXECUTION_TIME=2000')
     const [available] = await db.query('SELECT TABLE_NAME AS name, ENGINE AS engine FROM information_schema.tables WHERE table_schema=DATABASE() AND TABLE_TYPE=\'BASE TABLE\'')
     const mapping = {}
     for (const [key, allowed] of Object.entries(tables)) {

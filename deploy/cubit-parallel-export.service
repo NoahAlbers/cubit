@@ -1,0 +1,11 @@
+[Unit]
+Description=Cubit read-only source snapshot delivery
+After=docker.service network-online.target
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/cubit-export/parallel-source.py
+TimeoutStartSec=100
+Nice=15
+IOSchedulingClass=idle
+MemoryMax=256M
+UMask=0077

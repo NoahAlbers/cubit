@@ -1,0 +1,8 @@
+[Unit]
+Description=Deliver a read-only Tonic snapshot every 15 minutes
+[Timer]
+OnCalendar=*:0/15
+RandomizedDelaySec=20
+Persistent=true
+[Install]
+WantedBy=timers.target
