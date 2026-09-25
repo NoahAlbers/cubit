@@ -9,7 +9,7 @@ No source credentials, member exports or private server addresses belong in this
 Run Cubit as a **read-only mirror with comparison reports**. Staff continue making
 all membership, payment, plan and key changes in Tonic. Cubit receives consistent
 copies of that data and shows where its billing or access calculations disagree.
-Neither system writes back to the other during this stage.
+Cubit never writes back to Tonic during this stage.
 
 Start with a fresh parallel-run database, preserving the current editable review
 copy and the separate synthetic demo. Test edits and generated review charges must
@@ -30,12 +30,51 @@ flowchart LR
 There is no Cubit-to-Tonic, Cubit-to-PayPal or Cubit-to-door control path in this design.
 The export reads Tonic's database locally; it does not call Tonic's application endpoints.
 
+### Optional independent PayPal comparison feed
+
+Read-only source inspection on 2026-09-25 supports a **hybrid** approach: keep the
+Tonic mirror for operational records, and later add an independent PayPal reporting
+reader for reconciliation. This is an optional extension, not an enabled integration.
+Detailed host observations and aggregate counts are retained privately outside Git.
+
+- PayPal's Transaction Search API is a read operation. An independently authorized
+  reader can compare provider records with transactions Tonic has imported without
+  taking over payment collection, subscriptions or Tonic's importer.
+- Use separate credentials with reporting access and verify their effective scope
+  and merchant account before use. Restrict the worker to token acquisition and
+  reporting reads; do not reuse or rotate Tonic's application credentials.
+- Store provider observations separately from the mirrored ledger. A payment seen
+  in both feeds is one payment, not two credits. Unknown payers become comparison
+  exceptions, never automatically created members.
+- Read all pages, use overlapping bounded windows, and reconcile later changes and
+  reversals. PayPal reports may lag by up to three hours, cover only the previous
+  three years, and accept at most a 31-day range per request. A transaction ID alone
+  is not necessarily unique across reporting rows; event identity and balance impact
+  need an explicit mapping. See the [Transaction Search reference](https://developer.paypal.com/api/transaction-search/v1/search-get).
+- A new webhook subscription is not a substitute for this account reconciliation.
+  Webhooks are scoped to the originating app, and some legacy recurring payments
+  are outside the special NVP/SOAP webhook coverage. Preserve existing listeners and
+  verify subscription provenance before planning webhook coverage. See
+  [PayPal's webhook overview](https://developer.paypal.com/api/rest/webhooks).
+
+PayPal does not supply Tonic's manual transactions, staff member edits, key assignments
+or full membership history. Subscription cancellation is also different from the
+staff-defined final billing date. An independent payment reader cannot replace that
+part of the Tonic mirror.
+
+For doors, continue copying recorded events from Tonic. No independent event feed
+has been established, and the installed controller versions have not been inspected.
+A future independent scan feed would require a controller-owned durable queue and
+asynchronous delivery that never blocks a scan, whitelist refresh or exit-button
+handling. Test that design on spare hardware before considering an operational change.
+Do not insert Cubit as a proxy or add synchronous Cubit requests to the live door loop.
+
 ## Which system does what
 
 | Area | During the parallel run | Cubit access |
 | --- | --- | --- |
 | Members, contact details, notes, plans and keys | Staff edit in Tonic | View copied fields that actually exist in the source |
-| PayPal collection, subscription changes and payment import | Existing PayPal/Tonic arrangement continues | View transactions already recorded by Tonic; no second live importer or webhook consumer |
+| PayPal collection, subscription changes and payment import | Existing PayPal/Tonic arrangement continues | Mirror Tonic's transactions; optionally compare a separate reporting-only PayPal feed, never a second operational ledger writer |
 | Door whitelist and access decisions | Existing controllers continue using Tonic | View copied events and compare proposed eligibility; never supply a controller whitelist |
 | Billing and membership status | Tonic remains the operational source | Show Tonic's values and separately labeled Cubit estimates |
 | Unmatched payments and balance cleanup | Record actual changes in Tonic | Identify discrepancies and prepare a correction list; no silent matching or adjustment |
@@ -108,8 +147,10 @@ Add a distinct parallel-run mode before installing a connection to Tonic.
 - Display a persistent **Read-only mirror** indicator and the source snapshot time.
   Explain that actual corrections must be made in Tonic. Hide or disable misleading
   edit controls, with matching API rejection rather than relying on the browser alone.
-- Restrict network access: no PayPal credentials or door-control secrets in this
-  service, no route to controller networks, no outbound mail provider access.
+- Restrict network access: no PayPal credentials or door-control secrets in the
+  mirror web service, no route to controller networks, no outbound mail provider access.
+  If separately approved, isolate the reporting-only PayPal reader in a worker with
+  its own credentials and an allowlist of reporting operations.
 
 **Exit:** tests attempt every business write as both Staff User and Administration;
 all are rejected. Representative GET requests leave business-table hashes unchanged.
@@ -229,6 +270,7 @@ are not lost and two importers do not run simultaneously.
 3. Add sync history/freshness and the source-versus-Cubit comparison report.
 4. Prove all of this with existing private exports and synthetic changes.
 5. Only then arrange the restricted source exporter and scheduled feed with the Tonic operator.
+6. Once the mirror reconciles, optionally add the independent PayPal comparison reader.
 
 No live connection, schedule change, provider setup or controller change is authorized
 by this planning document alone. The next implementation stage should explicitly name
