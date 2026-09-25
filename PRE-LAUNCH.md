@@ -256,6 +256,9 @@ Target: **Unassigned**. Sign-off: **Pending**.
 - [ ] Obtain an independent review of authentication, authorization, member portal,
   upload/download handling, door and payment integration. Run an authorized security
   scan against the release candidate with safe test data; fix and retest findings.
+- [ ] Verify recovery from a Git revision with a compatible database backup.
+  Successful VPS updates now keep only the current code release; immediate rollback
+  remains available during activation, but later rollback requires rebuilding code.
 - [ ] Configure independent health, disk-space and backup-failure monitoring.
   The Settings & Automation health panel provides cached read-only diagnostics,
   not out-of-band monitoring or alert delivery. The demo hides real VPS readings.

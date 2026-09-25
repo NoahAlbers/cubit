@@ -339,3 +339,7 @@ Settings & Automation includes read-only, manually refreshed diagnostics for VPS
 ### Trusted computers
 
 After a successful authenticator or recovery-code sign-in, users may trust their private browser for 30 days. Email and password remain required; only the MFA challenge is skipped. Trust uses an HttpOnly, Secure, SameSite cookie on hosted deployments and a server-side token hash with an absolute expiry. Account settings can forget all trusted computers and end all sessions. Existing sign-out-on-all-devices and credential/role changes also invalidate trust. A trusted-browser sign-in cannot extend or issue new trust without a fresh authenticator verification.
+
+### Release storage
+
+The VPS retains only the current application release after a successful update. The updater keeps the previous release available while activating and checking the new one, then removes inactive code directories under `/opt/cubit/releases`. Cleanup shares the deployment lock, validates paths, and refuses releases referenced by running processes or containing mounts. Cleanup failure leaves the healthy application running and reports an operator warning. Database backups, uploaded documents and secrets are not removed. Returning to older code after a completed update requires rebuilding a revision from Git; GitHub does not replace database backups or a tested data-restoration plan. Operators can preview cleanup with `sudo python3 deploy/prune-releases.py` from a trusted checkout and add `--apply` to remove the listed inactive code releases.

@@ -82,6 +82,11 @@ if activate; then
         continue
       fi
       echo "Activated $revision"
+      # Keep the previous release until activation succeeds, then retain only
+      # current code. Database backups have their own independent retention.
+      if ! python3 "$release/deploy/prune-releases.py" --under-update-lock --apply; then
+        echo 'Release is healthy, but old-code cleanup needs operator attention.' >&2
+      fi
       exit 0
     fi
     sleep 1

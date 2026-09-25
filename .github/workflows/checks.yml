@@ -27,6 +27,7 @@ jobs:
       - run: bash -n deploy/install-build-node.sh
       - run: bash -n deploy/migrate-billing-tools.sh
       - run: python3 deploy/test-backups.py
+      - run: python3 deploy/test-prune-releases.py
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 22.23.3
