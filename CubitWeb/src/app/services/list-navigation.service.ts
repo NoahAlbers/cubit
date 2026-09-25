@@ -1,3 +1,4 @@
+import { ViewportScroller } from '@angular/common';
 import { Injectable, NgZone } from '@angular/core';
 import { Router, NavigationStart, NavigationEnd, Scroll, UrlTree } from '@angular/router';
 import { take } from 'rxjs/operators';
@@ -20,13 +21,17 @@ export class ListNavigationService {
   }
   private positions = new Map<string,number>();
   private pendingScroll?:{path:string;y:number};
-  constructor(private router:Router, private zone:NgZone) {
+  constructor(private router:Router, private zone:NgZone, private viewport:ViewportScroller) {
     router.events.subscribe(event => {
-      if(event instanceof Scroll && this.pendingScroll) {
+      if(event instanceof Scroll) {
         const pending=this.pendingScroll;this.pendingScroll=undefined;
-        // Router scroll restoration runs on the Scroll event, after navigation
-        // resolves. Restore on the next frame so query-only view changes stay put.
-        if(this.path(router.url)===pending.path)requestAnimationFrame(()=>window.scrollTo(0,pending.y));
+        // Own restoration in one place: a view-only query change must never
+        // scroll to the top for a frame before being restored.
+        if(!pending || this.path(router.url)!==pending.path) {
+          if(event.position)this.viewport.scrollToPosition(event.position);
+          else if(event.anchor)this.viewport.scrollToAnchor(event.anchor);
+          else this.viewport.scrollToPosition([0,0]);
+        }
       }
       if(event instanceof NavigationStart && this.isList(router.url)) {
         this.positions.set(router.url,window.scrollY);
