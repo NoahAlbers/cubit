@@ -1,6 +1,6 @@
 # Cubit pre-launch checklist
 
-Last reviewed: **2026-09-24**. **Not cleared for operational launch.**
+Last reviewed: **2026-09-25**. **Not cleared for operational launch.**
 
 This is the release gate for replacing the existing membership system, not a
 feature wish list. The review VPS must keep live doors, PayPal imports and email
@@ -13,6 +13,9 @@ review alone does not approve launch. Owners marked **Unassigned** must be named
 by the makerspace; target dates and sign-off dates must not be invented.
 
 ## Verified foundations
+
+Security follow-up verified by Codex on 2026-09-25 with isolated database/browser regressions, frontend tests, builds, and fresh/existing-schema migration checks: Administration-only backup settings/pruning; account-ID upload quotas and persistent upload limits; demo-waiver compliance isolation; link-only password assignment and reasons for staff email corrections; persistent escalating MFA cooldowns; bounded member-directory access; and malformed portal-input handling. Mandatory staff MFA and protected off-server recovery remain launch gates. Deployment evidence is recorded after release verification.
+
 
 - [x] Patch backend dependencies, remove unused vulnerable packages, add weekly
   dependency updates and CI production audits. Evidence: `ac65a7d`; review verified.

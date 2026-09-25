@@ -80,7 +80,7 @@ Historical membership counts are estimates reconstructed from available billing 
 
 Members can view their status, current plan, charges and payments, and waiver records, and update their own contact and emergency-contact information. The billing-history page is a record of entries without balance, past-due, or total-paid summary cards.
 
-Staff handle sign-in help and contact requests manually. From a member's **Sign-in & staff permissions**, staff can prepare a single-use invitation or password reset link, valid for 24 hours, and share it privately with the verified account owner. Cubit does not send these links automatically. Login credentials currently remain associated with member records.
+Staff handle sign-in help and contact requests manually. From a member's **Sign-in & staff permissions**, staff can prepare a single-use invitation or password reset link, valid for 24 hours, and share it privately with the verified account owner. Cubit does not send these links automatically. Login credentials currently remain associated with member records. Member create/edit endpoints cannot set passwords; use the invitation/reset-link process. Staff corrections to a login email require a reason and revoke existing sessions.
 
 ### Organization and staff administration
 
@@ -110,7 +110,11 @@ Portal login-email changes generate in-app staff notices and remain in the audit
 log. Staff can review and acknowledge them from Staff User Settings. This is
 not yet verification that the member owns the new email address.
 
+Authenticator attempts use a database-backed, per-account cooldown shared by sign-in and account recovery. Five failed attempts trigger five minutes; subsequent failed attempts after cooldown double the wait, up to 24 hours. Accepted codes clear the counter, and restarting the service does not reset it.
+
 ### Digital and uploaded waivers
+
+Demo checkbox signing is restricted to local and synthetic-demo workspaces. Review and production reject demo waiver publication/signing; retained demo signatures do not satisfy compliance there.
 
 Waiver management uses normal staff and member account permissions, with no additional preview password. The foundation includes versioned templates, required and optional documents, signing history, and a view of active members missing required waivers.
 
@@ -118,13 +122,13 @@ Members can sign through a separately hosted DocuSeal signing page or upload a s
 
 Member profiles group each waiver with that member's signed or uploaded records, including historical versions. Selecting an unsigned current waiver opens attachment controls; signed and pending waivers expand to show their associated documents.
 
-With DocuSeal explicitly configured, Cubit verifies completion server-to-server and saves the signed PDF and signing audit certificate in its private database. Pending submissions are checked every five minutes, with retries if downloading fails. Original templates, file hashes, upload dates, review notes, and audit history are retained. Downloads require authentication and are restricted to staff or the owning member. Files are limited to 10 MB each; member-facing forms accept up to five files per upload batch.
+With DocuSeal explicitly configured, Cubit verifies completion server-to-server and saves the signed PDF and signing audit certificate in its private database. Pending submissions are checked every five minutes, with retries if downloading fails. Original templates, file hashes, upload dates, review notes, and audit history are retained. Downloads require authentication and are restricted to staff or the owning member. Files are limited to 10 MB each; member-facing forms accept up to five files per upload batch. Manual uploads share a 250 MB allowance per account ID, regardless of email changes, and a persistent limit of ten attempts per 15 minutes. Existing member uploads are attributed to their account during migration.
 
 Publishing a DocuSeal version requires the same original PDF used in its template, a single signer role, and a required signature field. Cubit fingerprints the document and fields; editing the published template blocks new signing requests until staff clones it and publishes a new version. Existing requests keep their original submission. The synthetic demo stays disconnected from DocuSeal, and its signatures are not legal agreements.
 
 Self-hosted setup uses the free template builder and submission API, without paid embedding. Set `DOCUSEAL_ENABLED=true`, `DOCUSEAL_API_KEY`, `DOCUSEAL_API_URL`, and `DOCUSEAL_PUBLIC_URL` in the private service environment. Hosted review permits only `http://127.0.0.1:3000/api`; its public signing URL must use HTTPS. Keep SMTP unconfigured, submission email/SMS disabled, and DocuSeal on an internal Docker network behind the HTTPS proxy. Credentials, waiver PDFs, and signed records do not belong in Git.
 
-**Settings & Automation → Backups & recovery** controls manual, daily, weekly, or monthly encrypted backups, local retention, and isolated restore tests. The saved-backup inventory shows creation times and captured sizes, supports testing a selected local copy, and lets staff apply local retention after confirmation. New snapshots include both Cubit databases, uploaded waivers, DocuSeal files and SQLite, and recovery requirements; private service secrets require independent custody. An operator connects a private S3-compatible destination with independently protected retention separately; the VPS cannot run remote deletion or pruning. Until then, backups remain local to the VPS. See [backup and recovery operations](deploy/BACKUPS.md) for setup, key custody, and replacement-server recovery. Same-server backups alone do not protect against losing the VPS.
+**Settings & Automation → Backups & recovery** controls manual, daily, weekly, or monthly encrypted backups, local retention, and isolated restore tests. The saved-backup inventory shows creation times and captured sizes, supports testing a selected local copy, and lets Administration apply local retention after confirmation. Only Administration can change backup settings or prune copies; Staff Users can view backups, create a backup, and run recovery checks. New snapshots include both Cubit databases, uploaded waivers, DocuSeal files and SQLite, and recovery requirements; private service secrets require independent custody. An operator connects a private S3-compatible destination with independently protected retention separately; the VPS cannot run remote deletion or pruning. Until then, backups remain local to the VPS. See [backup and recovery operations](deploy/BACKUPS.md) for setup, key custody, and replacement-server recovery. Same-server backups alone do not protect against losing the VPS.
 
 ## Interface and branding
 

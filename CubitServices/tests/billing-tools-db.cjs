@@ -30,6 +30,7 @@ async function main(){
  await require('./organization-management.cjs')({request,db,administrator:staff,member:existing});
  await require('./grace-reversibility.cjs')({request,db});
  await require('./member-waiver-records.cjs')({request,db,member:existing,other:another,staff});
+ await require('./waiver-security-boundaries.cjs')({db,request,base,Member,jwtHelper,staff});
  const drift=require('node:child_process').spawnSync(process.execPath,[require.resolve('typeorm/cli.js'),'migration:generate','--check','-d','dist/database.js',require('node:path').join(require('node:os').tmpdir(),'cubit-ci-schema-drift')],{cwd:require('node:path').resolve(__dirname,'..'),env:process.env,encoding:'utf8',windowsHide:true});
  assert.equal(drift.status,0,'TypeORM migration:generate --check: '+drift.stdout+drift.stderr);
  for(const path of ['/api/cubit/plan-catalog','/api/cubit/payment-matching','/api/cubit/matching-members?q=existing']){assert.equal((await request(path,null,'GET',null)).status,401);assert.equal((await request(path,null,'GET',jwtHelper.GenerateJWT(existing))).status,403);}
@@ -99,7 +100,7 @@ async function main(){
  const portalValues=Object.fromEntries(['firstName','lastName','email','phone','emergencyContact','emergencyEmail','emergencyPhone'].map(k=>[k,contactBefore[k]||'']));
  assert.equal((await request('/api/portal/profile',{...portalValues,phone:'not a phone'},'PUT',jwtHelper.GenerateJWT(existing))).status,400);
  const portalSaved=await request('/api/portal/profile',{...portalValues,phone:'+1 (321) 555-0108'},'PUT',jwtHelper.GenerateJWT(existing));assert.equal(portalSaved.status,200);assert.equal(portalSaved.data.profile.phone,'321-555-0108');
- const password='audit-secret-never-persist';await ok('/member',{id:existing.id,phone:'(321) 555-0109',password},'PUT');
+ const password='audit-secret-never-persist';assert.equal((await request('/member',{id:existing.id,password},'PUT')).status,400);await ok('/member',{id:existing.id,phone:'(321) 555-0109'},'PUT');
  assert.equal((await db.manager.findOneByOrFail(Member,{id:existing.id})).phone,'321-555-0109');
  const fob=await ok('/key',{id:'New',memberId:existing.id,serialNumber:'TEST-FOB-001',status:'Active'});
  assert.equal((await request('/key',{id:'New',memberId:another.id,serialNumber:'test-fob-001',status:'Active'})).status,409,'Duplicate fob assignment');
@@ -128,6 +129,8 @@ async function main(){
  const otherPrefs=await request('/api/cubit/staff/preferences',null,'GET',jwtHelper.GenerateJWT(admin2));assert.equal(otherPrefs.data.preferences.enabled,false,'Preferences isolated per staff member');
  const preview=await ok('/api/cubit/staff/preferences/preview',{});assert.equal(preview.deliveryEnabled,false);assert.deepEqual(preview.results.map(r=>r.decision),['Would alert','Duplicate suppressed','Would alert','Successful entry \u2014 no email','Would alert']);
  await require('./notification-options.cjs')({db,request,ok,Member,jwtHelper});
+ await require('./backup-authorization.cjs')({db,request,ok,Member,jwtHelper});
+ await require('./member-api-security.cjs')({db,request,Member,jwtHelper});
  assert.equal((await request('/api/cubit/audit',{kind:'Forged entry'})).status,404,'Audit has no mutation API');
  // Waivers need normal staff authorization, without an extra preview token.
  assert.equal((await request('/api/waivers',null,'GET',null)).status,401);
@@ -157,7 +160,8 @@ async function main(){
  const commonLong=require('fs').readFileSync(require('path').join(__dirname,'../src/security/common-passwords.txt'),'utf8').split(/\r?\n/).find(p=>p.length>=12);assert.ok(commonLong);
  assert.equal((await request('/member',{id:existing.id,password:commonLong},'PUT')).status,400,'Long common passwords are rejected');
  assert.equal((await request('/member',{id:existing.id,password:'x'.repeat(73)},'PUT')).status,400,'No silent bcrypt truncation');
- await ok('/member',{id:existing.id,password:'another-strong-fixture-phrase'},'PUT');
+ const resetForPolicy=await require('../src/security/accounts').issueAccountLink(existing.id,staff,'reset');
+ await require('../src/security/accounts').redeemAccountLink(new URLSearchParams(resetForPolicy.path.split('#')[1]).get('token'),'another-strong-fixture-phrase',null);
  assert.equal((await request('/api/portal',null,'GET',oldMemberToken)).status,401,'Password change revokes the old portal session');
  const currentMemberToken=await freshToken(existing.id);
  assert.equal((await request('/api/portal',null,'GET',currentMemberToken)).status,200);
@@ -216,6 +220,7 @@ async function main(){
  assert.ok((await db.manager.findOneByOrFail(AccountMfa,{memberId:mfaMember.id})).secret,'Reset retains MFA enrollment');
  assert.equal((await request('/api/account',null,'GET',firstMfaLogin.data.token)).status,401,'MFA-preserving reset revokes old sessions');
  process.env.REQUIRE_STAFF_MFA='true';await assert.rejects(accounts.authenticateSecondFactor(staff,null));assert.equal((await request('/api/cubit/audit')).status,401,'Mandatory MFA also rejects existing non-MFA staff sessions');delete process.env.REQUIRE_STAFF_MFA;
+ await require('./mfa-throttle.cjs')({db,request,Member,staff});
  const beforeContactChange=await db.manager.findOneByOrFail(Member,{id:existing.id}),contactToken=await freshToken(existing.id);
  const changedProfile={firstName:beforeContactChange.firstName,lastName:beforeContactChange.lastName,email:'updated.login@example.test',phone:'321-555-0109',emergencyContact:'',emergencyEmail:'',emergencyPhone:''};
  assert.equal((await request('/api/portal/profile',changedProfile,'PUT',contactToken)).status,200);

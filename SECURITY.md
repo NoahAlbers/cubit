@@ -48,3 +48,9 @@ Imported contact-email collisions require staff reconciliation before a unique
 normalized-email index can be installed. Ambiguous login addresses fail closed;
 accounts and financial history must not be merged automatically. The generated
 portal test login is intentionally retained for testing at the owner's request.
+
+## September 25 security follow-up
+
+Backup settings and retention cleanup require Administration. Upload quotas use immutable account IDs, with a database-backed upload-attempt limit. Demo waivers cannot be published, signed, or counted toward compliance outside local and synthetic-demo modes. Legacy member writes reject passwords and require reasons for login-email changes. Authenticator guessing limits persist across restarts, escalate after failures, and apply to recovery as well as sign-in. The unbounded member list is retired in favor of the paginated directory; profile responses omit authentication internals. Malformed portal profile requests return 400.
+
+Synthetic regression tests cover these boundaries, concurrent upload quota checks, email-change attempts, restart persistence, and retained historical records. Migration 12 adds uploader attribution and persistent throttle storage without deleting documents. Operational MFA enrollment, email ownership verification, independent security review, and off-server recovery remain required in PRE-LAUNCH.md.

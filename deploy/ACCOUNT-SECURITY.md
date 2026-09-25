@@ -41,3 +41,9 @@ Imported duplicate login emails must be reconciled by staff before imposing the
 unique normalized-email index. Authentication and account-link issuance reject
 ambiguous addresses; they do not merge records or rewrite billing history.
 The owner requested retaining the generated portal testing login on the review.
+
+## Persistent authenticator cooldown
+
+After a correct password or valid recovery link, authenticator attempts share a database-backed account budget. Five failures trigger a five-minute wait. Each subsequent failed attempt after the wait doubles the cooldown, up to 24 hours. Blocked requests return 429 and Retry-After without extending the wait. An accepted code clears the failure state; 24 hours without an admitted attempt resets escalation. Service restarts, a different IP address, and password-reset links do not bypass the cooldown. Recovery codes remain single-use and share this protection.
+
+Member create/edit requests cannot assign a password. Use a scoped invitation/reset link and verify the recipient manually before sharing it. Staff login-email corrections require a reason; the audit record retains it and existing sessions are revoked.
