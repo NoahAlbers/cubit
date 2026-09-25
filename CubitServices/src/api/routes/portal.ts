@@ -122,6 +122,7 @@ router.put(
   '/profile',
   route(async (req: any, res: any) => {
     const b = req.body;
+    if (!b || typeof b !== 'object' || Array.isArray(b)) fail('Enter valid contact details.');
     if (Object.keys(b).some((k) => !profileFields.includes(k as any)))
       fail('Only contact and emergency contact fields can be changed here.');
     const values: any = {};
