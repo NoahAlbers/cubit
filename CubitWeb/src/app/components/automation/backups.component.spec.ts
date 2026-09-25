@@ -33,6 +33,7 @@ describe('Local backup inventory',()=>{
   const inventories=Array.from(fixture.nativeElement.querySelectorAll('.backup-inventory')) as HTMLElement[];
   expect(inventories[0].textContent).toContain('Saved local backups');expect(inventories[1].textContent).toContain('Saved off-server backups');
   expect(inventories[1].textContent).toContain('Backup server memory (RAM)');expect(inventory.open).toBe(true);
+  component.data.runtime.remoteSync={ok:false};fixture.detectChanges();expect(component.remoteHealthy).toBe(false);expect(inventories[1].textContent).toContain('latest off-server copy attempt failed');component.data.runtime.remoteSync={ok:true};
   component.data.runtime.vaultError=true;fixture.detectChanges();expect(component.remoteHealthy).toBe(false);expect(component.auditHealthy).toBe(false);expect(inventories[1].textContent).toContain('last recorded readings');
   component.data.runtime.vaultError=false;component.data.runtime.vault.checkedAt='2020-01-01T00:00:00Z';expect(component.remoteHealthy).toBe(false);
   fixture.destroy();http.verify();

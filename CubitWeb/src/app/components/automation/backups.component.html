@@ -66,6 +66,7 @@
       @if(data.runtime.vault;as vault){
         @if(!remoteFresh){<p class="notice-strip" role="alert">The backup server status is unavailable or out of date. These are the last recorded readings.</p>}
         @if(!data.settings.offsiteEnabled){<p class="notice-strip">Off-server copies are paused. Retained backups and audit records remain on the backup server.</p>}
+        @if(data.runtime.remoteSync?.ok===false){<p class="notice-strip" role="alert">The latest off-server copy attempt failed. Existing remote backups remain available; the worker will retry pending copies.</p>}
         <div class="backup-status-grid remote-status-grid">
           <div><b>Saved backups</b><p>{{vault.backup?.snapshots?.length||0}} retained</p><small>{{remoteFresh&&!vault.backup?.error?'Repository reachable':'Check connection / repository'}}</small></div>
           <div><b>Audit archive</b><p>{{vault.audit?.count||0}} records</p><small>{{auditHealthy?'Delivery healthy':'Delivery needs attention'}} · {{data.runtime.auditDelivery?.pending??'Unknown'}} queued · {{vault.audit?.conflicts||0}} conflicts</small></div>
