@@ -202,7 +202,7 @@ export const defaultDelivery: DeliveryOptions = {
   quietHours: false,
   start: '22:00',
   end: '08:00',
-  timezone: 'UTC',
+  timezone: 'America/New_York',
 };
 export const availableTopics = (role: string) =>
   notificationTopics.filter((topic) => !('administration' in topic) || role === 'admin');

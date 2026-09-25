@@ -1,3 +1,4 @@
+import { organizationDay } from '../../services/org-time';
 import { Component, OnInit, OnDestroy, HostListener, ChangeDetectionStrategy } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
@@ -97,7 +98,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
   ngOnInit(){const period=reportPeriod(3),q=this.route.snapshot.queryParams;this.from=q.from||period.from;this.to=q.to||period.to;this.growthView=q.growth==='bars'?'bars':'line';this.busyView=q.busy==='monthDays'?'monthDays':'weekHours';this.checkinsView=q.checkins==='unique'?'unique':'total';this.load();}
   choosePeriod(months:number){Object.assign(this,reportPeriod(months));this.load();}
   isPeriod(months:number){const p=reportPeriod(months);return this.from===p.from&&this.to===p.to;}
-  date(d:Date){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+  date(d:Date){return organizationDay(d);}
   load(){this.clearComparison();this.request?.unsubscribe();this.loading=true;this.error='';this.request=this.http.get<any>('/api/cubit/reports',{params:{from:this.from,to:this.to}}).subscribe({next:d=>{this.data=d;this.chart=membershipChart(d.months);this.prepareHeat();this.loading=false;this.remember().then(()=>{if(this.restorePosition){this.restorePosition=false;this.navigation.restoreScroll();}});},error:e=>{this.loading=false;this.error=e.error?.message||'Could not load reports.';}});}
   width(value:number,field:string){const max=Math.max(1,...this.data.months.map(m=>Math.abs(m[field])));return Math.abs(value)/max*100;}
   export(type:string){if(this.downloading)return;this.downloading=type;this.error='';

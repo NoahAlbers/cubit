@@ -5,7 +5,7 @@
       <button [class.primary]="isPeriod(period.months)" [class.secondary]="!isPeriod(period.months)" [attr.aria-pressed]="isPeriod(period.months)" [disabled]="loading" (click)="choosePeriod(period.months)">{{period.label}}</button>
     }</div>
     @if (data && !loading) {
-      <p class="muted report-period-summary">{{data.from | date:'MMM d, y':'UTC'}} – {{data.to | date:'MMM d, y':'UTC'}} · Membership status and summary counts are current as of {{data.asOf | date:'MMM d, y':'UTC'}}.</p>
+      <p class="muted report-period-summary">{{data.from |orgDate:'MMM d, y':'UTC'}} – {{data.to |orgDate:'MMM d, y':'UTC'}} · Membership status and summary counts are current as of {{data.asOf |orgDate:'MMM d, y':'UTC'}}.</p>
     }
     <form class="report-range" (ngSubmit)="load()"><label>From<input type="date" name="from" [(ngModel)]="from" required></label><label>To<input type="date" name="to" [(ngModel)]="to" required></label><button class="primary" [disabled]="loading">Apply</button></form>
   </div>

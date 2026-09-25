@@ -1,3 +1,5 @@
+import { organizationTimestamp } from '../organization/time';
+import { organizationDay } from '../organization/time';
 import { AppDataSource } from '../database';
 import { directoryRows } from './directory';
 import { day, validDay } from './ledger';
@@ -10,9 +12,9 @@ import { activeMembersAt } from './membership-history';
 import { localAccessEntries, busiestTimes } from './activity-patterns';
 
 export function reportRange(query: any) {
-  const to = String(query.to || day(new Date())),
+  const to = String(query.to || organizationDay()),
     from = String(query.from || `${to.slice(0, 4)}-01-01`);
-  if (!validDay(from) || !validDay(to) || from > to || to > day(new Date()))
+  if (!validDay(from) || !validDay(to) || from > to || to > organizationDay())
     fail('Choose valid dates with the start on or before the end, ending no later than today.');
   return { from, to };
 }
@@ -79,7 +81,7 @@ export async function reportData(query: any) {
         membershipAsOf,
       ),
       membershipAsOf,
-      membershipEstimated: membershipAsOf !== day(new Date()),
+      membershipEstimated: membershipAsOf !== organizationDay(),
     });
   }
   const overdue = roster.filter((m) => m.pastDue > 0 && m.status !== 'Canceled');
@@ -95,7 +97,7 @@ export async function reportData(query: any) {
   return {
     from,
     to,
-    asOf: day(new Date()),
+    asOf: organizationDay(),
     summary,
     months,
     busiestTimes: busiestTimes(localVisits, from, to),
@@ -126,7 +128,7 @@ export function exportReport(type: string, data: Awaited<ReturnType<typeof repor
         'Balance',
         'Past due',
         'Access enabled',
-        'Last successful check-in',
+        'Last successful check-in (organization time)',
       ],
       ...data.roster.map((m) => [
         m.id,
@@ -140,7 +142,7 @@ export function exportReport(type: string, data: Awaited<ReturnType<typeof repor
         m.balance,
         m.pastDue,
         m.accessAllowed,
-        m.lastKeyUsage,
+        m.lastKeyUsage ? organizationTimestamp(m.lastKeyUsage) : null,
       ]),
     ]);
   if (type === 'transactions')
@@ -195,9 +197,9 @@ export function exportReport(type: string, data: Awaited<ReturnType<typeof repor
     ]);
   if (type === 'checkins')
     return csv([
-      ['Timestamp', 'Member', 'Access granted', 'Message'],
+      ['Timestamp (organization time)', 'Member', 'Access granted', 'Message'],
       ...data.visits.map((v) => [
-        new Date(v.timestamp).toISOString(),
+        organizationTimestamp(v.timestamp),
         v.member ? names.get(v.member.id) : '',
         v.accessGranted,
         v.message,

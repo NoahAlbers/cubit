@@ -16,7 +16,7 @@
           <a class="member-name" [routerLink]="['/member',event.member.id]" [queryParams]="navigation.memberQuery">{{event.member.firstName}} {{event.member.lastName}}</a>
         } @else {
           Unknown member
-          }<small>{{event.member?.email}}</small></td><td>{{event.timestamp|date:'medium'}}</td><td><span class="badge" [class.active]="event.accessGranted" [class.canceled]="!event.accessGranted">{{event.accessGranted?'Granted':'Denied'}}</span></td><td>{{event.message}}</td></tr>
+          }<small>{{event.member?.email}}</small></td><td>{{event.timestamp|orgDate:'medium'}}</td><td><span class="badge" [class.active]="event.accessGranted" [class.canceled]="!event.accessGranted">{{event.accessGranted?'Granted':'Denied'}}</span></td><td>{{event.message}}</td></tr>
         }</tbody>
       </table></div>@if (!loading&&!total&&!error) {
       <p class="empty-small">No access events match these filters.</p>

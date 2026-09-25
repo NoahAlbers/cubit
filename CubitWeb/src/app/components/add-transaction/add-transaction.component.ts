@@ -1,3 +1,4 @@
+import { organizationDay } from '../../services/org-time';
 import { DraftGuard } from '../../services/draft-guard';
 import { Component, OnInit, Inject, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
@@ -11,7 +12,7 @@ import { TransactionService } from '../../services/transaction.service';
 })
 export class AddTransactionComponent implements OnInit {
   transactionForm:UntypedFormGroup;error='';busy=false;loading=false;requestKey=crypto.randomUUID();
-  methods=['Cash','Paypal','Credit Card','Check'];today=this.dateInput(new Date());
+  methods=['Cash','Paypal','Credit Card','Check'];today=organizationDay();
   constructor(private drafts:DraftGuard,public dialogRef:MatDialogRef<AddTransactionComponent>,@Inject(MAT_DIALOG_DATA) public data:any,
     private transactionService:TransactionService,private http:HttpClient,private fb:UntypedFormBuilder){
     this.transactionForm=this.fb.group({id:[data.id],memberId:[data.memberId],kind:['payment'],transactionDate:[this.today,Validators.required],
@@ -44,7 +45,7 @@ export class AddTransactionComponent implements OnInit {
       this.dialogRef.close('Saved');
     }catch(e){this.busy=false;this.error=e.error?.message||'Could not save the entry.';}
   }
-  dateInput(date:Date){return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;}
+  dateInput(date:Date){return date.toISOString().slice(0,10);}
   async onCancel(){if(this.busy)return;if(this.transactionForm.dirty&&!await this.drafts.confirmDiscard())return;
     this.dialogRef.close('Cancel');}
   ngOnInit(){this.dialogRef.keydownEvents().subscribe(e=>{if(e.key==='Escape'){e.preventDefault();this.onCancel();}});}

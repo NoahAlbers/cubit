@@ -64,7 +64,12 @@ export function demoProxy(enabled: boolean, port = 5002): RequestHandler {
           /^(?:__Host-)?cubit-trust-[a-f0-9]{12}=/.test(value),
         );
         if (cookies?.length) res.setHeader('Set-Cookie', cookies);
-        for (const key of ['content-type', 'content-disposition', 'retry-after'])
+        for (const key of [
+          'content-type',
+          'content-disposition',
+          'retry-after',
+          'x-cubit-timezone',
+        ])
           if (response.headers[key]) res.setHeader(key, response.headers[key]!);
         response.on('error', () => res.destroy());
         response.pipe(res);

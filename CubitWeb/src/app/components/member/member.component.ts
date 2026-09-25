@@ -1,3 +1,4 @@
+import { organizationDay, organizationTimeZone } from '../../services/org-time';
 import { AuthService } from '../../services/security/auth.service';
 import { formatPhone } from '../../services/contact-format';
 import { Component, OnInit, OnDestroy, NgZone, ElementRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
@@ -75,7 +76,7 @@ export class MemberComponent implements OnInit, OnDestroy {
   loadCatalog(){this.http.get<any[]>('/plan?available=true').subscribe({next:plans=>{this.availablePlans=plans;this.planError='';},error:()=>this.planError='Could not load available plans. Close and try again.'});}
   async closePlanWorkflow(){if(this.planBusy||this.cutoffBusy)return;if((this.pendingPlanDraft||(this.cutoffPlan&&this.cutoffOriginal!==JSON.stringify([this.cutoffDate,this.cutoffReason])))&&!await this.drafts.confirmDiscard())return;this.changingPlan=false;this.cutoffPlan=null;}
   setPlanGoal(goal:'change'|'cancel'){this.planGoal=goal;}
-  prepareAssignment(){this.planStep='assign';this.cutoffPlan=null;this.newPlanId='';this.planConfirmed=false;const d=new Date();const today=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');this.newPlanDate=this.earliestPlanStart>today?this.earliestPlanStart:today;this.initialPlanDate=this.newPlanDate;this.loadCatalog();}
+  prepareAssignment(){this.planStep='assign';this.cutoffPlan=null;this.newPlanId='';this.planConfirmed=false;const today=organizationDay();this.newPlanDate=this.earliestPlanStart>today?this.earliestPlanStart:today;this.initialPlanDate=this.newPlanDate;this.loadCatalog();}
   async saveWorkflowPlan(){if(!this.validNewPlan||this.planBusy)return;this.planBusy=true;this.planError='';try{await this.memberService.savePlan({id:'New',memberId:this.memberId,planId:this.newPlanId,startDate:this.newPlanDate,catalogRevision:this.selectedPlan.revision});this.planStep='done';this.cutoffSaved='Membership plan saved. Review the member’s access status and enabled keys below.';this.loadPlans();}catch(e){this.planError=e.error?.message||'Could not save the plan. Your earlier cutoff remains saved.';}finally{this.planBusy=false;}}
 
   get filteredHistory(){return this.historyRows.filter(r=>(!this.historyFrom||r.date>=this.historyFrom)&&(!this.historyTo||r.date<=this.historyTo)&&(!this.historyType||r.kind===this.historyType));}
@@ -113,7 +114,7 @@ export class MemberComponent implements OnInit, OnDestroy {
     if (this.activityError) return 'Entry history unavailable';
     if (!this.lastEntry) return 'No recorded entries';
     const calendarDay = (date: Date) => {
-      const parts = new Intl.DateTimeFormat('en-US', {timeZone:'America/New_York',year:'numeric',month:'numeric',day:'numeric'}).formatToParts(date);
+      const parts = new Intl.DateTimeFormat('en-US', {timeZone:organizationTimeZone,year:'numeric',month:'numeric',day:'numeric'}).formatToParts(date);
       const part = (type: string) => Number(parts.find(p=>p.type===type)?.value);
       return Date.UTC(part('year'), part('month')-1, part('day'));
     };

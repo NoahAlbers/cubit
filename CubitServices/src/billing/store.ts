@@ -1,3 +1,4 @@
+import { organizationDay } from '../organization/time';
 import { recordAudit } from '../staff/audit';
 import { EntityManager } from 'typeorm';
 import { AppDataSource } from '../database';
@@ -21,7 +22,7 @@ export async function lockMember(manager: EntityManager, memberId: string) {
 export async function postCharges(
   manager: EntityManager,
   memberId: string,
-  asOf = day(new Date()),
+  asOf = organizationDay(),
 ) {
   const plans = await manager.find(MemberPlan, { where: { memberId }, relations: { plan: true } });
   const existing = await manager.find(BillingCharge, { where: { memberId } });
@@ -64,7 +65,7 @@ export async function postCharges(
 export async function readBilling(
   manager: EntityManager,
   memberId: string,
-  asOf = day(new Date()),
+  asOf = organizationDay(),
 ) {
   const [plans, payments, charges, adjustments] = await Promise.all([
     manager.find(MemberPlan, { where: { memberId }, relations: { plan: true } }),

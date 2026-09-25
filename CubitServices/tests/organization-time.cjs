@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict');
+const {organizationDay,startOfOrganizationDay,setOrganizationTimeZone,validTimeZone}=require('../dist/organization/time');
+assert.equal(organizationDay(new Date('2026-07-01T02:00:00Z')),'2026-06-30');
+assert.equal(startOfOrganizationDay('2026-03-08').toISOString(),'2026-03-08T05:00:00.000Z');
+assert.equal(startOfOrganizationDay('2026-03-09').toISOString(),'2026-03-09T04:00:00.000Z');
+assert.equal(+startOfOrganizationDay('2026-11-02')-startOfOrganizationDay('2026-11-01'),25*3600000);
+assert.equal(validTimeZone('Invalid/City'),false);
+setOrganizationTimeZone('Asia/Tokyo');assert.equal(organizationDay(new Date('2026-06-30T20:00:00Z')),'2026-07-01');
+const {localAccessEntries}=require('../dist/billing/activity-patterns');
+assert.equal(localAccessEntries([{timestamp:'2026-06-30T20:00:00Z'}],'2026-07-01','2026-07-01',new Date('2026-07-02T00:00:00Z'))[0].hour,5);
+const {day}=require('../dist/billing/ledger');assert.equal(day(new Date('2026-06-30T12:00:00Z')),'2026-06-30','Calendar billing days do not move when zone changes');
+console.log('Organization date boundaries, DST, changed-zone activity, and preserved billing dates pass.');

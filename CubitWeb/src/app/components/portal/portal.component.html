@@ -20,8 +20,8 @@
         <div class="notice-strip"><b>{{data.waivers.missing}} required waiver{{data.waivers.missing===1?'':'s'}} to review.</b> <a routerLink="/portal/waivers">View waivers <app-arrow name="arrow-right"></app-arrow></a></div>
       }
       <section class="panel detail-panel"><h2>Current plan</h2>@for (p of currentPlans; track p) {
-      <div class="portal-plan"><div><h3>{{p.name}}</h3><p class="muted">Since {{p.startDate | date:'MMM d, y':'UTC'}}@if (p.finalBillingDate) {
-      <span> · Ends {{p.finalBillingDate | date:'MMM d, y':'UTC'}}</span>
+      <div class="portal-plan"><div><h3>{{p.name}}</h3><p class="muted">Since {{p.startDate |orgDate:'MMM d, y':'UTC'}}@if (p.finalBillingDate) {
+      <span> · Ends {{p.finalBillingDate |orgDate:'MMM d, y':'UTC'}}</span>
       }</p></div><b>{{p.monthlyRate | currency}} / month</b></div>
       }@if (!currentPlans.length) {
       <p class="muted">You do not have a current plan. @if(organization.supportEmail){<a [href]="organization.contactUrl">Contact staff</a>}@else{Contact your organization’s staff} to get set up.</p>
@@ -34,7 +34,7 @@
     }</div>
     @if (rows.length) {
       <div class="table-scroll"><table class="record-table"><thead><tr><th>Date</th><th>Entry</th><th class="number">Amount</th><th>Status</th></tr></thead><tbody>@for (row of visibleRows; track row) {
-      <tr><td data-label="Date">{{row.date | date:'MMM d, y':'UTC'}}</td><td class="billing-entry" data-label="Entry"><b>{{row.kind}}</b><small>{{row.description}}</small></td><td data-label="Amount" class="number" [class.payment-amount]="row.amount<0">{{row.amount>0?'+':row.amount<0?'−':''}}{{abs(row.amount)|currency}}</td><td data-label="Status"><span class="badge" [class.canceled]="row.status==='Past due'">{{row.status}}</span>@if (row.status==='Part-paid') {
+      <tr><td data-label="Date">{{row.date |orgDate:'MMM d, y':'UTC'}}</td><td class="billing-entry" data-label="Entry"><b>{{row.kind}}</b><small>{{row.description}}</small></td><td data-label="Amount" class="number" [class.payment-amount]="row.amount<0">{{row.amount>0?'+':row.amount<0?'−':''}}{{abs(row.amount)|currency}}</td><td data-label="Status"><span class="badge" [class.canceled]="row.status==='Past due'">{{row.status}}</span>@if (row.status==='Part-paid') {
       <small>{{row.charge.outstanding|currency}} unpaid</small>
     }</td></tr>
   }</tbody></table></div>
@@ -66,13 +66,13 @@
   <article class="waiver-card"><div><h3>{{w.version.name}}</h3><p>{{w.version.description}}</p><small>Version {{w.version.number}} · {{w.required?'Required':'Optional'}} · {{w.version.provider==='demo'?'Local demo':w.version.provider==='paper'?'Upload signed copy':'DocuSeal'}}</small><span class="badge" [class.active]="w.complete">{{w.signature?.status==='Signed'?(w.version.provider==='demo'?'Signed · demo':'Signed'):w.complete?'Accepted upload':'Needs signature'}}</span></div>@if (!w.complete&&w.version.provider!=='paper') {
   <button class="primary" [disabled]="busy" (click)="start(w)">{{w.signature?'Continue':'Review & sign'}}</button>
   }@if (w.signature?.status==='Signed') {
-  <span class="muted">{{w.signature.completedAt|date:'MMM d, y'}}</span>
+  <span class="muted">{{w.signature.completedAt|orgDate:'MMM d, y'}}</span>
 }</article>
 }@if (!data.waivers.current.length) {
 <p class="muted">No waivers are currently assigned.</p>
 }</section>
 <section class="panel detail-panel"><h2>Signed waivers</h2>@for (s of data.waivers.history; track s) {
-<article class="waiver-card"><div><h3>{{s.version.name}}</h3><p>Version {{s.version.number}} · {{s.completedAt|date:'MMM d, y'}}</p><small>{{s.signerName}} · {{s.provider==='demo'?'Demo signature':'Verified by DocuSeal'}}</small>@if (s.provider==='demo') {
+<article class="waiver-card"><div><h3>{{s.version.name}}</h3><p>Version {{s.version.number}} · {{s.completedAt|orgDate:'MMM d, y'}}</p><small>{{s.signerName}} · {{s.provider==='demo'?'Demo signature':'Verified by DocuSeal'}}</small>@if (s.provider==='demo') {
 <details><summary>View signed demo version</summary><pre class="waiver-document">{{s.version.demoText}}</pre></details>
 }</div>@if (s.documentUrl) {
 <a class="button secondary" [href]="s.documentUrl" target="_blank" rel="noopener noreferrer">Signed document <app-arrow name="external-link"></app-arrow></a>

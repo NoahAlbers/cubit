@@ -1,3 +1,4 @@
+import { organizationDay } from '../../services/org-time';
 import { DraftGuard } from '../../services/draft-guard';
 import { Component, OnInit, Inject, Input, ChangeDetectionStrategy } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -44,7 +45,7 @@ export class AddEditMemberPlanComponent implements OnInit {
     } else {
       this.planForm.controls['id'].setValue('New');
       const now = new Date();
-      this.planForm.controls['startDate'].setValue(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`);
+      this.planForm.controls['startDate'].setValue(organizationDay(now));
     }
   }
 

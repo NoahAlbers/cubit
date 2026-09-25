@@ -1,9 +1,10 @@
+import { organizationDay } from '../organization/time';
 import { recordAudit } from '../staff/audit';
 import { EntityManager } from 'typeorm';
 import { BillingCharge, ChargeAdjustment } from '../entity/cubitOperations';
 import { lockMember, readBilling, refreshAccess, postCharges } from './store';
 import { fail, reasonText, requestKey } from './payments';
-import { day, validDay } from './ledger';
+import { validDay } from './ledger';
 
 function money(value: unknown, allowZero = false) {
   if (
@@ -26,7 +27,7 @@ export async function addCharge(
   const amount = money(input.amount),
     name = reasonText(input.description, 255),
     key = requestKey(input.requestKey);
-  if (!validDay(input.date) || input.date > day(new Date()) || input.date < '1900-01-01')
+  if (!validDay(input.date) || input.date > organizationDay() || input.date < '1900-01-01')
     fail('Enter a valid charge date no later than today.');
   const member = await lockMember(manager, memberId);
   const duplicate = await manager.findOneBy(BillingCharge, { requestKey: key });

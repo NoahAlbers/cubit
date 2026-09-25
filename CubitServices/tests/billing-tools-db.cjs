@@ -117,7 +117,8 @@ async function main(){
  const keyAudit=all.rows.find(a=>a.kind==='Fob updated');assert.equal(keyAudit.author,staff.email);assert.equal(keyAudit.reason,'Reported lost');assert.deepEqual(keyAudit.changes.find(c=>c.field==='status'),{field:'status',before:'Active',after:'Inactive'});
  const raw=await db.manager.find(OperationsAudit);assert.ok(!JSON.stringify(raw).includes(password));assert.ok(!JSON.stringify(raw).includes('$2b$'),'Password hashes never audited');
  assert.ok(raw.filter(a=>a.kind==='Fob assigned').every(a=>JSON.parse(a.detail).actorId===staff.id));
- const old=await ok('/api/cubit/audit?memberId='+existing.id+'&from=2004-01-01&to=2004-01-01');assert.equal(old.total,1);assert.equal(old.rows[0].legacy,true);
+ const old=await ok('/api/cubit/audit?memberId='+existing.id+'&from=2003-12-31&to=2003-12-31');assert.equal(old.total,1);assert.equal(old.rows[0].legacy,true);
+ assert.equal((await ok('/api/cubit/audit?memberId='+existing.id+'&from=2004-01-01&to=2004-01-01')).total,0,'Midnight UTC is the previous calendar day in Eastern Time');
  assert.equal((await request('/api/cubit/audit?from=2026-02-30')).status,400);
  const filtered=await ok('/api/cubit/audit?kind='+encodeURIComponent('Fob removed')+'&author='+encodeURIComponent(staff.email));assert.equal(filtered.total,1);
  await db.manager.insert(OperationsAudit,Array.from({length:25},(_,i)=>({kind:'Pagination fixture',author:staff.email,detail:'Fixture '+i})));

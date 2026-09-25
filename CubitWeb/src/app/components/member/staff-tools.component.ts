@@ -8,7 +8,7 @@ import { forkJoin } from 'rxjs';
   <label class="sr-only" for="staff-note">New staff note</label><textarea id="staff-note" [(ngModel)]="note" maxlength="4000" rows="3" placeholder="Add a note for other staff…"></textarea>
   <div class="section-heading"><span></span><button class="primary" (click)="addNote()" [disabled]="busy || !note.trim()">Add note</button></div>
   @for (n of notes; track n.id) {
-    <article class="note-entry staff-note-entry"><p [id]="'note-'+n.id" [class.note-collapsed]="!expandedNotes.has(n.id)">{{n.text}}</p><div class="note-footer"><small>{{n.author}} · {{n.createdAt | date:'medium'}}</small><button class="secondary" (click)="toggleNote(n.id)" [attr.aria-expanded]="expandedNotes.has(n.id)" [attr.aria-controls]="'note-'+n.id">{{expandedNotes.has(n.id)?'Collapse note':'Expand note'}}</button></div></article>
+    <article class="note-entry staff-note-entry"><p [id]="'note-'+n.id" [class.note-collapsed]="!expandedNotes.has(n.id)">{{n.text}}</p><div class="note-footer"><small>{{n.author}} · {{n.createdAt |orgDate:'medium'}}</small><button class="secondary" (click)="toggleNote(n.id)" [attr.aria-expanded]="expandedNotes.has(n.id)" [attr.aria-controls]="'note-'+n.id">{{expandedNotes.has(n.id)?'Collapse note':'Expand note'}}</button></div></article>
   }
   @if(notePages>1){<nav class="notes-pagination" aria-label="Staff notes pages"><button class="secondary" (click)="changeNotePage(notePage-1)" [disabled]="notesLoading||notePage===1">Previous</button><span>Page {{notePage}} of {{notePages}} · {{noteTotal}} notes</span><button class="secondary" (click)="changeNotePage(notePage+1)" [disabled]="notesLoading||notePage===notePages">Next</button></nav>}
   @if (!notes.length&&!notesLoading) {

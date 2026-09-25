@@ -18,7 +18,7 @@
   }
   @if (detail) {
     <section class="panel detail-panel"><div class="section-heading"><h2>Review {{detail.event.kind}}</h2><button class="secondary" (click)="navigate(page)" [disabled]="busy">Close review</button></div>
-    <div class="matching-summary"><div><strong>{{detail.event.payerName||'Payer name not provided'}}</strong><p>{{detail.event.payerEmail||'Payer email not provided'}}</p></div><div><strong>{{detail.event.amount|currency}}</strong><p>{{detail.event.eventDate|date:'mediumDate':'UTC'}}</p></div><span class="badge">{{detail.event.status}}</span></div>
+    <div class="matching-summary"><div><strong>{{detail.event.payerName||'Payer name not provided'}}</strong><p>{{detail.event.payerEmail||'Payer email not provided'}}</p></div><div><strong>{{detail.event.amount|currency}}</strong><p>{{detail.event.eventDate|orgDate:'mediumDate':'UTC'}}</p></div><span class="badge">{{detail.event.status}}</span></div>
     <p class="muted">Reference: {{detail.event.resourceId}}@if (detail.event.subscriptionId) {
       <span> · Subscription: {{detail.event.subscriptionId}}</span>
       }</p><p>{{detail.event.detail}}</p>
@@ -64,7 +64,7 @@
     <app-loading label="Loading payment events…"></app-loading>
     }@if (data&&!loading) {
     <div class="table-scroll"><table><thead><tr><th>Date</th><th>Payer</th><th>Type</th><th>Amount</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody>@for (e of data.rows; track e) {
-    <tr><td>{{e.eventDate|date:'mediumDate':'UTC'}}</td><td><strong>{{e.payerName||e.payerEmail||'Unknown payer'}}</strong><br><small>{{e.payerName?e.payerEmail:e.resourceId}}</small></td><td>{{e.kind|titlecase}}</td><td>{{e.amount|currency}}</td><td>{{e.status}}</td><td><button class="secondary" (click)="navigate(page,e.id)" [disabled]="busy">{{e.status==='Processed'?'View':'Review'}}</button></td></tr>
+    <tr><td>{{e.eventDate|orgDate:'mediumDate':'UTC'}}</td><td><strong>{{e.payerName||e.payerEmail||'Unknown payer'}}</strong><br><small>{{e.payerName?e.payerEmail:e.resourceId}}</small></td><td>{{e.kind|titlecase}}</td><td>{{e.amount|currency}}</td><td>{{e.status}}</td><td><button class="secondary" (click)="navigate(page,e.id)" [disabled]="busy">{{e.status==='Processed'?'View':'Review'}}</button></td></tr>
   }</tbody></table>@if (!data.rows.length) {
   <p class="empty-small">{{state==='processed'?'No recorded events match.':'No events waiting for review.'}}</p>
 }</div>

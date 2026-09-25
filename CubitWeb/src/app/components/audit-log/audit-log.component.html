@@ -18,7 +18,7 @@
       <div class="table-scroll"><table><thead><tr>@for (column of ['date','action','staff','member']; track column) {
         <th [attr.aria-sort]="ariaSort(column)"><button class="column-sort" (click)="sortBy(column)">{{column==='date'?'Date (UTC)':label(column)}} <app-arrow [name]="icon(column)"></app-arrow></button></th>
         }<th>Details</th></tr></thead><tbody>@for (row of data.rows; track row) {
-        <tr><td>{{row.createdAt|date:'medium':'UTC'}}</td><td><strong>{{row.kind}}</strong>@if (row.legacy) {
+        <tr><td>{{row.createdAt|orgDate:'medium'}}</td><td><strong>{{row.kind}}</strong>@if (row.legacy) {
         <small>Preserved history</small>
       }</td><td>{{row.author}}@if (row.actorType!=='staff') {
       <small>{{label(row.actorType)}}</small>

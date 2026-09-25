@@ -1,3 +1,4 @@
+import { organizationDay } from '../organization/time';
 import { recordAudit, snapshot, paymentFields } from '../staff/audit';
 import { EntityManager } from 'typeorm';
 import { Transaction } from '../entity/transaction';
@@ -27,7 +28,7 @@ export async function recordPayment(manager: EntityManager, data: any, author: s
     Math.abs(amount) > 99999999 ||
     Math.abs(Math.round(amount * 100) - amount * 100) > 0.00001 ||
     !validDay(date) ||
-    date > day(new Date()) ||
+    date > organizationDay() ||
     date < '1900-01-01'
   )
     fail(

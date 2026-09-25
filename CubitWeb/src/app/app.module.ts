@@ -1,3 +1,4 @@
+import { OrgDatePipe } from './services/org-date.pipe';
 import { AccountSecurityComponent } from './components/account-security/account-security.component';
 import { OrganizationComponent } from './components/organization/organization.component';
 import { LoadingComponent } from './components/shared/loading.component';
@@ -74,7 +75,7 @@ import { AccessLogService } from './services/access-log.service';
         AddTransactionComponent,
         AccessLogComponent,
     ],
-    bootstrap: [AppComponent], imports: [SystemHealthComponent, AccountSecurityComponent, AppRoutingModule,
+    bootstrap: [AppComponent], imports: [OrgDatePipe, SystemHealthComponent, AccountSecurityComponent, AppRoutingModule,
         AppMaterialModule,
         BrowserModule,
         BrowserAnimationsModule,

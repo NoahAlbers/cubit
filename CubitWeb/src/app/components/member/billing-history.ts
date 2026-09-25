@@ -4,7 +4,7 @@ export interface BillingRow {
 }
 function localDay(value: string) {
   const d = new Date(value);
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return d.toISOString().slice(0,10);
 }
 export function billingRows(billing: any, order = 'desc'): BillingRow[] {
   if (!billing) return [];

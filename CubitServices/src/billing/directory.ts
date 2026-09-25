@@ -1,3 +1,4 @@
+import { organizationDay } from '../organization/time';
 import { AppDataSource } from '../database';
 import { Member } from '../entity/member';
 import { MemberPlan } from '../entity/memberPlan';
@@ -119,17 +120,20 @@ export function filterDirectory(rows: any[], query: Record<string, any>) {
   if (query.access === 'disabled') result = result.filter((m) => !m.accessAllowed);
   if (query.minDays) result = result.filter((m) => m.daysPastDue >= Number(query.minDays));
   if (query.minAmount) result = result.filter((m) => m.pastDue >= Number(query.minAmount));
-  const today = Date.parse(day(new Date()));
+  const today = Date.parse(organizationDay());
   if (query.activity === 'never') result = result.filter((m) => !m.lastKeyUsage);
   if (query.activity === '30' || query.activity === '90')
     result = result.filter(
       (m) =>
         m.lastKeyUsage &&
-        today - Date.parse(day(new Date(m.lastKeyUsage))) <= Number(query.activity) * 86400000,
+        today - Date.parse(organizationDay(new Date(m.lastKeyUsage))) <=
+          Number(query.activity) * 86400000,
     );
   if (query.activity === 'stale')
     result = result.filter(
-      (m) => m.lastKeyUsage && today - Date.parse(day(new Date(m.lastKeyUsage))) > 90 * 86400000,
+      (m) =>
+        m.lastKeyUsage &&
+        today - Date.parse(organizationDay(new Date(m.lastKeyUsage))) > 90 * 86400000,
     );
   const sort = [
     'name',
@@ -193,6 +197,6 @@ export function filterDirectory(rows: any[], query: Record<string, any>) {
       filteredPastDue: Math.round(result.reduce((sum, m) => sum + m.pastDue, 0) * 100) / 100,
       oldestDays: Math.max(0, ...result.map((m) => m.daysPastDue)),
     },
-    asOf: day(new Date()),
+    asOf: organizationDay(),
   };
 }

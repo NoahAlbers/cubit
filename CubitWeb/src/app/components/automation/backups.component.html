@@ -15,7 +15,7 @@
     @if (data.hosted&&!data.runtime.available&&!running) {
       <div class="notice-strip">The backup worker is not responding. Check the server before relying on scheduled backups.</div>
     }
-    <div class="backup-status-grid"><div><b>Local storage</b><p>{{data.runtime.localReady?'Encrypted repository ready':'Not initialized'}}</p></div><div><b>Off-server storage</b><p>{{data.runtime.offsiteConfigured?(data.settings.offsiteEnabled?'Configured · copies enabled':'Configured · copies paused'):'Not connected'}}</p></div><div><b>Next scheduled backup</b><p>{{data.runtime.nextRunAt?(data.runtime.nextRunAt|date:'medium'):'Manual only / awaiting worker'}}</p></div><div><b>Last recovery test</b><p>{{data.runtime.lastVerifiedAt?(data.runtime.lastVerifiedAt|date:'medium'):'Not verified yet'}}</p></div></div>
+    <div class="backup-status-grid"><div><b>Local storage</b><p>{{data.runtime.localReady?'Encrypted repository ready':'Not initialized'}}</p></div><div><b>Off-server storage</b><p>{{data.runtime.offsiteConfigured?(data.settings.offsiteEnabled?'Configured · copies enabled':'Configured · copies paused'):'Not connected'}}</p></div><div><b>Next scheduled backup</b><p>{{data.runtime.nextRunAt?(data.runtime.nextRunAt|orgDate:'medium'):'Manual only / awaiting worker'}}</p></div><div><b>Last recovery test</b><p>{{data.runtime.lastVerifiedAt?(data.runtime.lastVerifiedAt|orgDate:'medium'):'Not verified yet'}}</p></div></div>
     @if (form) {
       @if(!data.canManageSettings){<p class="notice-strip">Administration manages backup schedules and retention. Staff can view backups, create a backup and test recovery.</p>}
       <form #backupForm="ngForm" (ngSubmit)="save()"><fieldset [disabled]="!data.canManageSettings||busy">
@@ -24,9 +24,7 @@
           <label>Time<input type="time" name="time" [(ngModel)]="form.time" (ngModelChange)="dirty=true" required></label>
         }
         @if (form.frequency!=='manual') {
-          <label>Time zone<select name="timezone" [(ngModel)]="form.timezone" (ngModelChange)="dirty=true">@for (z of zones; track z) {
-            <option [value]="z">{{z}}</option>
-          }</select></label>
+          <label>Time zone<input name="timezone" [value]="form.timezone" readonly aria-label="Organization time zone"></label>
         }
         @if (form.frequency==='weekly') {
           <label>Day<select name="weekday" [(ngModel)]="form.weekday" (ngModelChange)="dirty=true">@for (d of days; track d; let i = $index) {
@@ -46,7 +44,7 @@
         </fieldset><div class="actions">@if(data.canManageSettings){<button class="primary" [disabled]="busy||backupForm.invalid||!dirty">Save backup settings</button>}<button type="button" class="secondary" [disabled]="busy||running||!data.runtime.available" (click)="queue('backup')">Back up now</button><button type="button" class="secondary" [disabled]="busy||running||!data.runtime.available||!data.runtime.localReady" (click)="queue('verify')">Test recovery</button></div></form>
       }
       <div class="backup-https"><b>HTTPS</b><p>{{data.runtime.https?.ok?'Certificate and HTTP-to-HTTPS redirect verified':'Not verified yet'}}@if (data.runtime.https?.checkedAt) {
-      <span> · {{data.runtime.https.checkedAt|date:'medium'}}</span>
+      <span> · {{data.runtime.https.checkedAt|orgDate:'medium'}}</span>
     }</p>@if (data.runtime.https?.message) {
     <p class="muted">{{data.runtime.https.message}}</p>
   }</div>
@@ -54,16 +52,16 @@
     <section class="backup-inventory" aria-label="Saved local backups">
       <div class="section-heading"><div><h3>Saved local backups <span class="badge">{{data.runtime.snapshots?.length||0}}</span></h3><p class="muted">Newest first · keeping the latest {{data.settings.localKeep}} copies on this VPS.</p></div><button type="button" class="secondary" [disabled]="!data.canManageSettings||busy||running||dirty||!data.runtime.available||data.runtime.inventoryError||(data.runtime.snapshots?.length||0)<=data.settings.localKeep" (click)="prune()">Apply local retention now</button></div>
       @if(data.runtime.inventoryError||!data.runtime.available){<p class="notice-strip">The inventory may be out of date. The worker will refresh it when available.</p>}
-      @if(data.runtime.inventoryCheckedAt){<p class="muted">Inventory checked {{data.runtime.inventoryCheckedAt|date:'medium'}}. Sizes show the data captured; encrypted storage uses deduplication.</p>}
+      @if(data.runtime.inventoryCheckedAt){<p class="muted">Inventory checked {{data.runtime.inventoryCheckedAt|orgDate:'medium'}}. Sizes show the data captured; encrypted storage uses deduplication.</p>}
       <div class="table-scroll"><table><thead><tr><th>Created</th><th>Snapshot</th><th>Data captured</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody>
-      @for(s of visibleBackups;track s.id){<tr><td>{{s.createdAt|date:'medium'}}</td><td><code>{{s.id.slice(0,12)}}</code></td><td>{{formatBytes(s.bytes)}}</td><td><button class="secondary" type="button" [disabled]="busy||running||!data.runtime.available" (click)="queue('verify',s.id)" [attr.aria-label]="'Test backup from '+(s.createdAt|date:'medium')">Test this backup</button></td></tr>}
+      @for(s of visibleBackups;track s.id){<tr><td>{{s.createdAt|orgDate:'medium'}}</td><td><code>{{s.id.slice(0,12)}}</code></td><td>{{formatBytes(s.bytes)}}</td><td><button class="secondary" type="button" [disabled]="busy||running||!data.runtime.available" (click)="queue('verify',s.id)" [attr.aria-label]="'Test backup from '+(s.createdAt|orgDate:'medium')">Test this backup</button></td></tr>}
       </tbody></table></div>
       @if(!data.runtime.snapshots?.length){<p class="muted">{{data.runtime.inventoryCheckedAt?'No managed local backups are currently retained.':'Waiting for the worker to read the repository.'}}</p>}
       @if(data.runtime.snapshots?.length>inventoryLimit){<button type="button" class="secondary" (click)="inventoryLimit=inventoryLimit+8">Show more backups</button>}
     </section>
   }
   <details><summary>Operation history</summary><div class="table-scroll"><table><thead><tr><th>Requested</th><th>Operation</th><th>By</th><th>Status</th><th>Result</th></tr></thead><tbody>@for (j of data.jobs; track j) {
-  <tr><td>{{j.createdAt|date:'medium'}}</td><td>{{j.kind==='backup'?'Backup':j.kind==='prune'?'Local retention':'Recovery test'}}</td><td>{{j.requestedBy}}</td><td>{{j.status}}</td><td>{{j.result?.message||'Waiting for worker'}}@if (j.result?.snapshot) {
+  <tr><td>{{j.createdAt|orgDate:'medium'}}</td><td>{{j.kind==='backup'?'Backup':j.kind==='prune'?'Local retention':'Recovery test'}}</td><td>{{j.requestedBy}}</td><td>{{j.status}}</td><td>{{j.result?.message||'Waiting for worker'}}@if (j.result?.snapshot) {
   <small>Snapshot {{j.result.snapshot}}</small>
 }</td></tr>
 }</tbody></table></div>@if (!data.jobs.length) {

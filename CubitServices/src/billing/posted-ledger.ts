@@ -1,3 +1,4 @@
+import { organizationDay } from '../organization/time';
 import { day } from './ledger';
 
 // Posted charge amounts never depend on the current catalog rate.
@@ -5,7 +6,7 @@ export function postedLedger(
   records: any[],
   payments: any[],
   adjustments: any[],
-  asOf = day(new Date()),
+  asOf = organizationDay(),
 ) {
   const charges = records
     .filter((c) => !c.voided && c.dueDate <= asOf)

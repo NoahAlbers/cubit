@@ -1,3 +1,4 @@
+import { organizationDay } from '../organization/time';
 import { validEmail } from '../contact/validation';
 import { recordAudit, snapshot, profileFields } from '../staff/audit';
 import { createHash } from 'crypto';
@@ -7,7 +8,7 @@ import { Member, ROLES } from '../entity/member';
 import { Transaction } from '../entity/transaction';
 import { PaymentEvent, OperationsSettings } from '../entity/cubitOperations';
 import { recordPayment, fail, requestKey } from './payments';
-import { validDay, day } from './ledger';
+import { validDay } from './ledger';
 
 // This local fixture endpoint cannot establish PayPal authenticity. Live webhooks remain blocked.
 export async function receiveSimulation(body: any, author: string) {
@@ -29,7 +30,7 @@ export async function receiveSimulation(body: any, author: string) {
   if (
     !['payment', 'refund', 'cancellation'].includes(input.kind) ||
     !validDay(input.eventDate) ||
-    input.eventDate > day(new Date()) ||
+    input.eventDate > organizationDay() ||
     input.eventDate < '1900-01-01' ||
     !Number.isFinite(input.amount) ||
     input.amount < 0 ||

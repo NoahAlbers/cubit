@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 @Component({
     selector: 'app-edit-charge', template: `
-<div class="cubit-dialog" [appDraft]="amount!==data.charge.amount||!!reason"><h2 mat-dialog-title>Edit charge</h2><p>{{data.charge.planName}} · {{data.charge.dueDate | date:'MMM d, y':'UTC'}}</p>
+<div class="cubit-dialog" [appDraft]="amount!==data.charge.amount||!!reason"><h2 mat-dialog-title>Edit charge</h2><p>{{data.charge.planName}} · {{data.charge.dueDate |orgDate:'MMM d, y':'UTC'}}</p>
 <form (ngSubmit)="save()"><label>Charge amount<input name="amount" type="number" step="0.01" min="0" max="99999999" [(ngModel)]="amount" required [disabled]="busy"></label>
 <button type="button" class="quiet" (click)="amount=0" [disabled]="busy">Waive this charge</button>
 <label>Reason for change<input name="reason" [(ngModel)]="reason" maxlength="500" required [disabled]="busy" placeholder="e.g. Approved waiver or incorrect amount"></label>

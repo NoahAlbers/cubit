@@ -1,3 +1,4 @@
+import { organizationTimeZone } from '../../organization/time';
 import { route, bodies } from '../common/request-schema';
 import express from 'express';
 import { randomUUID } from 'crypto';
@@ -54,7 +55,7 @@ router.get(
       AppDataSource.manager.find(BackupJob, { order: { createdAt: 'DESC' }, take: 30 }),
     ]);
     res.json({
-      settings: JSON.parse(s.settings),
+      settings: { ...JSON.parse(s.settings), timezone: organizationTimeZone },
       revision: s.revision,
       runtime: r,
       jobs: jobs.map((j) => ({ ...j, result: j.result ? JSON.parse(j.result) : null })),
@@ -67,7 +68,7 @@ router.post(
   '/settings',
   route(bodies.backup, async (req, res) => {
     if (req.member.role !== ROLES.ADMIN) fail('Administration access is required.', 403);
-    const value = validateBackupSettings(req.body.settings),
+    const value = validateBackupSettings({ ...req.body.settings, timezone: organizationTimeZone }),
       r = await runtime();
     if (value.offsiteEnabled && !r.offsiteConfigured)
       fail('Connect private off-server storage on the server before enabling copies.');

@@ -1,3 +1,4 @@
+import { organizationTimeZone, startOfOrganizationDay } from '../../organization/time';
 import {
   availableTopics,
   visibleChoices,
@@ -39,8 +40,13 @@ router.get(
       .createQueryBuilder(OperationsAudit, 'a')
       .leftJoin(Member, 'm', 'm.id=a.memberId');
     if (memberId) query.andWhere('a.memberId=:memberId', { memberId });
-    if (from) query.andWhere('a.createdAt>=:from', { from: from + ' 00:00:00' });
-    if (to) query.andWhere('a.createdAt<DATE_ADD(:to,INTERVAL 1 DAY)', { to: to + ' 00:00:00' });
+    if (from) query.andWhere('a.createdAt>=:from', { from: startOfOrganizationDay(from) });
+    if (to)
+      query.andWhere('a.createdAt<:to', {
+        to: startOfOrganizationDay(
+          new Date(Date.parse(to + 'T00:00:00Z') + 86400000).toISOString().slice(0, 10),
+        ),
+      });
     if (author) query.andWhere('a.author=:author', { author });
     if (kind) query.andWhere('a.kind=:kind', { kind });
     if (q.actor === 'staff')
@@ -110,7 +116,7 @@ router.get(
       preferences: {
         ...(preference || { ...defaultPreferences, revision: 0 }),
         topics: visibleChoices(preference?.topics, req.member.role),
-        delivery: preference?.delivery || defaultDelivery,
+        delivery: { ...(preference?.delivery || defaultDelivery), timezone: organizationTimeZone },
       },
       topics: availableTopics(req.member.role),
       email: req.member.email,
@@ -162,7 +168,10 @@ router.put(
           refusedFobs: b.refusedFobs,
           dedupeMinutes: b.dedupeMinutes,
           topics: visibleChoices(b.topics ?? old?.topics, req.member.role),
-          delivery: b.delivery ?? old?.delivery ?? defaultDelivery,
+          delivery: {
+            ...(b.delivery ?? old?.delivery ?? defaultDelivery),
+            timezone: organizationTimeZone,
+          },
         };
         const saved = await manager.save(StaffAlertPreference, {
           staffId: req.member.id,
@@ -200,7 +209,7 @@ router.post(
       examples: previewNotifications(
         p.enabled,
         p.topics || {},
-        p.delivery || defaultDelivery,
+        { ...(p.delivery || defaultDelivery), timezone: organizationTimeZone },
         req.member.role,
         start,
       ),
@@ -213,7 +222,11 @@ router.post(
       ]).map((row) => ({
         ...row,
         decision:
-          row.decision === 'Would alert' && inQuietHours(row.at, p.delivery || defaultDelivery)
+          row.decision === 'Would alert' &&
+          inQuietHours(row.at, {
+            ...(p.delivery || defaultDelivery),
+            timezone: organizationTimeZone,
+          })
             ? 'Quiet hours — defer'
             : row.decision,
       })),

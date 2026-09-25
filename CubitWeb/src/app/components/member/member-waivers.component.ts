@@ -18,7 +18,7 @@ import { HttpClient } from '@angular/common/http';
             </button>
             @if (expanded===w.version.id) {
               <div class="waiver-record-content" [id]="'waiver-'+w.version.id">
-                @if (w.signature?.status==='Signed') { <p class="muted">{{w.signature.signerName}} · {{w.signature.completedAt|date:'medium'}}{{w.signature.provider==='demo'?' · Demo signature':''}}</p> }
+                @if (w.signature?.status==='Signed') { <p class="muted">{{w.signature.signerName}} · {{w.signature.completedAt|orgDate:'medium'}}{{w.signature.provider==='demo'?' · Demo signature':''}}</p> }
                 <app-waiver-documents [staff]="true" [memberId]="memberId" [allowUpload]="w.canUpload" [selectedVersionId]="w.version.id" [showHeading]="false" [waivers]="[w]" [documents]="w.documents" emptyMessage="No documents attached to this waiver." (busyChange)="uploading=$event" (changed)="load()"></app-waiver-documents>
               </div>
             }

@@ -31,7 +31,7 @@ import {WaiverDocumentsService} from '../../services/waiver-documents.service';
   <article class="waiver-file">
     <div><b>{{d.filename}}</b>@if (d.memberName) {
     <small>{{d.memberName}}</small>
-    }<small>{{d.versionName}} · {{d.source}} · {{d.createdAt|date:'MMM d, y'}}</small><span class="badge" [class.active]="d.status==='Accepted'||d.status==='Stored'" [class.canceled]="d.status==='Rejected'">{{d.status}}</span>@if (d.reviewNote) {
+    }<small>{{d.versionName}} · {{d.source}} · {{d.createdAt|orgDate:'MMM d, y'}}</small><span class="badge" [class.active]="d.status==='Accepted'||d.status==='Stored'" [class.canceled]="d.status==='Rejected'">{{d.status}}</span>@if (d.reviewNote) {
     <p>{{d.reviewNote}}</p>
   }</div>
   <div class="actions"><button class="secondary" [disabled]="busy" (click)="download(d)">Download <app-arrow name="download"></app-arrow></button>@if (staff&&['staff upload','member upload'].includes(d.source)) {

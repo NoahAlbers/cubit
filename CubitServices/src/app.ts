@@ -1,5 +1,7 @@
+import { organizationTimeZone } from './organization/time';
 import { startAutomationScheduler } from './billing/automation';
 import { startLoginHistoryRetention } from './security/login-history';
+import { refreshOrganizationSettings } from './organization/settings';
 import { startWaiverReconciliation } from './waivers/reconcile';
 import { localConfig } from './dev/config';
 import { AppDataSource, assertSchemaReady } from './database';
@@ -111,6 +113,15 @@ app.use((req, res, next) => {
 });
 
 //routes
+app.use(async (_req, _res, next) => {
+  try {
+    await refreshOrganizationSettings();
+    _res.setHeader('X-Cubit-Timezone', organizationTimeZone);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 app.use('/api/organization', require('./api/routes/organization'));
 app.use('/api/account', require('./api/routes/account-security'));
 app.use('/api/backups', require('./api/routes/backups'));
@@ -164,6 +175,7 @@ app.use((req, res) => {
 export async function startLocalApp() {
   await AppDataSource.initialize();
   await assertSchemaReady(AppDataSource);
+  await refreshOrganizationSettings();
   if (localConfig.runtimeMode === 'hosted-demo') {
     const rows = await AppDataSource.query(
       "SELECT complete FROM cubit_demo_manifest WHERE id='synthetic-v1'",

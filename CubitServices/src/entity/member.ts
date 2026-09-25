@@ -1,3 +1,4 @@
+import { organizationDay } from '../organization/time';
 import { compare } from 'bcrypt';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, Raw } from 'typeorm';
 import { AccessLog } from './accessLog';
@@ -163,7 +164,7 @@ export class Member {
 
   public async getCurrentPlan(memberId: string): Promise<MemberPlan | null> {
     const { plans } = await this.getBilling(memberId);
-    const today = day(new Date());
+    const today = organizationDay();
     return (
       plans
         .filter(

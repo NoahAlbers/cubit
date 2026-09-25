@@ -1,13 +1,15 @@
-export const activityTimeZone = 'America/New_York';
-const calendar = new Intl.DateTimeFormat('en-US', {
-  timeZone: activityTimeZone,
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-  weekday: 'short',
-  hour: '2-digit',
-  hourCycle: 'h23',
-});
+import { organizationTimeZone } from '../organization/time';
+export { organizationTimeZone as activityTimeZone } from '../organization/time';
+const calendar = () =>
+  new Intl.DateTimeFormat('en-US', {
+    timeZone: organizationTimeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    weekday: 'short',
+    hour: '2-digit',
+    hourCycle: 'h23',
+  });
 const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export function localAccessEntries(logs: any[], from: string, to: string, now = new Date()) {
@@ -18,7 +20,9 @@ export function localAccessEntries(logs: any[], from: string, to: string, now = 
     if (!Number.isFinite(+stamp) || +stamp < earliest || +stamp > latest || +stamp > +now)
       return [];
     const p = Object.fromEntries(
-      calendar.formatToParts(stamp).map((part) => [part.type, part.value]),
+      calendar()
+        .formatToParts(stamp)
+        .map((part) => [part.type, part.value]),
     );
     const date = `${p.year}-${p.month}-${p.day}`;
     return date >= from && date <= to
@@ -83,5 +87,5 @@ export function busiestTimes(
       ...row,
       values: row.samples.map((count, i) => (count ? row.totals[i] / count : null)),
     }));
-  return { timeZone: activityTimeZone, total, weekHours, monthDays };
+  return { timeZone: organizationTimeZone, total, weekHours, monthDays };
 }

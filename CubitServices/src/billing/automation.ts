@@ -1,10 +1,13 @@
+import { refreshOrganizationSettings } from '../organization/settings';
+import { zonedParts } from '../organization/time';
+import { organizationDay } from '../organization/time';
 import { recordAudit } from '../staff/audit';
 import { randomUUID } from 'crypto';
 import { EntityManager } from 'typeorm';
 import { AppDataSource } from '../database';
 import { Member } from '../entity/member';
 import { AutomationRun, OperationsSettings } from '../entity/cubitOperations';
-import { billingLedger, day } from './ledger';
+import { billingLedger } from './ledger';
 import { lockMember, postCharges, readBilling, refreshAccess } from './store';
 import { postedLedger, accessDecision } from './posted-ledger';
 
@@ -13,7 +16,7 @@ export async function automationPlan(
   settings: OperationsSettings,
   apply: boolean,
 ) {
-  const today = day(new Date()),
+  const today = organizationDay(),
     actions: any[] = [];
   let newCharges = 0;
   const members = await manager.find(Member, { order: { id: 'ASC' } });
@@ -60,7 +63,8 @@ export async function automationPlan(
 }
 
 export async function runAutomation(preview: boolean, trigger: string, daily = false) {
-  const id = daily ? `daily:${day(new Date())}` : randomUUID();
+  await refreshOrganizationSettings();
+  const id = daily ? `daily:${organizationDay()}` : randomUUID();
   try {
     return await AppDataSource.transaction(async (manager) => {
       const settings = await manager.findOneOrFail(OperationsSettings, {
@@ -109,9 +113,11 @@ export async function runAutomation(preview: boolean, trigger: string, daily = f
 export function startAutomationScheduler() {
   let busy = false;
   const tick = async () => {
-    if (busy || new Date().getHours() < 9) return;
+    if (busy) return;
     busy = true;
     try {
+      await refreshOrganizationSettings();
+      if (Number(zonedParts().hour) < 9) return;
       await runAutomation(false, 'Daily schedule', true);
     } catch (err: any) {
       console.error('Automation run failed:', err.message);

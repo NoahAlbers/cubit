@@ -32,7 +32,7 @@
 </section>
 @if (data?.history?.length) {
   <section class="panel detail-panel"><h2>Recent catalog changes</h2><div class="table-scroll"><table><thead><tr><th>Date</th><th>Change</th><th>Details</th><th>Staff</th></tr></thead><tbody>@for (item of data.history; track item) {
-  <tr><td>{{item.createdAt|date:'medium'}}</td><td>{{item.kind}}</td><td>{{item.change.after.name}} · {{item.change.after.monthlyCost|currency}} / month@if (item.change.before) {
+  <tr><td>{{item.createdAt|orgDate:'medium'}}</td><td>{{item.kind}}</td><td>{{item.change.after.name}} · {{item.change.after.monthlyCost|currency}} / month@if (item.change.before) {
   <span><br><small>Previously {{item.change.before.name}} · {{item.change.before.monthlyCost|currency}} / month</small></span>
   }</td><td>{{item.author}}</td></tr>
 }</tbody></table></div></section>

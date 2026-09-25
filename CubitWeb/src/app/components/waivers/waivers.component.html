@@ -43,7 +43,7 @@
             <button class="secondary" (click)="edit(w)" [disabled]="busy">New version</button>
             }<button class="quiet" (click)="archive(w)" [disabled]="busy">{{w.archived?'Restore':'Archive'}}</button></div></div>
             <details><summary>Versions & document</summary>@for (v of w.versions; track v) {
-            <div class="note-entry"><b>Version {{v.number}} · {{v.signedCount}} signed</b><small>{{v.createdAt|date:'medium'}} · {{v.author}}</small>@if (v.provider==='demo') {
+            <div class="note-entry"><b>Version {{v.number}} · {{v.signedCount}} signed</b><small>{{v.createdAt|orgDate:'medium'}} · {{v.author}}</small>@if (v.provider==='demo') {
             <pre class="waiver-document">{{v.demoText}}</pre>
             }@if (v.provider==='docuseal') {
             <p>DocuSeal template {{v.docusealTemplateId}}</p>
@@ -64,7 +64,7 @@
 </section>
 }
 <details class="panel detail-panel"><summary>Signing history</summary><div class="table-scroll"><table><thead><tr><th>Member</th><th>Waiver</th><th>Status</th><th>Date</th><th></th></tr></thead><tbody>@for (s of data.signatures; track s) {
-<tr><td><a [routerLink]="['/member',s.memberId]" [queryParams]="navigation.memberQuery">{{s.memberName}}</a></td><td>{{s.version.name}}<small>Version {{s.version.number}} · {{s.provider==='demo'?'Demo':'DocuSeal'}}</small></td><td>{{s.status}}</td><td>{{(s.completedAt||s.createdAt)|date:'MMM d, y'}}</td><td>@if (s.documentUrl) {
+<tr><td><a [routerLink]="['/member',s.memberId]" [queryParams]="navigation.memberQuery">{{s.memberName}}</a></td><td>{{s.version.name}}<small>Version {{s.version.number}} · {{s.provider==='demo'?'Demo':'DocuSeal'}}</small></td><td>{{s.status}}</td><td>{{(s.completedAt||s.createdAt)|orgDate:'MMM d, y'}}</td><td>@if (s.documentUrl) {
 <a [href]="s.documentUrl" target="_blank" rel="noopener noreferrer">Signed document <app-arrow name="external-link"></app-arrow></a>
 }@if (s.provider==='docuseal'&&s.status!=='Signed') {
 <button class="quiet" (click)="sync(s)" [disabled]="busy">Check status</button>

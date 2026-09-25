@@ -1,3 +1,4 @@
+import { organizationDay } from '../../services/org-time';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -13,7 +14,7 @@ export class PaymentMatchingComponent implements OnInit {
   create=false;newMember:any={firstName:'',lastName:'',email:'',confirmCreate:false};simulation:any;showTest=false;private loadVersion=0;private searchVersion=0;
   constructor(private http:HttpClient,private route:ActivatedRoute,private router:Router,public navigation:ListNavigationService,private guard:DraftGuard){}
   ngOnInit(){this.resetTest();this.route.queryParamMap.subscribe(p=>{this.state=p.get('state')==='processed'?'processed':'pending';this.q=p.get('q')||'';this.page=Math.max(1,Number(p.get('page'))||1);this.selectedId=p.get('event')||'';this.load();});}
-  resetTest(){const d=new Date();this.simulation={id:'event-'+crypto.randomUUID(),resourceId:'resource-'+crypto.randomUUID(),kind:'payment',amount:60,eventDate:`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`,payerEmail:'',payerName:'',subscriptionId:'',parentResourceId:''};}
+  resetTest(){const d=new Date();this.simulation={id:'event-'+crypto.randomUUID(),resourceId:'resource-'+crypto.randomUUID(),kind:'payment',amount:60,eventDate:organizationDay(d),payerEmail:'',payerName:'',subscriptionId:'',parentResourceId:''};}
   hasUnsavedChanges(){return this.create&&!!(this.newMember.firstName||this.newMember.lastName||this.newMember.confirmCreate);}
   discardDraft(){this.create=false;this.newMember={firstName:'',lastName:'',email:'',confirmCreate:false};}
   async navigate(page=1,event=''){if(this.hasUnsavedChanges()&&!await this.guard.confirmDiscard())return;this.discardDraft();this.router.navigate([],{relativeTo:this.route,queryParams:{state:this.state,q:this.q,page,event:event||null}});}

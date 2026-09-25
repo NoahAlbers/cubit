@@ -238,7 +238,7 @@ def https_check():
 def heartbeat():
     now=dt.datetime.now(UTC);previous=sql("SELECT detail FROM backup_runtime WHERE id='default'")
     state=json.loads(previous) if previous else {}
-    settings=json.loads(sql("SELECT settings FROM backup_settings WHERE id='default'"));_,upcoming=slots(settings,now)
+    settings=json.loads(sql("SELECT settings FROM backup_settings WHERE id='default'"));settings['timezone']=sql("SELECT timezone FROM organization_settings WHERE id='default'");_,upcoming=slots(settings,now)
     if not state.get('https') or (now-dt.datetime.fromisoformat(state['https']['checkedAt'])).total_seconds()>3600: state['https']=https_check()
     verified=sql("SELECT DATE_FORMAT(finishedAt,'%Y-%m-%dT%H:%i:%sZ') FROM backup_job WHERE kind='verify' AND status='Succeeded' ORDER BY finishedAt DESC LIMIT 1")
     state.update(localReady=pathlib.Path(REPO,'config').exists(),offsiteConfigured=bool(cfg.get('remote')),nextRunAt=upcoming[1].isoformat() if upcoming else None,lastVerifiedAt=verified or None)
@@ -258,7 +258,7 @@ def cycle():
     sql("INSERT IGNORE INTO backup_settings(id,settings,revision) VALUES ('default',"+literal(json.dumps(DEFAULTS))+",1)")
     # flock guarantees no live worker owns these; recover interrupted operations visibly.
     sql("UPDATE backup_job SET status='Failed',finishedAt=UTC_TIMESTAMP(),result='{"+'"message":"Worker interrupted; retry the operation. Never restored over the working database."'+"}' WHERE status='Running'")
-    settings=validate(json.loads(sql("SELECT settings FROM backup_settings WHERE id='default'")))
+    settings=json.loads(sql("SELECT settings FROM backup_settings WHERE id='default'"));settings['timezone']=sql("SELECT timezone FROM organization_settings WHERE id='default'");settings=validate(settings)
     now=dt.datetime.now(UTC);due,_=slots(settings,now)
     if due:
         jid=str(uuid.uuid5(uuid.NAMESPACE_URL,'cubit-backup:'+cfg['database']+':'+due[0]))

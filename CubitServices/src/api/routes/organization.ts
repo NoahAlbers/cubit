@@ -14,6 +14,8 @@ import { recordAudit, snapshot } from '../../staff/audit';
 import { fail } from '../../billing/payments';
 import { demoMemberId } from '../../demo/identity';
 import { localConfig } from '../../dev/config';
+import { validTimeZone } from '../../organization/time';
+import { acceptOrganizationSettings } from '../../organization/settings';
 
 const router = express.Router();
 const text = z.string().trim().min(1).max(150);
@@ -50,7 +52,11 @@ router.get(
     const settings = await AppDataSource.manager.findOneByOrFail(OrganizationSettings, {
       id: 'default',
     });
-    res.json({ name: settings.name, supportEmail: settings.supportEmail });
+    res.json({
+      name: settings.name,
+      supportEmail: settings.supportEmail,
+      timezone: settings.timezone,
+    });
   }),
 );
 router.use(staffOnly, (req, res, next) => {
@@ -86,6 +92,7 @@ router.put(
       .object({
         name: z.string().trim().min(1).max(120),
         supportEmail: email,
+        timezone: z.string().refine(validTimeZone, 'Choose a valid IANA time zone.').optional(),
         revision: z.number().int().positive(),
       })
       .strict(),
@@ -105,17 +112,26 @@ router.put(
         });
         if (settings.revision !== req.body.revision)
           fail('Organization settings changed. Reload before saving.', 409);
-        const before = { name: settings.name, supportEmail: settings.supportEmail };
+        const before = {
+          name: settings.name,
+          supportEmail: settings.supportEmail,
+          timezone: settings.timezone,
+        };
         Object.assign(settings, req.body, { revision: settings.revision + 1 });
         await manager.save(settings);
         await recordAudit(manager, {
           kind: 'Organization settings changed',
           author: req.member.email,
           before,
-          after: { name: settings.name, supportEmail: settings.supportEmail },
+          after: {
+            name: settings.name,
+            supportEmail: settings.supportEmail,
+            timezone: settings.timezone,
+          },
         });
         return settings;
       });
+      acceptOrganizationSettings(saved);
       res.json(saved);
     },
   ),

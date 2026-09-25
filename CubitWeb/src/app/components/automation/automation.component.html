@@ -20,12 +20,12 @@
 }</div>
 }@if (data.settings.migrationSummary) {
 <details><summary>Initial billing reconciliation</summary>@if (data.migration) {
-<p>{{data.migration.members}} accounts · {{data.migration.charges}} charges stored.<br>All starting balances reconciled on {{data.migration.at | date:'medium'}}.</p>
+<p>{{data.migration.members}} accounts · {{data.migration.charges}} charges stored.<br>All starting balances reconciled on {{data.migration.at |orgDate:'medium'}}.</p>
 }</details>
 }</section></div>
 <section class="panel detail-panel"><h2>Plans</h2><p>Create, update, or retire membership plans. Existing membership rates and billing history stay unchanged.</p><a class="button secondary" routerLink="/plans" [queryParams]="navigation.query('/plans')">Manage plans <app-arrow name="arrow-right"></app-arrow></a></section>
 <section class="panel detail-panel"><h2>Run history</h2><div class="table-scroll"><table><thead><tr><th>Started</th><th>Run by</th><th>Status</th><th>Result</th></tr></thead><tbody>@for (r of data.runs; track r) {
-<tr><td>{{r.createdAt | date:'medium'}}</td><td>{{r.trigger}}</td><td>{{r.status}}</td><td>{{r.summary.error || (r.summary.newCharges+' charges · '+r.summary.accessChanges?.length+' access changes')}}</td></tr>
+<tr><td>{{r.createdAt |orgDate:'medium'}}</td><td>{{r.trigger}}</td><td>{{r.status}}</td><td>{{r.summary.error || (r.summary.newCharges+' charges · '+r.summary.accessChanges?.length+' access changes')}}</td></tr>
 }</tbody></table></div>@if (!data.runs.length) {
 <p class="empty-small">No runs yet.</p>
 }</section>

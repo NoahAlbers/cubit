@@ -5,7 +5,7 @@
         <div class="profile-identity">@if (memberId!=='New') {
           <svg class="member-identicon profile-identicon" width="42" height="42" [appMemberIcon]="memberId" aria-hidden="true" focusable="false"></svg>
           }<div class="profile-name-line"><h2>{{headerText || 'Member'}}</h2>@if (memberId!=='New') {
-          <span class="badge last-entry-badge" [attr.title]="lastEntry ? 'Last successful entry: ' + (lastEntry|date:'MMM d, y, h:mm a') : null">{{lastEntryLabel}}</span>
+          <span class="badge last-entry-badge" [attr.title]="lastEntry ? 'Last successful entry: ' + (lastEntry|orgDate:'MMM d, y, h:mm a') : null">{{lastEntryLabel}}</span>
         }</div></div>
 
       </div>
@@ -16,7 +16,7 @@
             <small>{{enabledKeys}} enabled key{{enabledKeys===1?'':'s'}}</small>
           }
           @if (billing?.oldestUnpaidDate) {
-            <small>Oldest unpaid: {{billing.oldestUnpaidDate|date:'MMM d, y':'UTC'}}</small>
+            <small>Oldest unpaid: {{billing.oldestUnpaidDate|orgDate:'MMM d, y':'UTC'}}</small>
           }
         </div>
       }
@@ -65,7 +65,7 @@
         }@if (activityError) {
         <p class="error" role="alert">{{activityError}}</p>
         }@for (key of memberKeys.data; track key) {
-        <div class="key-row"><div class="key-details"><span class="key-value" [appCopy]="key.serialNumber" copyLabel="access key"><code>{{key.serialNumber}}</code></span><small [attr.title]="key.lastUsed ? 'Last successful entry with this key' : 'No key-specific successful entry recorded; imported history does not identify individual keys.'">Last used: {{key.lastUsed ? (key.lastUsed | date:'MMM d, y, h:mm a') : 'Not recorded'}}</small></div><span class="badge" [class.active]="key.status==='Active'" [class.canceled]="key.status!=='Active'">{{key.status==='Active'?'Enabled key':'Disabled key'}}</span><div class="actions key-actions"><button class="quiet" (click)="setKeyStatus(key)">{{key.status === 'Active' ? 'Disable key' : 'Enable key'}}</button><button class="quiet debt" (click)="deleteKey(key)">Remove</button></div></div>
+        <div class="key-row"><div class="key-details"><span class="key-value" [appCopy]="key.serialNumber" copyLabel="access key"><code>{{key.serialNumber}}</code></span><small [attr.title]="key.lastUsed ? 'Last successful entry with this key' : 'No key-specific successful entry recorded; imported history does not identify individual keys.'">Last used: {{key.lastUsed ? (key.lastUsed |orgDate:'MMM d, y, h:mm a') : 'Not recorded'}}</small></div><span class="badge" [class.active]="key.status==='Active'" [class.canceled]="key.status!=='Active'">{{key.status==='Active'?'Enabled key':'Disabled key'}}</span><div class="actions key-actions"><button class="quiet" (click)="setKeyStatus(key)">{{key.status === 'Active' ? 'Disable key' : 'Enable key'}}</button><button class="quiet debt" (click)="deleteKey(key)">Remove</button></div></div>
         }@if (!activityLoading&&!activityError&&!memberKeys.data.length) {
         <p class="muted">No access keys.</p>
         }@if(billing && !billingError && memberStatus!=='Active' && enabledKeys>0){<aside class="access-warning" role="note"><strong>Membership blocks entry in Cubit</strong><p>{{enabledKeys}} enabled key{{enabledKeys===1?' is':'s are'}} still assigned. Inactive or canceled memberships must be refused even when a key is enabled.</p><p>This review does not update the physical doors. Confirm access is removed in the current door system.</p></aside>}<p class="muted">An enabled key is only eligible with an Active membership. Disabled keys and staff access blocks stay blocked when payments arrive.</p></section>
@@ -74,7 +74,7 @@
       <div id="membership-billing" tabindex="-1" class="plan-workflow-layout" [class.workflow-open]="changingPlan">
       <section class="panel detail-panel plan-summary"><div class="section-heading"><div><h2>Membership plans</h2><p class="muted">Monthly charges stop after the final billing date.</p></div><div class="plan-header-actions"><button class="secondary" (click)="addEditPlan('New')">{{openPlan?'Change membership plan':'Add plan'}}</button><button class="secondary" (click)="endMembershipPlan()" [disabled]="!openPlan||cutoffBusy||planBusy">End / Cancel plan</button></div></div>
       <div class="table-scroll"><table class="record-table"><thead><tr><th>Plan</th><th>Monthly rate</th><th>Starts</th><th>Final billing date</th><th></th></tr></thead><tbody>@for (plan of memberPlans.data; track plan) {
-      <tr><td data-label="Plan"><b>{{plan.billingName || plan.plan.name}}</b></td><td data-label="Monthly rate">{{(plan.billingRate ?? plan.plan.monthlyCost) | currency}}</td><td data-label="Starts">{{plan.startDate | date:'MMM d, y'}}</td><td data-label="Final billing date">{{(plan.finalBillingDate || plan.endDate) ? ((plan.finalBillingDate || plan.endDate) | date:'MMM d, y':'UTC') : 'Ongoing'}}</td><td><button class="secondary" (click)="openCutoff(plan)">{{(plan.finalBillingDate || plan.endDate) ? 'Review cutoff' : 'End billing'}}</button></td></tr>
+      <tr><td data-label="Plan"><b>{{plan.billingName || plan.plan.name}}</b></td><td data-label="Monthly rate">{{(plan.billingRate ?? plan.plan.monthlyCost) | currency}}</td><td data-label="Starts">{{plan.startDate |orgDate:'MMM d, y':'UTC'}}</td><td data-label="Final billing date">{{(plan.finalBillingDate || plan.endDate) ? ((plan.finalBillingDate || plan.endDate) |orgDate:'MMM d, y':'UTC') : 'Ongoing'}}</td><td><button class="secondary" (click)="openCutoff(plan)">{{(plan.finalBillingDate || plan.endDate) ? 'Review cutoff' : 'End billing'}}</button></td></tr>
     }</tbody></table></div>@if (!memberPlans.data.length) {
     <p class="empty-small">No membership plans yet.</p>
   }
@@ -88,10 +88,10 @@
       <p class="muted">Step 1 of {{planGoal==='change'?3:2}} · Preview and save the current plan’s cutoff.</p>
       }
       @if(cutoffSaved){<p class="success-message" role="status">{{cutoffSaved}}</p>}
-      @if(cutoffPlan){    <div class="cutoff-box"><div class="section-heading"><h3>Set final billing date · {{cutoffPlan.billingName || cutoffPlan.plan.name}}</h3></div><dl class="cutoff-context"><div><dt>Last payment</dt><dd>{{billingError ? 'Payment history unavailable' : !billing ? 'Loading…' : lastPaymentDate ? (lastPaymentDate | date:'MMM d, y':'UTC') : 'No recorded payment'}}</dd></div><div><dt>Last entry</dt><dd>{{activityError ? 'Entry history unavailable' : activityLoading ? 'Loading…' : lastEntry ? (lastEntry | date:'MMM d, y') : 'No recorded entry'}}</dd></div></dl><p>Include monthly charges scheduled on or before this date. No proration. Membership access ends after this date. This records a local cutoff; it does not cancel a PayPal subscription.</p><div class="form-grid"><label>Final billing date (required)<input type="date" [(ngModel)]="cutoffDate" (ngModelChange)="changeCutoff()" [disabled]="cutoffBusy"></label><label>Reason (required)<input [(ngModel)]="cutoffReason" (ngModelChange)="changeCutoff()" maxlength="255" placeholder="e.g. Member canceled via PayPal" [disabled]="cutoffBusy"></label></div>@if (cutoffError) {
+      @if(cutoffPlan){    <div class="cutoff-box"><div class="section-heading"><h3>Set final billing date · {{cutoffPlan.billingName || cutoffPlan.plan.name}}</h3></div><dl class="cutoff-context"><div><dt>Last payment</dt><dd>{{billingError ? 'Payment history unavailable' : !billing ? 'Loading…' : lastPaymentDate ? (lastPaymentDate |orgDate:'MMM d, y':'UTC') : 'No recorded payment'}}</dd></div><div><dt>Last entry</dt><dd>{{activityError ? 'Entry history unavailable' : activityLoading ? 'Loading…' : lastEntry ? (lastEntry |orgDate:'MMM d, y') : 'No recorded entry'}}</dd></div></dl><p>Include monthly charges scheduled on or before this date. No proration. Membership access ends after this date. This records a local cutoff; it does not cancel a PayPal subscription.</p><div class="form-grid"><label>Final billing date (required)<input type="date" [(ngModel)]="cutoffDate" (ngModelChange)="changeCutoff()" [disabled]="cutoffBusy"></label><label>Reason (required)<input [(ngModel)]="cutoffReason" (ngModelChange)="changeCutoff()" maxlength="255" placeholder="e.g. Member canceled via PayPal" [disabled]="cutoffBusy"></label></div>@if (cutoffError) {
     <p class="error" role="alert">{{cutoffError}}</p>
     }@if (cutoffPreview) {
-    <div class="cutoff-preview"><b>Review this change</b><p>Balance: {{cutoffPreview.before.balance | currency}} <span class="sr-only">to</span> <app-arrow name="arrow-right"></app-arrow> <strong>{{cutoffPreview.after.balance | currency}}</strong><br>Past due: {{cutoffPreview.before.pastDue | currency}} <span class="sr-only">to</span> <app-arrow name="arrow-right"></app-arrow> {{cutoffPreview.after.pastDue | currency}}<br>Last billing date: {{cutoffDate | date:'MMM d, y':'UTC'}}</p><small>Payments stay intact. The date, reason, and staff account are recorded in the change history.</small></div>
+    <div class="cutoff-preview"><b>Review this change</b><p>Balance: {{cutoffPreview.before.balance | currency}} <span class="sr-only">to</span> <app-arrow name="arrow-right"></app-arrow> <strong>{{cutoffPreview.after.balance | currency}}</strong><br>Past due: {{cutoffPreview.before.pastDue | currency}} <span class="sr-only">to</span> <app-arrow name="arrow-right"></app-arrow> {{cutoffPreview.after.pastDue | currency}}<br>Last billing date: {{cutoffDate |orgDate:'MMM d, y':'UTC'}}</p><small>Payments stay intact. The date, reason, and staff account are recorded in the change history.</small></div>
     }<div class="actions"><button class="secondary" (click)="submitCutoff(true)" [disabled]="cutoffBusy || !cutoffDate || !cutoffReason.trim()">Preview balance</button>@if (cutoffPreview) {
     <button class="primary" (click)="submitCutoff(false)" [disabled]="cutoffBusy">Save final billing date</button>
   }</div></div>}
@@ -99,9 +99,9 @@
       <p class="muted">{{planGoal==='change'?'Step 2 of 3 · Choose the replacement plan.':'Step 1 of 2 · Choose a plan and its first billing date.'}}</p>
       <label>Available plan<select [(ngModel)]="newPlanId" (ngModelChange)="planConfirmed=false" [disabled]="planBusy"><option value="">Choose a plan</option>@for(p of availablePlans;track p.id){<option [value]="p.id">{{p.name}} · {{p.monthlyCost|currency}} / month</option>}</select></label>
       <label>Start date<input type="date" [(ngModel)]="newPlanDate" [min]="earliestPlanStart" (ngModelChange)="planConfirmed=false" [disabled]="planBusy" required></label>
-      @if(lastPlanCutoff){<p class="muted">The previous plan ends {{lastPlanCutoff|date:'MMM d, y':'UTC'}}. The new plan must start after this date.</p>}
+      @if(lastPlanCutoff){<p class="muted">The previous plan ends {{lastPlanCutoff|orgDate:'MMM d, y':'UTC'}}. The new plan must start after this date.</p>}
       @if(newPlanDate&&earliestPlanStart&&newPlanDate<earliestPlanStart){<p class="error">Choose a start date after the previous plan’s final billing date.</p>}
-      @if(selectedPlan){<div class="cutoff-preview"><b>Review the new membership</b><p>{{selectedPlan.name}} · {{selectedPlan.monthlyCost|currency}} each month<br>First charge: {{newPlanDate|date:'MMM d, y':'UTC'}}</p><p>Charges repeat on the monthly billing anniversary. Earlier unpaid charges remain. Staff access blocks and disabled keys stay in place.</p><label class="check"><input type="checkbox" [(ngModel)]="planConfirmed" [disabled]="planBusy">I have checked the start date and monthly rate.</label></div>}
+      @if(selectedPlan){<div class="cutoff-preview"><b>Review the new membership</b><p>{{selectedPlan.name}} · {{selectedPlan.monthlyCost|currency}} each month<br>First charge: {{newPlanDate|orgDate:'MMM d, y':'UTC'}}</p><p>Charges repeat on the monthly billing anniversary. Earlier unpaid charges remain. Staff access blocks and disabled keys stay in place.</p><label class="check"><input type="checkbox" [(ngModel)]="planConfirmed" [disabled]="planBusy">I have checked the start date and monthly rate.</label></div>}
       @if(planError){<p class="error" role="alert">{{planError}}</p>}
       <button class="primary" (click)="saveWorkflowPlan()" [disabled]="!validNewPlan||planBusy">{{planBusy?'Saving…':'Save membership plan'}}</button>
       }
@@ -123,7 +123,7 @@
   @if (filteredHistory.length) {
     <div class="table-scroll"><table class="record-table"><thead><tr><th [attr.aria-sort]="historyOrder==='desc'?'descending':'ascending'"><button class="quiet charge-date-sort" (click)="historyOrder=historyOrder==='desc'?'asc':'desc';sortHistory()" [attr.aria-label]="historyOrder==='desc'?'Sort billing oldest first':'Sort billing newest first'">Date <app-arrow [name]="historyOrder==='desc'?'sort-descending':'sort-ascending'"></app-arrow></button></th><th>Entry</th><th class="number">Amount</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody>
     @for (row of visibleHistory; track row) {
-      <tr><td data-label="Date">{{row.date | date:'MMM d, y':'UTC'}}</td><td class="billing-entry" data-label="Entry"><b>{{row.kind}}</b><small>{{row.description}}</small></td><td data-label="Amount" class="number" [class.payment-amount]="row.amount < 0">{{row.amount > 0 ? '+' : row.amount < 0 ? '−' : ''}}{{abs(row.amount) | currency}}</td><td data-label="Status"><span class="badge" [class.canceled]="row.status==='Past due'">{{row.status}}</span>@if (row.status==='Part-paid') {
+      <tr><td data-label="Date">{{row.date |orgDate:'MMM d, y':'UTC'}}</td><td class="billing-entry" data-label="Entry"><b>{{row.kind}}</b><small>{{row.description}}</small></td><td data-label="Amount" class="number" [class.payment-amount]="row.amount < 0">{{row.amount > 0 ? '+' : row.amount < 0 ? '−' : ''}}{{abs(row.amount) | currency}}</td><td data-label="Status"><span class="badge" [class.canceled]="row.status==='Past due'">{{row.status}}</span>@if (row.status==='Part-paid') {
       <small>{{row.charge.outstanding | currency}} unpaid</small>
     }</td><td>@if (row.editable) {
     <button class="quiet" (click)="editBillingEntry(row)" [attr.aria-label]="'Edit '+row.kind.toLowerCase()+' from '+row.date">Edit</button>
@@ -140,16 +140,16 @@
 @if (billing.adjustments.length || billing.history.length || billing.voidedCharges.length || paymentChanges.length) {
   <details class="billing-audit"><summary>Change history</summary>
   @for (a of billing.adjustments; track a) {
-    <div class="note-entry"><b>Charge {{a.credit >= 0 ? 'reduced' : 'increased'}} by {{abs(a.credit) | currency}}</b><p>{{a.reason}}</p><small>{{a.author}} · {{a.createdAt | date:'medium'}}</small></div>
+    <div class="note-entry"><b>Charge {{a.credit >= 0 ? 'reduced' : 'increased'}} by {{abs(a.credit) | currency}}</b><p>{{a.reason}}</p><small>{{a.author}} · {{a.createdAt |orgDate:'medium'}}</small></div>
   }
   @for (p of paymentChanges; track p) {
-    <div class="note-entry"><b>{{p.correctedBy ? 'Original entry' : p.reversalOf ? 'Reversed entry' : p.amount == 0 ? 'Entry removed' : 'Updated entry'}} · {{p.amount | currency}}</b><p>{{p.correctionReason || p.description}}</p><small>{{p.recordedBy || 'Imported history'}} · {{p.createdAt | date:'medium'}}</small></div>
+    <div class="note-entry"><b>{{p.correctedBy ? 'Original entry' : p.reversalOf ? 'Reversed entry' : p.amount == 0 ? 'Entry removed' : 'Updated entry'}} · {{p.amount | currency}}</b><p>{{p.correctionReason || p.description}}</p><small>{{p.recordedBy || 'Imported history'}} · {{p.createdAt |orgDate:'medium'}}</small></div>
   }
   @for (event of billing.history; track event) {
-    <div class="note-entry"><b>Final billing date: {{event.finalBillingDate | date:'MMM d, y':'UTC'}}</b><p>{{event.reason}}</p><small>{{event.changedBy}} · {{event.changedAt | date:'medium'}} · Previous: {{event.previousDate || 'Ongoing'}}</small></div>
+    <div class="note-entry"><b>Final billing date: {{event.finalBillingDate |orgDate:'MMM d, y':'UTC'}}</b><p>{{event.reason}}</p><small>{{event.changedBy}} · {{event.changedAt |orgDate:'medium'}} · Previous: {{event.previousDate || 'Ongoing'}}</small></div>
   }
   @for (c of billing.voidedCharges; track c) {
-    <div class="note-entry"><b>Charge stopped by final billing date</b><p>{{c.dueDate | date:'MMM d, y':'UTC'}} · {{c.planName}} · {{c.amount | currency}}</p></div>
+    <div class="note-entry"><b>Charge stopped by final billing date</b><p>{{c.dueDate |orgDate:'MMM d, y':'UTC'}} · {{c.planName}} · {{c.amount | currency}}</p></div>
   }
 </details>
 }

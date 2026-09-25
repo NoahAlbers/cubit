@@ -1,4 +1,5 @@
-import { day } from './ledger';
+import { organizationDay } from '../organization/time';
+import {} from './ledger';
 import { postedLedger, accessDecision } from './posted-ledger';
 
 // Reconstruct month-end billing eligibility using corrected records and today's
@@ -11,7 +12,7 @@ export function activeMembersAt(
   adjustments: any[],
   graceDays: number,
   asOf: string,
-  today = day(new Date()),
+  today = organizationDay(),
 ) {
   const group = (rows: any[]) => {
     const result = new Map<string, any[]>();

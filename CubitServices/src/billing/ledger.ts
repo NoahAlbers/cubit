@@ -1,3 +1,4 @@
+import { organizationDay } from '../organization/time';
 // Calendar dates and integer cents keep billing independent of DST and rounding.
 export function day(value: Date | string): string {
   if (typeof value === 'string') return value.slice(0, 10);
@@ -33,7 +34,7 @@ export interface Payment {
   transactionDate: Date | string;
 }
 
-export function billingLedger(plans: BillingPlan[], payments: Payment[], asOf = day(new Date())) {
+export function billingLedger(plans: BillingPlan[], payments: Payment[], asOf = organizationDay()) {
   if (!validDay(asOf)) throw new Error('Invalid billing date');
   const charges: {
     planId: string;
@@ -99,7 +100,7 @@ export function billingLedger(plans: BillingPlan[], payments: Payment[], asOf = 
   };
 }
 
-export function membershipStatus(plans: BillingPlan[], balance: number, asOf = day(new Date())) {
+export function membershipStatus(plans: BillingPlan[], balance: number, asOf = organizationDay()) {
   const current = plans
     .filter(
       (p) =>
