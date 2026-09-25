@@ -23,6 +23,8 @@ let ownsSchema=false;
   await db.query('ALTER TABLE member MODIFY balance FLOAT NULL, DROP COLUMN tokenVersion, DROP COLUMN loginDisabled, DROP COLUMN staffVersion');
   await db.query('DROP TABLE organization_settings');
   await db.query('ALTER TABLE staff_alert_preference DROP COLUMN topics, DROP COLUMN delivery');
+  await db.query('ALTER TABLE waiver_document DROP COLUMN uploadedById');
+  await db.query('DROP TABLE account_throttle');
   await db.query('ALTER TABLE waiver_version DROP COLUMN providerFingerprint');
   await db.query('ALTER TABLE account_link RENAME INDEX idx_account_link_member TO previous_generated_index');
   await db.runMigrations({transaction:'none'});

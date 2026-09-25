@@ -16,6 +16,9 @@ export class WaiverDocument {
   @Column() source: string;
   @Index('idx_waiver_doc_status') @Column() status: string;
   @Column() uploadedBy: string;
+  @Index('idx_waiver_doc_uploader')
+  @Column({ type: 'varchar', length: 36, nullable: true })
+  uploadedById: string | null;
   @Column({ nullable: true }) reviewedBy: string;
   @Column({ nullable: true }) reviewedAt: Date;
   @Column({ type: 'text', nullable: true }) reviewNote: string;

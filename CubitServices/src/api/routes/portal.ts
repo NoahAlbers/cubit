@@ -15,6 +15,7 @@ import { memberWaivers, startSigning, completeDemo, syncSigning } from '../../wa
 import { localConfig } from '../../dev/config';
 import { demoEmail, demoMemberId } from '../../demo/identity';
 import { documentLimit, uploadDocument, sendDocument } from '../../waivers/documents';
+import { limitWaiverUploads } from '../../waivers/upload-limit';
 
 const router = express.Router();
 router.use(signedIn);
@@ -31,6 +32,7 @@ const route = (fn: any) => async (req: any, res: any, next: any) => {
 };
 router.post(
   '/waivers/:versionId/documents',
+  limitWaiverUploads,
   express.raw({ type: 'application/octet-stream', limit: documentLimit }),
   route(async (req: any, res: any) =>
     res

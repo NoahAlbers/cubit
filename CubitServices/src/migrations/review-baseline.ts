@@ -1,4 +1,5 @@
 import { StaffNotificationOptions1790261000000 } from './staff-notifications';
+import { UploadAccountLimits1790352000000 } from './upload-security';
 import { OrganizationManagement1790260000000 } from './organization';
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import { baselineTables } from './baseline-schema';
@@ -146,4 +147,5 @@ export const migrations = [
   StableIndexNames1790250000008,
   OrganizationManagement1790260000000,
   StaffNotificationOptions1790261000000,
+  UploadAccountLimits1790352000000,
 ];

@@ -10,6 +10,7 @@ import { publishWaiver, publicSignature, memberWaivers, syncSigning } from '../.
 import { docusealConfig } from '../../waivers/docuseal';
 import { fail } from '../../billing/payments';
 import { WaiverDocument } from '../../entity/waiverDocument';
+import { limitWaiverUploads } from '../../waivers/upload-limit';
 import {
   documentLimit,
   uploadDocument,
@@ -26,6 +27,7 @@ router.use((req, res, next) => {
 });
 router.post(
   '/documents/template',
+  limitWaiverUploads,
   express.raw({ type: 'application/octet-stream', limit: documentLimit }),
   route(bodies.document, async (req, res) =>
     res
@@ -44,6 +46,7 @@ router.post(
 );
 router.post(
   '/members/:memberId/versions/:versionId/documents',
+  limitWaiverUploads,
   express.raw({ type: 'application/octet-stream', limit: documentLimit }),
   route(bodies.document, async (req, res) =>
     res

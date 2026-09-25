@@ -83,7 +83,10 @@ export async function uploadDocument(
     const total = await manager
       .createQueryBuilder(WaiverDocument, 'd')
       .select('COALESCE(SUM(d.bytes),0)', 'bytes')
-      .where('d.uploadedBy=:email', { email: actor.email })
+      .where(
+        'd.uploadedById=:id OR (d.uploadedById IS NULL AND d.source=:source AND d.memberId=:id)',
+        { id: actor.id, source: 'member upload' },
+      )
       .getRawOne();
     if (Number(total.bytes) + file.bytes > 250 * 1024 * 1024)
       fail('Your upload allowance has been reached. Contact staff.', 413);
@@ -107,6 +110,7 @@ export async function uploadDocument(
         source: memberId ? (staff ? 'staff upload' : 'member upload') : 'template',
         status: memberId ? 'Pending review' : 'Template',
         uploadedBy: actor.email,
+        uploadedById: actor.id,
       }),
     );
     await recordAudit(manager, {
