@@ -17,7 +17,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
   from='';to='';data:any;loading=false;error='';downloading='';
   periods=[{months:1,label:'1 month'},{months:3,label:'3 months'},{months:6,label:'6 months'},{months:12,label:'1 year'},{months:24,label:'2 years'}];
   private restorePosition=true;
-  growthView='line'; busyView='weekHours'; chart=membershipChart([]);
+  growthView='line'; busyView='weekHours'; checkinsView='total'; chart=membershipChart([]);
   heatRows:any[]=[];heatColumns:number[]=[];heatMax=0;heatDetail='';heatHover='';activePoint:any=null;
   comparison:ReturnType<typeof barComparison>=null;
   comparisonX=0;comparisonY=0;
@@ -25,7 +25,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
   private ignoreDragClick=false;
   private clickReset:any;
   get partialComparison(){if(!this.comparison||!this.data)return false;const end=new Date(this.data.to+'T00:00:00Z');const monthEnd=new Date(Date.UTC(end.getUTCFullYear(),end.getUTCMonth()+1,0)).getUTCDate();return (this.comparison.first===0&&this.data.from.slice(8)!=='01')||(this.comparison.last===this.data.months.length-1&&end.getUTCDate()!==monthEnd);}
-  comparisonLabel(field:ComparisonField){return {activeMembers:'Active members',netPayments:'Payments',visits:'Successful check-ins'}[field];}
+  comparisonLabel(field:ComparisonField){return {activeMembers:'Active members',netPayments:'Payments',visits:'Total check-ins',uniqueVisitors:'Unique check-ins'}[field];}
   comparisonValue(value:number,field:ComparisonField){return field==='netPayments'?new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(value):value.toLocaleString('en-US');}
   selectedRow(field:ComparisonField,index:number){return this.comparison?.field===field&&index>=this.comparison.first&&index<=this.comparison.last;}
   private placeComparison(x:number,y:number){this.comparisonX=Math.max(8,Math.min(window.innerWidth-292,x+16));this.comparisonY=Math.max(8,Math.min(window.innerHeight-260,y+16));}
@@ -66,9 +66,11 @@ export class ReportsComponent implements OnInit, OnDestroy {
     const row=this.chartRows(field)[end];row.focus({preventScroll:true});row.scrollIntoView({block:'nearest'});
     const rect=row.getBoundingClientRect();this.placeComparison(rect.right-280,rect.bottom);
   }
-  remember(){return this.router.navigate([],{relativeTo:this.route,queryParams:{from:this.data?.from||this.from,to:this.data?.to||this.to,growth:this.growthView,busy:this.busyView},replaceUrl:true});}
+  remember(){return this.router.navigate([],{relativeTo:this.route,queryParams:{from:this.data?.from||this.from,to:this.data?.to||this.to,growth:this.growthView,busy:this.busyView,checkins:this.checkinsView},replaceUrl:true});}
   pointTooltip(point:any){return 'translate('+Math.max(52,Math.min(426,point.x-77))+','+(point.y<100?point.y+16:point.y-58)+')';}
   setGrowth(view:string){this.clearComparison();this.activePoint=null;this.growthView=view;this.navigation.preservingScroll(()=>this.remember());}
+  get checkinField():ComparisonField{return this.checkinsView==='unique'?'uniqueVisitors':'visits';}
+  setCheckins(view:'total'|'unique'){this.clearComparison();this.checkinsView=view;this.navigation.preservingScroll(()=>this.remember());}
   setBusy(){this.prepareHeat();this.navigation.preservingScroll(()=>this.remember());}
   prepareHeat(){this.heatRows=this.data?.busiestTimes?.[this.busyView]||[];this.heatColumns=Array.from({length:this.busyView==='weekHours'?24:31},(_,i)=>i);this.heatMax=this.heatRows.reduce((max,row)=>Math.max(max,...row.values.map(v=>v||0)),0);this.heatDetail='';this.heatHover='';this.activePoint=null;}
   heatColor(value:number|null){if(value===null)return '';if(!value||!this.heatMax)return '#edf2f8';return ['#dceafa','#a6c9f1','#5c99dd','#216cbf','#094fa3'][Math.min(4,Math.ceil(value/this.heatMax*5)-1)];}
@@ -92,7 +94,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
     {id:'overdue',name:'Overdue memberships',detail:'Current ongoing memberships with past-due charges'},
     {id:'checkins',name:'Check-ins',detail:'Successful and denied entries in the selected period'}];
   constructor(private http:HttpClient, private route:ActivatedRoute, private router:Router, public navigation:ListNavigationService){}
-  ngOnInit(){const period=reportPeriod(3),q=this.route.snapshot.queryParams;this.from=q.from||period.from;this.to=q.to||period.to;this.growthView=q.growth==='bars'?'bars':'line';this.busyView=q.busy==='monthDays'?'monthDays':'weekHours';this.load();}
+  ngOnInit(){const period=reportPeriod(3),q=this.route.snapshot.queryParams;this.from=q.from||period.from;this.to=q.to||period.to;this.growthView=q.growth==='bars'?'bars':'line';this.busyView=q.busy==='monthDays'?'monthDays':'weekHours';this.checkinsView=q.checkins==='unique'?'unique':'total';this.load();}
   choosePeriod(months:number){Object.assign(this,reportPeriod(months));this.load();}
   isPeriod(months:number){const p=reportPeriod(months);return this.from===p.from&&this.to===p.to;}
   date(d:Date){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}

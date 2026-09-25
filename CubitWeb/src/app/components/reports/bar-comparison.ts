@@ -1,4 +1,4 @@
-export type ComparisonField = 'activeMembers' | 'netPayments' | 'visits';
+export type ComparisonField = 'activeMembers' | 'netPayments' | 'visits' | 'uniqueVisitors';
 
 export function barComparison(months:any[], field:ComparisonField, anchor:number, end:number) {
   if(!months.length)return null;
@@ -9,6 +9,6 @@ export function barComparison(months:any[], field:ComparisonField, anchor:number
   return {field,first,last,from:months[first].month,to:months[last].month,
     start:startValue/scale,end:endValue/scale,change:change/scale,
     percent:startValue>0?change/startValue*100:startValue===0&&endValue===0?0:null,
-    total:field==='activeMembers'?null:months.slice(first,last+1).reduce((sum,m)=>sum+value(m),0)/scale,
+    total:field==='activeMembers'||field==='uniqueVisitors'?null:months.slice(first,last+1).reduce((sum,m)=>sum+value(m),0)/scale,
     estimated:field==='activeMembers'&&months.slice(first,last+1).some(m=>m.membershipEstimated)};
 }

@@ -65,10 +65,10 @@
           }</tbody></table></div></details>
         }
         <p class="muted">Past months are estimates from corrected billing records using the current grace period. Historical staff access blocks are not included.</p></section>
-        <section class="panel detail-panel"><h2>Successful check-ins</h2><p class="muted">{{data.summary.checkins}} visits in this period.</p><div class="report-bar-list" role="group" aria-label="Successful check-ins comparison">@for (m of data.months; track m; let i = $index) {
-        <div class="chart-row selectable-bar" tabindex="0" aria-describedby="bar-range-help" [attr.data-series]="'visits'" [class.range-selected]="selectedRow('visits',i)" (pointerdown)="startComparison($event,'visits',i)" (keydown)="compareWithKeyboard($event,'visits',i)" [attr.aria-label]="m.month+': '+comparisonValue(m.visits,'visits')+(selectedRow('visits',i)?', selected':'')"><span>{{monthLabel(m.month)}}@if (monthScope(m.month)) {
+        <section class="panel detail-panel checkin-report"><div class="section-heading chart-heading"><h2>Successful check-ins</h2><div class="chart-toggle" role="group" aria-label="Check-in count type"><button [class.selected]="checkinsView==='total'" [attr.aria-pressed]="checkinsView==='total'" (click)="setCheckins('total')">Total Check-Ins</button><button [class.selected]="checkinsView==='unique'" [attr.aria-pressed]="checkinsView==='unique'" (click)="setCheckins('unique')">Unique Check-Ins</button></div></div><p class="muted">@if(checkinsView==='unique'){ {{data.summary.uniqueVisitors | number}} unique members in this period. Each member counts once per month. }@else{ {{data.summary.checkins | number}} visits in this period. }</p><div class="report-bar-list" role="group" aria-label="Successful check-ins comparison">@for (m of data.months; track m; let i = $index) {
+        <div class="chart-row selectable-bar" tabindex="0" aria-describedby="bar-range-help" [attr.data-series]="checkinField" [class.range-selected]="selectedRow(checkinField,i)" (pointerdown)="startComparison($event,checkinField,i)" (keydown)="compareWithKeyboard($event,checkinField,i)" [attr.aria-label]="m.month+': '+comparisonValue(m[checkinField],checkinField)+(selectedRow(checkinField,i)?', selected':'')"><span>{{monthLabel(m.month)}}@if (monthScope(m.month)) {
           <small>{{monthScope(m.month)}}</small>
-          }</span><div class="bar-track"><div class="chart-bar" [style.width.%]="width(m.visits,'visits')"></div></div><b>{{m.visits}}</b></div>
+          }</span><div class="bar-track"><div class="chart-bar" [style.width.%]="width(m[checkinField],checkinField)"></div></div><b>{{m[checkinField]}}</b></div>
         }</div></section>
       </div>
       @if (data.busiestTimes) {
@@ -111,6 +111,7 @@
   @if (c.total!==null) {
     <p>Selected total: <b>{{comparisonValue(c.total,c.field)}}</b></p>
   }
+  @if (c.field==='uniqueVisitors') {<small>Monthly unique counts are not added together; a member may visit in multiple months.</small>}
   @if (c.estimated) {
     <small>Historical membership counts are estimates.</small>
   }
