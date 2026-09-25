@@ -103,21 +103,30 @@ both databases, waiver files and checksums. The deployed inventory shows retaine
 copies, creation times and captured sizes. CI run `36029780195` passed; Codex
 verified the deployed result. This is **not** an off-server or fresh-VPS rehearsal.
 
-- [ ] Choose a private off-server destination, budget, schedule and retention policy.
-  No off-server destination has been supplied; same-VPS copies are not disaster recovery.
-- [ ] Enable immutable/versioned off-server retention under separate administrative
-  control. The VPS credential must not be able to destroy recovery history. Prove
-  a VPS-side remote deletion attempt is denied. Remote pruning belongs on a
-  separately trusted machine, never in the VPS backup worker.
+- [x] Connect a private off-server destination and configure its schedules/retention.
+  On 2026-09-25, the owner-supplied dedicated backup VPS received encrypted copies.
+  Review retains its daily 02:15 Eastern schedule; remote retention is at least
+  30 days from receiver observation, with a weekly independent recovery test.
+- [x] Enforce append-only off-server storage under separate administrative control.
+  Verified actual snapshot DELETE and overwrite attempts from the CRM were denied,
+  and the snapshot bytes were unchanged. All remote DELETE/PUT/PATCH requests are
+  blocked; temporary restic locks stay on the CRM. Its IPs cannot use backup-server
+  SSH. Remote pruning belongs only to the backup operator and preserves the last
+  independently verified recovery point. See [vault operations](deploy/vault/README.md).
 - [x] Remove private service configuration from new ordinary backup payloads.
   Evidence: release `0c58159`, `cubit-backup-v2` capture regression, 11 worker tests passing,
   reviewed by Codex on 2026-09-24. Previous v1 snapshots remain sensitive and
   restorable; their retention and independent secret custody need operator review.
 - [ ] Put the restic repository password and any configuration-decryption key in
   independent secure custody. Record named primary and fallback custodians privately.
-- [ ] Verify the configured recovery image's immutable digest and actual MySQL 8.4
-  version. Re-run isolated restoration, including both databases, uploaded waivers,
-  DocuSeal files, signing certificates and checksums.
+  With explicit owner approval, a root-only service-configuration archive and the
+  matching restic key are now on the backup VPS. The directory is 0700 and files
+  are 0600. Name the custodians and put the operator credentials/recovery key in
+  an organization-controlled password manager before launch.
+- [x] Verify the configured recovery image's immutable digest and actual MySQL version.
+  MySQL 8.4.11 was confirmed from the pinned image. Both database schemas, uploaded
+  waiver BLOBs, retained DocuSeal files and checksums passed isolated restoration
+  from off-server copies on 2026-09-25. Full application recovery remains below.
 - [ ] Rehearse a full restore **from off-server storage onto a fresh server**. Verify
   logins, member/billing totals, retained documents, permissions and integration
   isolation. Record snapshot ID, release, elapsed recovery time and acceptable data
@@ -125,6 +134,17 @@ verified the deployed result. This is **not** an off-server or fresh-VPS rehears
 - [ ] Confirm schedules, retained copies and failure visibility on the deployed
   release. Test interrupted jobs, unavailable storage and a nearly full disk without
   deleting the last usable recovery point. See [operations procedure](deploy/BACKUPS.md).
+  Review evidence: `4a48393`, [CI 36169583867](https://github.com/NoahAlbers/cubit/actions/runs/36169583867),
+  schema migration 20 in both workspaces, five remote snapshots, successful fresh
+  backup and off-server recovery jobs. The independent backup-server restore of
+  snapshot `f0d91f0709ba` and the populated audit-chain check passed at 18:03 UTC.
+  All existing review audit events were archived
+  with zero pending records/conflicts. A simulated delivery outage retained its event
+  and retry delivered it without loss; the deployed application read the remote
+  archive. Synthetic demo and administrator MFA isolation passed. Unit tests cover
+  low-storage rejection, immutable audit records, scoped credentials, retry-before-
+  cleanup and receipt-based retention. Operational near-full-disk/failure drills,
+  named monitoring owners and final schedule approval remain required.
 
 ## 3. Waivers and DocuSeal
 
