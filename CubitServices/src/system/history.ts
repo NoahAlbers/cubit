@@ -77,9 +77,8 @@ export async function persistHealth(snapshot: HealthSnapshot) {
   await AppDataSource.createQueryBuilder()
     .delete()
     .from(HealthSample)
-    .where('(resolution=:short AND startedAt<:week) OR (resolution=:long AND startedAt<:quarter)', {
+    .where('(resolution=:short AND startedAt<:week) OR startedAt<:quarter', {
       short: '5m',
-      long: '1h',
       week: new Date(at - 7 * 86400000),
       quarter: new Date(at - 90 * 86400000),
     })
@@ -104,7 +103,11 @@ export async function healthHistory(range = '24h', now = new Date()) {
     .getMany();
   const displayInterval = Math.max(
     intervalSeconds,
-    Math.ceil((days * 86400) / 360 / intervalSeconds) * intervalSeconds,
+    Math.ceil(
+      (rows.length ? (+rows[rows.length - 1].startedAt - +rows[0].startedAt) / 1000 : 0) /
+        360 /
+        intervalSeconds,
+    ) * intervalSeconds,
   );
   const groups = new Map<number, Bucket>();
   for (const row of rows) {

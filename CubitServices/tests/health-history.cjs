@@ -11,7 +11,9 @@ module.exports=async({db})=>{
   assert.equal(await db.manager.count(HealthSample),3,'Old data is pruned and duplicate timestamps do not create extra buckets');
   const daily=await healthHistory('24h',now);assert.equal(daily.points.length,2);assert.equal(daily.points[0].count,1);
   const long=await healthHistory('90d',now);assert.equal(long.points.length,1);assert.equal(long.points[0].checks[0].max,95);assert.equal(long.points[0].checks[0].status,'critical');assert.equal(long.points[0].count,2);
-  localConfig.runtimeMode='hosted-demo';assert.deepEqual((await healthHistory('90d',now)).points,[]);await persistHealth(snapshot(now.toISOString(),99));assert.equal(await db.manager.count(HealthSample),3);
+  await persistHealth(snapshot('2026-09-25T13:05:00Z',26));await persistHealth(snapshot('2026-09-25T14:05:00Z',27));
+  const recent=await healthHistory('90d',new Date('2026-09-25T14:55:00Z'));assert.equal(recent.points.length,3,'Short recorded coverage retains hourly detail even when ninety days is selected');
+  const before=await db.manager.count(HealthSample);localConfig.runtimeMode='hosted-demo';assert.deepEqual((await healthHistory('90d',now)).points,[]);await persistHealth(snapshot(now.toISOString(),99));assert.equal(await db.manager.count(HealthSample),before);
  }finally{localConfig.runtimeMode=mode;await db.manager.clear(HealthSample);}
  console.log('PASS: health sampling, deduplication, retained peaks/warnings, coverage gaps, retention and demo privacy.');
 };
