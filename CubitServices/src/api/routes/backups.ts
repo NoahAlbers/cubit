@@ -10,6 +10,8 @@ import { defaultBackupSettings, validateBackupSettings } from '../../backups/set
 import { recordAudit } from '../../staff/audit';
 import { fail } from '../../billing/payments';
 import { Member, ROLES } from '../../entity/member';
+import { z } from 'zod';
+import { invalidateHealth } from '../../system/health';
 const router = express.Router();
 router.use(staffOnly);
 async function requireBackupAdministrator(manager: typeof AppDataSource.manager, actor: Member) {
@@ -96,6 +98,91 @@ router.post(
     });
     res.json({ revision });
   }),
+);
+router.get(
+  '/jobs',
+  route(async (req, res) => {
+    const filter = String(req.query.filter || 'all');
+    if (!['all', 'failed', 'unreviewed', 'reviewed'].includes(filter))
+      fail('Choose a valid history filter.');
+    const requested = Number(req.query.page || 1);
+    if (!Number.isSafeInteger(requested) || requested < 1 || requested > 10000)
+      fail('Choose a valid operation-history page.');
+    const query = AppDataSource.getRepository(BackupJob).createQueryBuilder('job');
+    if (filter !== 'all') query.where("job.status='Failed'");
+    if (filter === 'unreviewed') query.andWhere('job.reviewedAt IS NULL');
+    if (filter === 'reviewed') query.andWhere('job.reviewedAt IS NOT NULL');
+    const total = await query.getCount(),
+      pages = Math.max(1, Math.ceil(total / 20)),
+      page = Math.min(requested, pages);
+    const rows = await query
+      .orderBy('job.createdAt', 'DESC')
+      .addOrderBy('job.id', 'DESC')
+      .skip((page - 1) * 20)
+      .take(20)
+      .getMany();
+    res.json({
+      rows: rows.map((j) => ({ ...j, result: j.result ? JSON.parse(j.result) : null })),
+      total,
+      page,
+      pages,
+      pageSize: 20,
+    });
+  }),
+);
+router.post(
+  '/jobs/:id/review',
+  route(
+    z
+      .object({
+        reviewed: z.boolean(),
+        reason: z.string().trim().min(3).max(500),
+        revision: z.number().int().nonnegative(),
+      })
+      .strict(),
+    async (req, res) => {
+      if (req.member.role !== ROLES.ADMIN)
+        fail('Administration access is required to review backup failures.', 403);
+      if (typeof req.params.id !== 'string' || req.params.id.length > 255)
+        fail('Choose a valid backup operation.');
+      const saved = await AppDataSource.transaction(async (manager) => {
+        await requireBackupAdministrator(manager, req.member);
+        const job = await manager.findOne(BackupJob, {
+          where: { id: req.params.id },
+          lock: { mode: 'pessimistic_write' },
+        });
+        if (!job) fail('Backup operation not found.', 404);
+        if (job.status !== 'Failed') fail('Only failed operations can be marked reviewed.');
+        if (job.reviewRevision !== req.body.revision)
+          fail('This review changed. Refresh the operation history.', 409);
+        const before = {
+          reviewedAt: job.reviewedAt,
+          reviewedBy: job.reviewedBy,
+          reviewNote: job.reviewNote,
+        };
+        job.reviewedAt = req.body.reviewed ? new Date() : null;
+        job.reviewedBy = req.body.reviewed ? req.member.email : null;
+        job.reviewNote = req.body.reviewed ? req.body.reason : null;
+        job.reviewRevision++;
+        await manager.save(job);
+        await recordAudit(manager, {
+          kind: req.body.reviewed ? 'Backup failure reviewed' : 'Backup failure reopened',
+          author: req.member.email,
+          entityId: job.id,
+          before,
+          after: {
+            reviewedAt: job.reviewedAt,
+            reviewedBy: job.reviewedBy,
+            reviewNote: job.reviewNote,
+          },
+          reason: req.body.reason,
+        });
+        return job;
+      });
+      invalidateHealth();
+      res.json({ ...saved, result: saved.result ? JSON.parse(saved.result) : null });
+    },
+  ),
 );
 router.post(
   '/jobs',

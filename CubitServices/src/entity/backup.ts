@@ -7,6 +7,10 @@ export class BackupSettings {
 }
 @Entity()
 export class BackupJob {
+  @Column({ type: 'datetime', nullable: true }) reviewedAt: Date | null;
+  @Column({ type: 'varchar', length: 254, nullable: true }) reviewedBy: string | null;
+  @Column({ type: 'varchar', length: 500, nullable: true }) reviewNote: string | null;
+  @Column({ default: 0 }) reviewRevision: number;
   @PrimaryColumn() id: string;
   @Column() kind: string;
   @Index('idx_backup_status') @Column({ default: 'Queued' }) status: string;

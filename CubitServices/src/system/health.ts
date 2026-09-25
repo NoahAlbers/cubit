@@ -10,6 +10,9 @@ export function capacityStatus(used: number): Check['status'] {
 }
 let cached: { until: number; value: unknown } | undefined;
 let pending: Promise<unknown> | undefined;
+export function invalidateHealth() {
+  cached = undefined;
+}
 async function collect() {
   const checkedAt = new Date().toISOString();
   if (localConfig.runtimeMode === 'hosted-demo')
@@ -82,7 +85,7 @@ async function collect() {
     });
     const failed = await AppDataSource.manager
       .createQueryBuilder(BackupJob, 'job')
-      .where("job.status='Failed' AND job.createdAt >= :since", {
+      .where("job.status='Failed' AND job.reviewedAt IS NULL AND job.createdAt >= :since", {
         since: new Date(Date.now() - 7 * 86400000),
       })
       .getCount();
@@ -105,7 +108,7 @@ async function collect() {
     add(
       'Recent backup failures',
       failed ? 'warning' : 'ok',
-      `${failed} failed backup/recovery jobs in the last seven days. Review Backups & recovery for details.`,
+      `${failed} unreviewed failed backup/recovery jobs in the last seven days. Reviewed failures stay in Backups & recovery history.`,
     );
     add(
       'Off-server recovery',

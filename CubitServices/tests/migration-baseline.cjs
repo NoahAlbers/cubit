@@ -27,6 +27,7 @@ let ownsSchema=false;
   await db.query('DROP TABLE account_throttle');
   await db.query('DROP TABLE trusted_computer');
   await db.query('DROP TABLE login_history');
+  await db.query('ALTER TABLE backup_job DROP COLUMN reviewedAt, DROP COLUMN reviewedBy, DROP COLUMN reviewNote, DROP COLUMN reviewRevision');
   await db.query('ALTER TABLE waiver_version DROP COLUMN providerFingerprint');
   await db.query('ALTER TABLE account_link RENAME INDEX idx_account_link_member TO previous_generated_index');
   await db.runMigrations({transaction:'none'});

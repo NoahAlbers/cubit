@@ -28,6 +28,7 @@ async function main(){
  server=await new Promise(resolve=>{const s=app.listen(0,'127.0.0.1',()=>resolve(s))});base=`http://127.0.0.1:${server.address().port}`;
  await require('./login-history.cjs')({db,base,Member,jwtHelper});
  await require('./trusted-computers.cjs')({db,base,Member,jwtHelper});
+ await require('./backup-reviews.cjs')({db,request,Member,jwtHelper});
  await require('./system-health.cjs')({request,staffToken:token,memberToken:jwtHelper.GenerateJWT(existing)});
  await require('./request-schemas.cjs')({request,db,memberId:existing.id});
  await require('./organization-management.cjs')({request,db,administrator:staff,member:existing});

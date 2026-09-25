@@ -29,7 +29,7 @@
 }</tbody></table></div>@if (!data.runs.length) {
 <p class="empty-small">No runs yet.</p>
 }</section>
-<div id="backups"><app-backups (ready)="scrollToSection()"></app-backups></div>
+<div id="backups"><app-backups (reviewed)="health.load()" (ready)="scrollToSection()"></app-backups></div>
 }
-<div id="system-health"><app-system-health (ready)="scrollToSection()"></app-system-health></div>
+<div id="system-health"><app-system-health #health (ready)="scrollToSection()"></app-system-health></div>
 </section>

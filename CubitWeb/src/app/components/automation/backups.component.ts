@@ -6,7 +6,7 @@ import { HttpClient } from '@angular/common/http';
     standalone: false
 })
 export class BackupsComponent implements OnInit,OnDestroy {
- @Output() ready=new EventEmitter<void>();
+ @Output() ready=new EventEmitter<void>(); @Output() reviewed=new EventEmitter<void>(); historyOpen=false;reviewDirty=false;
  data:any;form:any;revision=0;error='';message='';busy=false;dirty=false;private timer:any;
  inventoryLimit=8;
  get visibleBackups(){return (this.data?.runtime?.snapshots||[]).slice(0,this.inventoryLimit);}

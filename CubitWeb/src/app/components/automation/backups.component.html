@@ -1,4 +1,4 @@
-<section class="panel detail-panel" [appDraft]="dirty">
+<section class="panel detail-panel" [appDraft]="dirty||reviewDirty">
   <div class="heading-with-info"><h2>Backups & recovery</h2><app-info title="Backups & recovery"><h3>What is saved</h3><p>Membership and billing databases, uploaded waivers, DocuSeal files, and a recovery requirements manifest. Service secrets must be held separately by the operator. Backups are encrypted before storage.</p><h3>Two locations</h3><p>A local copy helps recover from mistakes. A private off-server copy protects against losing the VPS. A server operator connects storage and keeps the recovery key separately.</p><h3>Retention</h3><p>Choose how many local backups to keep. Off-server retention is managed independently by the storage operator. Cleanup only happens after a new copy has succeeded. Earlier backups made by the old backup system are left alone.</p><h3>Test recovery</h3><p>Restore a saved copy into a temporary isolated database, check its tables and waiver files, then remove the test copy. This never replaces the working database. A full replacement-server rehearsal is still needed before launch.</p></app-info></div>
   @if (error) {
     <p class="error" role="alert">{{error}}</p>
@@ -60,12 +60,6 @@
       @if(data.runtime.snapshots?.length>inventoryLimit){<button type="button" class="secondary" (click)="inventoryLimit=inventoryLimit+8">Show more backups</button>}
     </section>
   }
-  <details><summary>Operation history</summary><div class="table-scroll"><table><thead><tr><th>Requested</th><th>Operation</th><th>By</th><th>Status</th><th>Result</th></tr></thead><tbody>@for (j of data.jobs; track j) {
-  <tr><td>{{j.createdAt|orgDate:'medium'}}</td><td>{{j.kind==='backup'?'Backup':j.kind==='prune'?'Local retention':'Recovery test'}}</td><td>{{j.requestedBy}}</td><td>{{j.status}}</td><td>{{j.result?.message||'Waiting for worker'}}@if (j.result?.snapshot) {
-  <small>Snapshot {{j.result.snapshot}}</small>
-}</td></tr>
-}</tbody></table></div>@if (!data.jobs.length) {
-<p class="muted">No backup operations recorded yet.</p>
-}</details>
+  <details (toggle)="historyOpen=historyOpen||$any($event.target).open"><summary>Operation history</summary>@if(historyOpen){<app-backup-history [canReview]="data.canManageSettings" (draftChange)="reviewDirty=$event" (reviewed)="reviewed.emit();load()"></app-backup-history>}</details>
 }
 </section>
