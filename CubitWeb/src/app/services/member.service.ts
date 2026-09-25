@@ -11,7 +11,7 @@ export class MemberService {
   constructor(private http: HttpClient) {}
 
   getMemberList(): Observable<Member[]> {
-    return this.http.get<Member[]>(environment.apiUrl + `member`);
+    return this.http.get<{rows:Member[]}>(environment.apiUrl + 'api/cubit/members?pageSize=100').pipe(map(result=>result.rows));
   }
 
   getMemberPlans(memberKey): Observable<MemberPlan[]> {

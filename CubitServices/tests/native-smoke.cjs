@@ -41,7 +41,7 @@ async function main() {
   const { token, member } = login.json()
   assert.equal(member.role, 'admin')
   assert.ok(token)
-  const members = (await request('/member', { token })).json()
+  const members = (await request('/api/cubit/members?pageSize=100', { token })).json().rows
   assert.ok(members.length >= 75)
   assert.ok(members.every(member => member.email.endsWith('@example.test')))
 
@@ -49,7 +49,7 @@ async function main() {
   const alex = (await request('/member/' + alexId, { token })).json()
   const originalPhone = alex.phone
   try {
-    const saved = await request('/member', { method: 'PUT', token, body: { ...alex, password: '', phone: '202-555-0199' } })
+    const saved = await request('/member', { method: 'PUT', token, body: { ...Object.fromEntries(['id','firstName','lastName','email','paypalEmail','phone','emergencyContact','emergencyEmail','emergencyPhone','picture','role'].map(k=>[k,alex[k]])), phone: '202-555-0199' } })
     assert.equal(saved.status, 200)
     assert.equal((await request('/member/' + alexId, { token })).json().phone, '202-555-0199')
   } finally {

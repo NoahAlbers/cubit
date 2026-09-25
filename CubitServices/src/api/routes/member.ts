@@ -13,24 +13,28 @@ import { lockIdentities, rejectDuplicateContact } from '../../billing/member-ide
 const router = express.Router();
 const memberClass = new Member();
 
-//in this file, you don't put the main route
-//(e.g. /member, you just need member)
-router.get('/', (req, res, next) => {
-  //find all members
-  AppDataSource.manager.find(Member, { order: { status: 'ASC', lastName: 'ASC' } }).then(
-    (result) => {
-      //remove the password field from the payload
-      result.map((member) => (member.password = ''));
-
-      //say everything is happy with a 200 status
-      //and pass the result as json
-      return res.status(200).json(result);
-    },
-    (err) => {
-      next(err);
-    },
-  );
-});
+// The active directory uses /api/cubit/members with bounded pagination.
+router.get('/', (_req, res) =>
+  res.status(410).json({ message: 'Use the paginated member directory at /api/cubit/members.' }),
+);
+const publicFields = [
+  'id',
+  'firstName',
+  'lastName',
+  'email',
+  'paypalEmail',
+  'phone',
+  'emergencyContact',
+  'emergencyEmail',
+  'emergencyPhone',
+  'picture',
+  'role',
+  'status',
+  'statusReason',
+  'balance',
+] as const;
+const publicMember = (member: Partial<Member>) =>
+  Object.fromEntries(publicFields.map((k) => [k, member[k]]));
 
 router.put('/', async (req, res, next) => {
   try {
@@ -93,7 +97,7 @@ router.put('/', async (req, res, next) => {
         //and pass the result as json
         member.password = '';
 
-        return res.status(200).json(member);
+        return res.status(200).json(publicMember(member));
       })
       .catch((err) => {
         //oh nos! we have an error
@@ -140,7 +144,7 @@ router.post('/', async (req, res, next) => {
         //and pass the result as json
         member.password = '';
 
-        return res.status(200).json(member);
+        return res.status(200).json(publicMember(member));
       })
       .catch((err) => {
         //oh nos! we have an error
@@ -162,11 +166,14 @@ router.get('/refreshStatus', async (req, res, next) => {
 
 router.get('/:memberId', (req, res, next) => {
   AppDataSource.manager
-    .findOneByOrFail(Member, { id: req.params.memberId })
+    .findOneOrFail(Member, {
+      where: { id: req.params.memberId },
+      select: Object.fromEntries(publicFields.map((k) => [k, true])),
+    })
     .then((member: Member) => {
       member.password = '';
 
-      res.status(200).json(member);
+      res.status(200).json(publicMember(member));
     })
     .catch((err) => {
       next(err);
