@@ -14,6 +14,8 @@ by the makerspace; target dates and sign-off dates must not be invented.
 
 ## Verified foundations
 
+On 2026-09-25, Codex verified the MFA-only sign-in screen and optional 30-day browser trust using an isolated database and browser: passwords remain required, tokens are hashed, expiry is absolute, fresh MFA is required for issuance, and forgetting computers ends all sessions. Fresh/existing-schema migration checks passed; local migration 13 followed a database backup. Report view toggles were checked for stable scroll and zero report refetches. Staff-only system diagnostics and demo isolation passed. These checks do not replace the operational policy and independent-review gates below.
+
 Security follow-up verified by Codex on 2026-09-25 with isolated database/browser regressions, frontend tests, builds, and fresh/existing-schema migration checks: Administration-only backup settings/pruning; account-ID upload quotas and persistent upload limits; demo-waiver compliance isolation; link-only password assignment and reasons for staff email corrections; persistent escalating MFA cooldowns; bounded member-directory access; and malformed portal-input handling. Mandatory staff MFA and protected off-server recovery remain launch gates. Release `bbf54e0` passed [GitHub CI 36133890423](https://github.com/NoahAlbers/cubit/actions/runs/36133890423) and was deployed to review by Codex on 2026-09-25. Both review and demo applied migration 12 with no schema drift; local migration also completed after a backup. HTTPS, service health, the administrator MFA challenge, and synthetic-demo API checks passed. Authenticated review-page verification was limited by the administrator’s enrolled authenticator; no MFA code was attempted or bypassed.
 
 
@@ -229,6 +231,10 @@ Target: **Unassigned**. Sign-off: **Pending**.
   retries and unsubscribe behavior. The grouped preferences and fictional preview
   are implemented; payment/controller/monitoring sources and an email worker are
   not. Never treat a saved checkbox as evidence that delivery is operational.
+
+- [ ] Approve the 30-day trusted-browser MFA policy and staff guidance for shared computers.
+  Passwords remain required. Verify expiry, revoked browsers, credential changes and
+  forget-all recovery against the release candidate; keep recovery codes private.
 
 ## 6. Hosting, privacy and operational sign-off
 

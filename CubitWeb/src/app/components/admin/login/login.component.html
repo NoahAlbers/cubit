@@ -22,16 +22,26 @@
     <img class="watermark" src="assets/login/cubit-gear-watermark.svg" #gear alt="" aria-hidden="true">
     <div class="form-wrap">
       @if(demoWorkspace){<p class="help">Synthetic demo sign-in · fictional accounts only</p>}
-      <h1 id="welcome" aria-live="polite" aria-atomic="true">{{firstName ? 'Welcome back, ' + firstName + '.' : 'Welcome back.'}}</h1>
+      <h1 id="welcome" aria-live="polite" aria-atomic="true">{{trustPrompt?'Trust this computer?':mfaRequired?'Verify your sign-in':firstName ? 'Welcome back, ' + firstName + '.' : 'Welcome back.'}}</h1>
+      @if(trustPrompt){
+        <div class="trust-computer"><p>You’re signed in. Trust this browser to skip the authenticator code for 30 days.</p><p>You’ll still enter your email and password every time. Only choose this on a private computer you control.</p><p class="help">You can forget trusted computers in account settings. Signing out on all devices or changing your sign-in details also removes trust.</p>
+        <button class="submit ready" type="button" [disabled]="pending" (click)="trustComputer()">{{pending?'Saving…':'Trust for 30 days'}}</button>
+        <button class="trust-skip" type="button" [disabled]="pending" (click)="continueSignIn()">Not now</button>
+        @if(loginError){<p class="notice error" role="alert">{{loginError}}</p>}</div>
+      } @else {
       <form id="login" [formGroup]="form" (ngSubmit)="login()" [attr.aria-busy]="pending" (input)="onInput($event)">
+        @if(!mfaRequired){
         <div class="field"><label for="email">Email</label><input id="email" name="email" formControlName="email" type="email" autocomplete="username" placeholder="you@example.com" (blur)="recognizeBrowser()" [readOnly]="pending" required></div>
         <div class="field"><label for="password">Password</label><div class="password"><input id="password" name="password" formControlName="password" [type]="showPassword ? 'text' : 'password'" autocomplete="current-password" required><button class="reveal" type="button" [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'" [attr.aria-pressed]="showPassword" (click)="showPassword = !showPassword"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
-        @if(mfaRequired){<div class="field"><label for="code">Authenticator or recovery code</label><input id="code" name="code" formControlName="code" autocomplete="one-time-code" maxlength="64"></div>}
+        }
+        @if(mfaRequired){<p class="help" id="code-help">{{recoveryMode?'Enter one unused recovery code saved during authenticator setup.':'Enter the 6-digit code from your authenticator app.'}}</p><div class="field"><label for="code">{{recoveryMode?'Recovery code':'Authenticator code · 6 digits'}}</label><input #codeInput id="code" name="code" formControlName="code" autocomplete="one-time-code" [attr.inputmode]="recoveryMode?'text':'numeric'" [attr.maxlength]="recoveryMode?35:6" [attr.placeholder]="recoveryMode?'xxxxxxxx-xxxxxxxx-xxxxxxxx-xxxxxxxx':'000000'" aria-describedby="code-help" [readOnly]="pending" required></div>
+          <div class="mfa-options"><button type="button" [disabled]="pending" (click)="setCodeMode(!recoveryMode)">{{recoveryMode?'Use authenticator app':'Use a recovery code'}}</button><button type="button" [disabled]="pending" (click)="startOver()">Use another account</button></div>
+        }
         <button class="submit" type="submit" [class.ready]="form.valid && !pending" [class.pending]="pending" [disabled]="pending || form.invalid">
           @if (pending) {
             <span class="signing-spinner" aria-hidden="true"></span>
           }
-          <span>{{pending ? 'Signing in…' : 'Sign in'}}</span>
+          <span>{{pending ? 'Signing in…' : mfaRequired?'Verify code':'Sign in'}}</span>
           @if (form.valid && !pending) {
             <app-arrow name="arrow-right" aria-hidden="true"></app-arrow>
           }
@@ -41,8 +51,9 @@
           <p class="notice error" role="alert">{{loginError}}</p>
         }
       </form>
+      }
       <p class="help">Need access or a password reset? @if(organization.supportEmail){<a [href]="organization.contactUrl">Contact staff</a>}@else{contact your organization’s staff} here.</p>
-      @if (demoAvailable) {
+      @if (demoAvailable&&!mfaRequired&&!trustPrompt) {
         <details class="demo-access"><summary>Try the local demo</summary><div class="actions"><button type="button" class="secondary" [disabled]="pending" (click)="demo(true)">Demo member</button><button type="button" class="secondary" [disabled]="pending" (click)="demo(false)">Demo staff</button></div><small>Uses synthetic accounts only.</small></details>
       }
     </div>

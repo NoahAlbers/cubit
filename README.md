@@ -335,3 +335,7 @@ Publish the operational application at **`cubit.melbournemakerspace.com`**, subj
 ### System health
 
 Settings & Automation includes read-only, manually refreshed diagnostics for VPS storage, memory, CPU load, database responsiveness, backup-worker heartbeat, recovery checks and the existing public HTTPS probe. Results are cached for 30 seconds. The synthetic demo hides real server diagnostics. This dashboard does not send alerts or replace independent monitoring when the application is unavailable.
+
+### Trusted computers
+
+After a successful authenticator or recovery-code sign-in, users may trust their private browser for 30 days. Email and password remain required; only the MFA challenge is skipped. Trust uses an HttpOnly, Secure, SameSite cookie on hosted deployments and a server-side token hash with an absolute expiry. Account settings can forget all trusted computers and end all sessions. Existing sign-out-on-all-devices and credential/role changes also invalidate trust. A trusted-browser sign-in cannot extend or issue new trust without a fresh authenticator verification.

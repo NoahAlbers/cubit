@@ -1,6 +1,6 @@
 <a class="skip-link" href="#main" (click)="skip($event)">Skip to content</a>
-<div class="workspace" [class.signed-out]="!isAuthenticated" [class.sidebar-compact]="sidebarCollapsed">
-  @if (isAuthenticated) {
+<div class="workspace" [class.signed-out]="!showWorkspace" [class.sidebar-compact]="sidebarCollapsed">
+  @if (showWorkspace) {
     <aside class="sidebar" [class.menu-open]="menuOpen">
       <a class="brand" [routerLink]="portalView ? '/portal' : '/memberlist'" aria-label="Cubit home"><img class="compact-brand" src="assets/cubit-icon-192.png" alt=""><img class="cubit-wordmark" src="assets/cubit-logo.png" alt="Cubit CRM Software"></a>
       <button class="secondary mobile-menu" (click)="menuOpen=!menuOpen" [attr.aria-expanded]="menuOpen" aria-controls="main-navigation">{{sectionName}} · {{menuOpen?'Close menu':'Menu'}}</button><div class="nav-label">{{portalView ? 'MY MEMBERSHIP' : 'WORKSPACE'}}</div>
@@ -55,7 +55,7 @@
     </aside>
   }
   <div class="workspace-body">
-    @if (isAuthenticated) {
+    @if (showWorkspace) {
       <header class="topbar">
         <div class="page-location">@if (headerBackTarget) {
           <a class="button secondary header-back" [routerLink]="headerBackTarget" [queryParams]="headerBackQuery" [attr.aria-label]="'Back to '+headerBackLabel" [attr.title]="'Back to '+headerBackLabel"><app-arrow name="arrow-left"></app-arrow><span>{{headerBackLabel}}</span></a>
@@ -65,7 +65,7 @@
           }<button class="secondary sign-out-button" (click)="logout()" [disabled]="auth.signingOut" title="Sign out on all devices">Sign out</button></div>
         </header>
       }
-      @if (isAuthenticated && auth.isDemo) {
+      @if (showWorkspace && auth.isDemo) {
         <div class="synthetic-demo-banner"><strong>Synthetic demo</strong> Fictional members, payments and visits. Changes affect the shared demo only; use fictional details.</div>
         }<main id="main" tabindex="-1"><router-outlet></router-outlet></main>
       </div>

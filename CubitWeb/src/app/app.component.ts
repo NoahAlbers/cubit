@@ -51,6 +51,7 @@ export class AppComponent implements OnInit {
     router.events.subscribe(e=>{if(e instanceof NavigationEnd){this.refreshAccountNotices();this.menuOpen=false;this.compactGroup=null;const active=this.staffNavigation.find(item=>item.children&&this.groupCurrent(item));if(active){this.expandedGroups[active.id]=true;this.saveNavigation();}}});
   }
   get compactNavigation(){return this.sidebarCollapsed&&window.innerWidth>800;}
+  get showWorkspace(){return this.isAuthenticated&&!['/','/app-login'].includes(this.router.url.split(/[?#]/)[0]);}
   navCurrent(item:NavItem){const url=this.router.parseUrl(this.router.url),path=this.router.url.split(/[?#]/)[0];if(item.path==='/memberlist'&&path.startsWith('/member/'))return true;if(item.path!==path)return false;return item.fragment?url.fragment===item.fragment:item.path!=='/automation'||!['backups','system-health'].includes(url.fragment||'');}
   groupCurrent(item:NavItem){return item.children?.some(child=>this.navCurrent(child))||false;}
   groupExpanded(id:string){return this.compactNavigation?this.compactGroup===id:!!this.expandedGroups[id];}

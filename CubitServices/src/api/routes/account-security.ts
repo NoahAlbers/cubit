@@ -1,3 +1,8 @@
+import {
+  rememberComputer,
+  forgetComputers,
+  trustedComputerSummary,
+} from '../../security/trusted-computers';
 import express from 'express';
 import { signedIn } from '../common/member-auth';
 import { staffOnly } from '../common/staff-auth';
@@ -53,9 +58,11 @@ router.get(
   '/',
   signedIn,
   route(async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
     const mfa = await AppDataSource.manager.findOneBy(AccountMfa, { memberId: req.member!.id });
     res.json({
       mfaEnabled: !!mfa?.secret,
+      trustedComputers: await trustedComputerSummary(req.member!),
       email: req.member!.email,
       passwordResetEmailAvailable: false,
       mfaAvailable: mfaConfigured(),
@@ -160,6 +167,24 @@ router.post(
   route(async (req, res) => {
     const b = body(req, ['password', 'code']);
     res.json(await confirmMfa(req.member!.id, b.password, b.code));
+  }),
+);
+router.post(
+  '/trusted-computers',
+  limit,
+  signedIn,
+  route(async (req, res) => {
+    body(req, []);
+    await rememberComputer(req, res);
+  }),
+);
+router.post(
+  '/trusted-computers/forget',
+  limit,
+  signedIn,
+  route(async (req, res) => {
+    body(req, []);
+    await forgetComputers(req, res);
   }),
 );
 module.exports = router;

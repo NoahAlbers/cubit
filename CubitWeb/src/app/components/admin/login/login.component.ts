@@ -19,6 +19,19 @@ export class LoginComponent implements OnInit, OnDestroy {
   form: UntypedFormGroup;
   loginError = '';
   mfaRequired = false;
+  recoveryMode = false;
+  trustPrompt = false;
+  @ViewChild('codeInput') set codeInput(element:ElementRef<HTMLInputElement>|undefined){element?.nativeElement.focus();}
+  setCodeMode(recovery=false){
+    this.recoveryMode=recovery;const code=this.form.controls['code'];code.setValue('');
+    code.setValidators([Validators.required,Validators.pattern(recovery?/^[a-f0-9]{8}(?:-[a-f0-9]{8}){3}$/i:/^[0-9]{6}$/)]);code.updateValueAndValidity();this.loginError='';
+  }
+  startOver(){this.mfaRequired=false;this.recoveryMode=false;this.form.controls['code'].clearValidators();this.form.controls['code'].reset('');this.form.controls['password'].reset('');this.loginError='';}
+  continueSignIn(){this.router.navigateByUrl(this.auth.home);}
+  trustComputer(){
+    if(this.pending)return;this.pending=true;this.loginError='';
+    this.request=this.http.post('/api/account/trusted-computers',{}).pipe(take(1)).subscribe({next:()=>this.continueSignIn(),error:e=>{this.pending=false;this.loginError=e.error?.message||'Could not trust this computer. You can continue without trusting it.';}});
+  }
   demoWorkspace = false;
   showPassword = false;
   pending = false;
@@ -128,7 +141,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   login() {
-    if (this.pending || this.auth.signingOut || this.form.invalid) return;
+    if (this.pending || this.trustPrompt || this.auth.signingOut || this.form.invalid) return;
     this.freeze();
     this.pending = true;
     this.loginError = '';
@@ -138,13 +151,15 @@ export class LoginComponent implements OnInit, OnDestroy {
       .login(formValues.email, formValues.password, formValues.code, this.demoWorkspace?'demo':'')
       .pipe(take(1))
       .subscribe(
-        () => {
+        (result) => {
+          this.pending=false;this.form.controls['password'].reset('');this.form.controls['code'].reset('');
           this.resultMotion(true);
-          this.router.navigateByUrl(this.auth.home);
+          if(result.trustEligible){this.trustPrompt=true;this.freeze();}
+          else this.continueSignIn();
         },
         (err) => {
           this.pending = false;
-          if(err.error?.code==='MFA_REQUIRED')this.mfaRequired=true;
+          if(err.error?.code==='MFA_REQUIRED'){this.mfaRequired=true;this.setCodeMode();return;}
           this.loginError = err.error?.code==='MFA_REQUIRED' ? 'Enter your authenticator or recovery code to finish signing in.' : err.status === 401 ? 'Invalid email, password, or authenticator code.' : err.error?.message || 'Unable to sign in. Please try again.';
           this.resultMotion(false);
         }

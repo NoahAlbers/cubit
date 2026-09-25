@@ -67,6 +67,19 @@ module.exports = async function verifyWorkflows({base, staff, member, password})
       assert.equal(await page.locator('main app-loading').count(), 0, `${route} finished loading`)
       assert.equal(await page.locator('main [role=alert]').count(), 0, `${route} has no load error`)
     }
+    await page.goto(base+'/reports');await page.waitForLoadState('networkidle');
+    const unique=page.getByRole('button',{name:'Unique Check-Ins',exact:true});await unique.scrollIntoViewIfNeeded();
+    await unique.evaluate(el=>window.scrollTo(0,Math.max(100,el.getBoundingClientRect().top+window.scrollY-300)));
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    const initialY=await page.evaluate(()=>window.scrollY);
+    assert.ok(initialY>0,'Scroll regression exercises a position below the page top');
+    await page.evaluate(()=>{window.__reportScrolls=[];window.addEventListener('scroll',()=>window.__reportScrolls.push(window.scrollY));});
+    let reportFetches=0;const countReport=r=>{if(new URL(r.url()).pathname==='/api/cubit/reports')reportFetches++;};page.on('request',countReport);
+    await unique.click();await page.waitForURL(u=>u.searchParams.get('checkins')==='unique');
+    await page.getByRole('button',{name:'Total Check-Ins',exact:true}).click();await page.waitForURL(u=>u.searchParams.get('checkins')==='total');
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    assert.equal(reportFetches,0,'View toggles do not refetch reports');
+    assert.ok((await page.evaluate(()=>window.__reportScrolls)).every(y=>Math.abs(y-initialY)<3),'View toggles never jump to the top');page.off('request',countReport);
     await page.getByRole('button', {name: 'Sign out', exact: true}).click()
     await page.locator('#email').waitFor()
     await login(member)
@@ -86,7 +99,33 @@ module.exports = async function verifyWorkflows({base, staff, member, password})
     assert.equal(await page.locator('input[name=emergencyContact]').inputValue(), 'Browser Emergency Fixture')
     await page.goto(base + '/memberlist')
     await page.waitForURL('**/portal')
+    // Create an authenticator fixture only in this disposable database.
+    const {AppDataSource:db}=require('../CubitServices/src/database'),{Member}=require('../CubitServices/src/entity/member');
+    const {AccountMfa}=require('../CubitServices/src/entity/accountSecurity'),{encryptSecret}=require('../CubitServices/src/security/accounts');
+    const otpLib=require('../CubitServices/node_modules/otpauth'),crypto=require('node:crypto');
+    const otp=new otpLib.TOTP({secret:new otpLib.Secret({size:20})});
+    const mfa=await db.manager.save(Member,db.manager.create(Member,{firstName:'Browser MFA',lastName:'Fixture',email:'browser.mfa@example.test',paypalEmail:'browser.mfa@example.test',role:'admin',password:staff.password}));
+    await db.manager.save(AccountMfa,{memberId:mfa.id,secret:encryptSecret(otp.secret.base32,mfa.id),lastStep:'-1',recoveryHashes:'[]'});
+    const mfaContext=await browser.newContext({viewport:{width:1360,height:900}});
+    await mfaContext.route('**/*',route=>route.request().url().startsWith(base+'/')?route.continue():route.abort());
+    let mfaPage=await mfaContext.newPage();
+    async function credentials(){await mfaPage.goto(base);await mfaPage.locator('#email').fill(mfa.email);await mfaPage.locator('#password').fill(password);await mfaPage.getByRole('button',{name:'Sign in',exact:true}).click();}
+    await credentials();await mfaPage.locator('#code').waitFor();
+    assert.equal(await mfaPage.locator('#email').count(),0);assert.equal(await mfaPage.locator('#password').count(),0);
+    assert.match(await mfaPage.locator('label[for=code]').innerText(),/6 digits/);
+    const output=require('node:path').resolve(__dirname,'../.private/verification');require('node:fs').mkdirSync(output,{recursive:true});
+    await mfaPage.screenshot({path:output+'/mfa-step.png'});
+    await mfaPage.locator('#code').fill(otp.generate());await mfaPage.getByRole('button',{name:'Verify code',exact:true}).click();
+    await mfaPage.getByRole('button',{name:'Trust for 30 days',exact:true}).waitFor();
+    assert.equal(await mfaPage.locator('.sidebar').count(),0,'Trust prompt stays in the sign-in layout');
+    await mfaPage.screenshot({path:output+'/trust-prompt.png'});
+    await mfaPage.getByRole('button',{name:'Trust for 30 days',exact:true}).click();await mfaPage.waitForURL('**/memberlist*');
+    await mfaPage.close();mfaPage=await mfaContext.newPage();await credentials();await mfaPage.waitForURL('**/memberlist*');
+    assert.equal(await mfaPage.locator('#code').count(),0,'A recognized browser still enters a password but skips MFA');
+    await mfaPage.goto(base+'/account/security');await mfaPage.getByRole('button',{name:'Forget all trusted computers',exact:true}).click();await mfaPage.getByRole('button',{name:'Forget computers and sign out',exact:true}).click();await mfaPage.locator('#email').waitFor();
+    await credentials();await mfaPage.locator('#code').waitFor();await mfaContext.close();
     assert.deepEqual(errors, [], 'No uncaught browser errors')
+    console.log('PASS: report toggles keep scroll without refetch, isolated MFA screen, opt-in trust prompt, recognized-browser login and revoke-all challenge.')
     console.log('PASS: synthetic staff/member login, all main screens, profile/audit/list return context, real identicons, database-backed contact saves and member routing isolation.')
   } finally {await browser.close()}
 }

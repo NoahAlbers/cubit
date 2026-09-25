@@ -1,3 +1,4 @@
+import { verifyTrustedComputer } from './trusted-computers';
 import { authorizeAccountChange, isStaffRole } from './staff-permissions';
 import { createCipheriv, createDecipheriv, createHash, randomBytes, timingSafeEqual } from 'crypto';
 import { compare, hash } from 'bcrypt';
@@ -132,18 +133,27 @@ export async function verifyMfa(
   return true;
 }
 
-export async function authenticateSecondFactor(member: Member, code: unknown) {
+export async function authenticateSecondFactor(
+  member: Member,
+  code: unknown,
+  trustedToken?: string,
+) {
   return AppDataSource.transaction(async (manager) => {
     const current = await lockAccount(manager, member.id);
     if (current.tokenVersion !== member.tokenVersion || current.loginDisabled)
       fail('Please sign in again.', 401);
+    if (
+      (!code || (typeof code === 'string' && !code.trim())) &&
+      (await verifyTrustedComputer(manager, current, trustedToken))
+    )
+      return Object.assign(current, { mfaVerified: true, mfaFresh: false });
     const mfaVerified = await verifyMfa(
       manager,
       current,
       code,
       isStaffRole(current.role) && process.env.REQUIRE_STAFF_MFA === 'true',
     );
-    return Object.assign(current, { mfaVerified });
+    return Object.assign(current, { mfaVerified, mfaFresh: mfaVerified });
   });
 }
 

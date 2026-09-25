@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { isStaffRole } from '../../security/staff-permissions';
 import * as jwt from 'jsonwebtoken';
 import { Member } from '../../entity/member';
@@ -6,13 +7,14 @@ import { localConfig } from '../../dev/config';
 import { demoAudience } from '../../demo/identity';
 
 export class jwtHelper {
-  public static GenerateJWT(member: Member, mfaVerified = false): string {
+  public static GenerateJWT(member: Member, mfaVerified = false, mfaFresh = false): string {
     const payload = {
       email: member.email,
       id: member.id,
       role: member.role,
       tokenVersion: member.tokenVersion ?? 0,
       mfaVerified,
+      ...(mfaVerified && mfaFresh ? { mfaFresh: true, mfaProof: randomUUID() } : {}),
     };
 
     return jwt.sign(payload, environment.jwtSecret, {

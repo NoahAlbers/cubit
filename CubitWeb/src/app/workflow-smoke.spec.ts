@@ -47,11 +47,26 @@ describe('Core workflow rendering and submissions', () => {
     reply.error({status: 401, error: {code: 'MFA_REQUIRED'}}); fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('authenticator');
     expect(component.pending).toBe(false);
+    expect(fixture.nativeElement.querySelector('#email')).toBeNull();
+    expect(fixture.nativeElement.querySelector('#password')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('6-digit');
+    component.form.controls.code.setValue('12345');expect(component.form.invalid).toBe(true);
+    component.form.controls.code.setValue('abcdef');expect(component.form.invalid).toBe(true);
+    component.setCodeMode(true);component.form.controls.code.setValue('12345678-12345678-12345678-12345678');expect(component.form.valid).toBe(true);
+    component.setCodeMode();
     const success = new Subject<any>(); auth.login.mockReturnValue(success);
     component.form.controls.code.setValue('123456'); component.login(); success.next({});
     expect(auth.login).toHaveBeenLastCalledWith('person@example.test', 'synthetic-password', '123456', '');
     expect(TestBed.inject(Router).navigateByUrl).toHaveBeenCalledWith('/memberlist');
     fixture.destroy();
+  });
+
+  it('offers browser trust only after fresh MFA and retains a continue option after a trust failure',()=>{
+    const fixture=TestBed.createComponent(LoginComponent),http=TestBed.inject(HttpTestingController);fixture.detectChanges();http.expectOne('/health').flush({mode:'test'});
+    const c=fixture.componentInstance;c.form.patchValue({email:'person@example.test',password:'fixture-password',code:'123456'});auth.login.mockReturnValue(of({trustEligible:true}));c.login();fixture.detectChanges();
+    expect(c.trustPrompt).toBe(true);expect(c.form.controls.password.value).toBe('');expect(fixture.nativeElement.querySelector('#password')).toBeNull();expect(TestBed.inject(Router).navigateByUrl).not.toHaveBeenCalled();
+    c.trustComputer();http.expectOne('/api/account/trusted-computers').flush({message:'Try again.'},{status:503,statusText:'Unavailable'});fixture.detectChanges();expect(c.pending).toBe(false);expect(c.loginError).toBe('Try again.');
+    c.continueSignIn();expect(TestBed.inject(Router).navigateByUrl).toHaveBeenCalledWith('/memberlist');fixture.destroy();
   });
 
   it('restores directory pagination and sorting and resets the page when search changes', async () => {

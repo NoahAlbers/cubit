@@ -17,6 +17,8 @@ export class AccountSecurityComponent implements OnInit {
   token=''; error=''; message=''; busy=false; loading=true; state:any;
   demoWorkspace=false;
   setupQr='';
+  confirmForget=false;
+  forgetComputers(){return this.action(async()=>{await firstValueFrom(this.http.post('/api/account/trusted-computers/forget',{}));this.auth.logout();});}
   setup:any; recoveryCodes:string[]=[]; link=''; expiresAt=''; email='';
   constructor(private route:ActivatedRoute,private http:HttpClient,public auth:AuthService){}
   hasUnsavedChanges(){return this.recoveryCodes.length>0;}
