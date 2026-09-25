@@ -1,4 +1,5 @@
 import { OrganizationService } from './services/organization.service';
+import { IdleSessionService } from './services/security/idle-session.service';
 import { Component, HostListener, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../environments/environment';
@@ -46,7 +47,7 @@ export class AppComponent implements OnInit {
     {id:'settings',label:'Settings & automation',icon:'settings',path:'/automation',children:[{label:'Billing & processing',path:'/automation'},{label:'Plan catalog',path:'/plans'},{label:'Backups & recovery',path:'/automation',fragment:'backups'},{label:'System health',path:'/automation',fragment:'system-health'}]},
     {label:'Organization Management',icon:'organization',path:'/organization',administration:true},
   ];
-  constructor(public organization:OrganizationService,public auth: AuthService, public router: Router, private http: HttpClient, public navigation:ListNavigationService) {
+  constructor(public organization:OrganizationService,public auth: AuthService, public router: Router, private http: HttpClient, public navigation:ListNavigationService, private idle:IdleSessionService) {
     try {const saved=JSON.parse(localStorage.getItem('cubit.navigation')||'null');if(saved)this.sidebarCollapsed=saved.compact===true;}catch{}
     router.events.subscribe(e=>{if(e instanceof NavigationEnd){this.refreshAccountNotices();this.menuOpen=false;this.compactGroup=null;for(const item of this.staffNavigation.filter(item=>item.children))this.expandedGroups[item.id]=this.groupCurrent(item);}});
   }

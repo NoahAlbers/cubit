@@ -23,6 +23,7 @@
     <div class="form-wrap">
       @if(demoWorkspace){<p class="help">Synthetic demo sign-in · fictional accounts only</p>}
       <h1 id="welcome" aria-live="polite" aria-atomic="true">{{trustPrompt?'Trust this computer?':mfaRequired?'Verify your sign-in':firstName ? 'Welcome back, ' + firstName + '.' : 'Welcome back.'}}</h1>
+      @if(idleSignedOut&&!mfaRequired&&!trustPrompt){<p class="notice" role="status">You were signed out after being inactive. Please sign in again.</p>}
       @if(trustPrompt){
         <div class="trust-computer"><p>You’re signed in. Trust this browser to skip the authenticator code for 30 days.</p><p>You’ll still enter your email and password every time. Only choose this on a private computer you control.</p><p class="help">You can forget trusted computers in account settings. Signing out on all devices or changing your sign-in details also removes trust.</p>
         <button class="submit ready" type="button" [disabled]="pending" (click)="trustComputer()">{{pending?'Saving…':'Trust for 30 days'}}</button>

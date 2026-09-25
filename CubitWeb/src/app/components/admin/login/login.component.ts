@@ -18,6 +18,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   @ViewChild('gear') gear?: ElementRef<HTMLImageElement>;
   form: UntypedFormGroup;
   loginError = '';
+  idleSignedOut = false;
   mfaRequired = false;
   recoveryMode = false;
   trustPrompt = false;
@@ -72,6 +73,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    this.idleSignedOut=this.route.snapshot.queryParams['reason']==='inactive';
     this.demoWorkspace=this.route.snapshot.queryParams['workspace']==='demo';
     this.healthRequest = this.http.get<any>('/health').subscribe({
       next: d => this.demoAvailable = d.mode === 'local-development' && d.dataMode === 'demo',

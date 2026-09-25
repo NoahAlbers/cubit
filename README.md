@@ -107,6 +107,14 @@ reused, and password resets preserve enrolled MFA. Mandatory staff enrollment,
 external recovery-key custody, and verified email delivery remain launch requirements.
 See [account security operations](deploy/ACCOUNT-SECURITY.md).
 
+After 10 minutes without interaction, staff and member browsers show a **Stay signed in**
+prompt with a two-minute countdown. No response clears the browser sign-in and unsaved
+changes. Background API polling does not extend it; refreshing or waking a sleeping tab
+does not reset its deadline. Tabs for the same account share activity and timeout state.
+This browser timeout leaves active sessions on other devices and trusted-computer
+preferences unchanged; the explicit **Sign out** button still revokes all devices.
+It is a browser inactivity control, not a replacement for server token expiry/revocation.
+
 Portal login-email changes generate in-app staff notices and remain in the audit
 log. Staff can review and acknowledge them from Staff User Settings. This is
 not yet verification that the member owns the new email address.

@@ -29,12 +29,12 @@ export class AuthService  {
     }
     this.logout(); return false;
   }
-  logout() {
+  logout(reason?: 'inactive') {
     this.authToken = '';
     sessionStorage.removeItem('cubit-token');
     localStorage.removeItem('token');
     this.isAuthenticated$.next(false);
-    this.router.navigateByUrl('/');
+    this.router.navigateByUrl(reason ? '/?reason='+reason : '/');
   }
   async signOutEverywhere() {
     // Leave the token in place until the authenticated server revocation finishes.

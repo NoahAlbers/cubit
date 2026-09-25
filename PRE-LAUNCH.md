@@ -257,6 +257,11 @@ Target: **Unassigned**. Sign-off: **Pending**.
 - [ ] Approve the 30-day trusted-browser MFA policy and staff guidance for shared computers.
   Passwords remain required. Verify expiry, revoked browsers, credential changes and
   forget-all recovery against the release candidate; keep recovery codes private.
+- [ ] Confirm the 10-minute inactivity prompt and two-minute automatic browser sign-out
+  policy with staff. Exercise unsaved edits, multiple tabs, refreshes, device sleep and
+  offline use on supported browsers. Local unit and browser checks cover timing,
+  renewal, draft preservation, expiry and protected-page removal. This clears browser
+  sessions; server token expiry/revocation and explicit all-device sign-out are separate.
 
 ## 6. Hosting, privacy and operational sign-off
 
