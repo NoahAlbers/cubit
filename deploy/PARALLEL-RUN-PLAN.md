@@ -47,7 +47,7 @@ The export reads Tonic's database locally; it does not call Tonic's application 
 
 ## What the current code already provides—and what it does not
 
-- `dev/export-legacy-data.cjs` exports seven allowlisted datasets using a consistent,
+- `dev/export-legacy-data.cjs` exports six allowlisted datasets using a consistent,
   read-only InnoDB transaction: members, plans, memberships, transactions, keys and
   access logs. It excludes passwords and includes schema information, row counts
   and a completion marker. It is a useful starting point, not an installed sync job.
