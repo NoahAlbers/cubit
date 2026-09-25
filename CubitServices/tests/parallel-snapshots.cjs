@@ -22,6 +22,10 @@ async function database(db){
  const [tombstones]=await db.query("SELECT action FROM parallel_change WHERE kind='transaction'");assert.equal(tombstones[0].action,'removed');
  const broken=fixture('2026-09-01 12:30:00');broken.complete=false;await assert.rejects(()=>publish(db,bytes(broken)));
  assert.equal((await db.query('SELECT generation FROM parallel_current'))[0][0].generation,next.id);
+ const failing=new Proxy(db,{get(target,key){if(key==='query')return (...args)=>String(args[0]).startsWith('INSERT INTO parallel_record')?Promise.reject(Error('Injected interrupted insert')):target.query(...args);const value=target[key];return typeof value==='function'?value.bind(target):value;}});
+ await assert.rejects(()=>publish(failing,bytes(fixture('2026-09-01 12:45:00'))),/Injected/);
+ assert.equal((await db.query('SELECT generation FROM parallel_current'))[0][0].generation,next.id);
+ assert.equal((await db.query('SELECT COUNT(*) AS n FROM parallel_generation'))[0][0].n,2);
  for(let i=1;i<=3;i++)await publish(db,bytes(fixture('2026-09-02 12:'+String(i*15).padStart(2,'0')+':00')));
  await retain(db);assert.equal((await db.query('SELECT COUNT(*) AS n FROM parallel_generation'))[0][0].n,3);
  assert.equal((await db.query("SELECT COUNT(*) AS n FROM parallel_change WHERE action='removed'"))[0][0].n,1);

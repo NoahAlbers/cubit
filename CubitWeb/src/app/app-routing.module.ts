@@ -20,6 +20,7 @@ import { PaymentMatchingComponent } from './components/payment-matching/payment-
 import { PlanCatalogComponent } from './components/plan-catalog/plan-catalog.component';
 
 const routes: Routes = [
+  {path:'parallel',loadComponent:()=>import('./components/parallel/parallel.component').then(m=>m.ParallelComponent),canActivate:[AuthService]},
   {path:'organization',component:OrganizationComponent,canActivate:[AuthService],canDeactivate:[DraftGuard],data:{administration:true}},
   {path:'account/activate',component:AccountSecurityComponent,data:{mode:'activate'}},
   {path:'account/security',component:AccountSecurityComponent,canActivate:[AuthService],canDeactivate:[DraftGuard],data:{portal:true}},

@@ -20,7 +20,7 @@ const date = value => {
 function validate(bytes) {
   if (bytes.length > 64*1024*1024) fail('Snapshot exceeds 64 MB');
   let input;try{input=JSON.parse(bytes.toString('utf8'));}catch{fail('Invalid snapshot JSON');}
-  if (input.format !== 'cubit-tonic-export' || input.version !== 1 || input.complete !== true) fail('Incomplete or unsupported snapshot');
+  if (!input || input.format !== 'cubit-tonic-export' || input.version !== 1 || input.complete !== true) fail('Incomplete or unsupported snapshot');
   const timestamp = date(input.source?.snapshotUtc);
   if (+timestamp > Date.now()+300000) fail('Snapshot timestamp is in the future');
   if (input.source.systemTimeZone !== 'UTC' || !['SYSTEM','UTC','+00:00'].includes(input.source.sessionTimeZone)) fail('Source timezone needs an explicit mapping');

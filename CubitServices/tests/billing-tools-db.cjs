@@ -31,6 +31,7 @@ async function main(){
  await require('./health-history.cjs')({db});
  await require('./backup-reviews.cjs')({db,request,Member,jwtHelper});
  await require('./system-health.cjs')({request,staffToken:token,memberToken:jwtHelper.GenerateJWT(existing)});
+ await require('./parallel-api.cjs')({request,staff,member:existing});
  await require('./request-schemas.cjs')({request,db,memberId:existing.id});
  await require('./organization-management.cjs')({request,db,administrator:staff,member:existing});
  await require('./grace-reversibility.cjs')({request,db});

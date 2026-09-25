@@ -79,6 +79,7 @@ app.get(
     '/member/:memberId',
     '/accessLog',
     '/reports',
+    '/parallel',
     '/automation',
     '/payments',
     '/plans',
@@ -126,6 +127,7 @@ app.use(async (_req, _res, next) => {
   }
 });
 app.use('/api/organization', require('./api/routes/organization'));
+app.use('/api/parallel', require('./api/routes/parallel'));
 app.use('/api/account', require('./api/routes/account-security'));
 app.use('/api/backups', require('./api/routes/backups'));
 app.use('/api/system-health', require('./api/routes/system-health'));

@@ -143,6 +143,8 @@ export class StableIndexNames1790250000008 extends ForwardMigration {
   }
 }
 
+import { ParallelSubscriptions1790361000000 } from './parallel-subscriptions';
+
 export const migrations = [
   ReviewBaseline1790250000000,
   MoneyPrecision1790250000001,
@@ -164,4 +166,5 @@ export const migrations = [
   BackupReviews1790358000000,
   HealthHistory1790359000000,
   AuditOutbox1790360000000,
+  ParallelSubscriptions1790361000000,
 ];

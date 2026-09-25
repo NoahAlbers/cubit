@@ -9,7 +9,7 @@ import { ListNavigationService } from './services/list-navigation.service';
 import { switchMap, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 
-interface NavItem {id?:string;label:string;icon?:string;path?:string;fragment?:string;children?:NavItem[];administration?:boolean;}
+interface NavItem {id?:string;label:string;icon?:string;path?:string;fragment?:string;children?:NavItem[];administration?:boolean;liveOnly?:boolean;}
 
 @Component({
     selector: 'app-root',
@@ -44,6 +44,7 @@ export class AppComponent implements OnInit {
     {label:'Access log',icon:'access',path:'/accessLog'},
     {label:'Audit log',icon:'audit',path:'/audit'},
     {label:'Reports',icon:'reports',path:'/reports'},
+    {label:'Parallel workspace',icon:'reports',path:'/parallel',liveOnly:true},
     {id:'settings',label:'Settings & automation',icon:'settings',path:'/automation',children:[{label:'Billing & processing',path:'/automation'},{label:'Plan catalog',path:'/plans'},{label:'Backups & recovery',path:'/automation',fragment:'backups'},{label:'System health',path:'/automation',fragment:'system-health'}]},
     {label:'Organization Management',icon:'organization',path:'/organization',administration:true},
   ];
@@ -81,7 +82,7 @@ export class AppComponent implements OnInit {
   @HostListener('document:pointerdown',['$event']) closeOutside(event:PointerEvent){if(!(event.target as Element).closest('.nav-group'))this.compactGroup=null;}
   @HostListener('window:resize') closeOnResize(){this.compactGroup=null;this.hoverLabel='';}
   @HostListener('document:keydown.escape',['$event']) closeOnEscape(event:KeyboardEvent){if(this.compactGroup){const button=document.querySelector('.nav-group-button[aria-controls="nav-'+this.compactGroup+'"]') as HTMLElement;button?.focus();this.compactGroup=null;this.hoverLabel='';event.preventDefault();}else if(this.hoverLabel){this.hoverLabel='';event.preventDefault();}else if(this.menuOpen){this.menuOpen=false;(document.querySelector('.mobile-menu') as HTMLElement)?.focus();}}
-  get sectionName(){const p=this.router.url.split(/[?#]/)[0];if(p==='/member/New')return 'Add Member';if(p.startsWith('/account/access/'))return 'Sign-in Access';return ({'/memberlist':'Members','/overdue':'Overdue Memberships','/accessLog':'Access Log','/reports':'Reports','/automation':'Settings & Automation','/audit':'Audit Log','/organization':'Organization Management','/staff/settings':'Staff User Settings','/account/security':'Account Security','/payments':'Payment Matching','/plans':'Plan Catalog','/waivers':'Waivers','/portal':'My Membership','/portal/profile':'My Details','/portal/billing':'Billing History','/portal/waivers':'My Waivers'})[p]||(p.startsWith('/member/')?'Member Profile':'Cubit');}
+  get sectionName(){const p=this.router.url.split(/[?#]/)[0];if(p==='/member/New')return 'Add Member';if(p.startsWith('/account/access/'))return 'Sign-in Access';return ({'/memberlist':'Members','/overdue':'Overdue Memberships','/accessLog':'Access Log','/parallel':'Parallel Workspace','/reports':'Reports','/automation':'Settings & Automation','/audit':'Audit Log','/organization':'Organization Management','/staff/settings':'Staff User Settings','/account/security':'Account Security','/payments':'Payment Matching','/plans':'Plan Catalog','/waivers':'Waivers','/portal':'My Membership','/portal/profile':'My Details','/portal/billing':'Billing History','/portal/waivers':'My Waivers'})[p]||(p.startsWith('/member/')?'Member Profile':'Cubit');}
   get headerBack(){
     const path=this.router.url.split(/[?#]/)[0],q=this.router.parseUrl(this.router.url).queryParams;
     if(path.startsWith('/member/')){
@@ -90,6 +91,7 @@ export class AppComponent implements OnInit {
     }
     if(path==='/audit'&&q.memberId)return {target:'/member/'+q.memberId,query:{returnTo:this.navigation.memberReturn(q.memberReturnTo,q.memberId)},label:this.navigation.memberName(q.memberId)};
     if(path.startsWith('/account/access/')){const id=path.split('/')[3];return {target:'/member/'+id,query:{returnTo:this.navigation.memberReturn(q.memberReturnTo,id)},label:this.navigation.memberName(id)};}
+    if(path==='/parallel'&&q.member)return {target:'/parallel',query:{...q,member:null},label:'Parallel workspace'};
     if(path==='/plans')return {target:'/automation',query:this.navigation.query('/automation'),label:'Settings & automation'};
     return null;
   }

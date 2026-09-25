@@ -46,6 +46,8 @@ jobs:
       - run: pnpm --dir CubitServices build
       - run: node tests/security-hardening.cjs && node tests/device-details.cjs && node tests/organization-time.cjs
         working-directory: CubitServices
+      - run: node tests/parallel-snapshots.cjs
+        working-directory: CubitServices
       - run: node tests/remembered-greeting.cjs && node tests/login-greeting-integration.cjs
         working-directory: CubitServices
       - run: node tests/backup-settings.cjs && node tests/contact-validation.cjs && node tests/local-safety.cjs && node tests/hosted-safety.cjs && node tests/hosted-demo.cjs && node tests/billing.cjs && node tests/activity-patterns.cjs && node tests/review-controls.cjs
