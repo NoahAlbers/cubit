@@ -336,6 +336,8 @@ Publish the operational application at **`cubit.melbournemakerspace.com`**, subj
 
 Settings & Automation includes read-only, manually refreshed diagnostics for VPS storage, memory, CPU load, database responsiveness, backup-worker heartbeat, recovery checks and the existing public HTTPS probe. Results are cached for 30 seconds. The synthetic demo hides real server diagnostics. This dashboard does not send alerts or replace independent monitoring when the application is unavailable.
 
+Numeric checks include interactive sparklines; other checks show status timelines. Cubit samples every five minutes, retaining detailed readings for seven days and hourly peaks/worst statuses for 90 days. Longer chart ranges summarize peaks and warnings to keep responses small. Hover or use the arrow keys to inspect each interval. History starts when this feature is installed; gaps indicate missing readings and changes between samples can be missed. A database outage cannot be recorded while that database is unavailable.
+
 ### Trusted computers
 
 After a successful authenticator or recovery-code sign-in, users may trust their private browser for 30 days. Email and password remain required; only the MFA challenge is skipped. Trust uses an HttpOnly, Secure, SameSite cookie on hosted deployments and a server-side token hash with an absolute expiry. Account settings can forget all trusted computers and end all sessions. Existing sign-out-on-all-devices and credential/role changes also invalidate trust. A trusted-browser sign-in cannot extend or issue new trust without a fresh authenticator verification.

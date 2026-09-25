@@ -1,3 +1,4 @@
+import { HealthHistory1790359000000 } from './health-history';
 import { OrganizationCurrency1790357000000 } from './organization-currency';
 import { BackupReviews1790358000000 } from './backup-reviews';
 import { TrustedComputers1790353000000 } from './trusted-computers';
@@ -160,4 +161,5 @@ export const migrations = [
   OrganizationTimezone1790356000000,
   OrganizationCurrency1790357000000,
   BackupReviews1790358000000,
+  HealthHistory1790359000000,
 ];

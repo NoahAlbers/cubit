@@ -1,19 +1,34 @@
+import { organizationTimestamp } from '../organization/time';
 import os from 'node:os';
 import { statfs } from 'node:fs/promises';
 import { AppDataSource } from '../database';
 import { localConfig } from '../dev/config';
 import { BackupRuntime, BackupJob } from '../entity/backup';
 
-type Check = { name: string; status: 'ok' | 'warning' | 'critical' | 'unknown'; detail: string };
+export type HealthCheck = {
+  name: string;
+  status: 'ok' | 'warning' | 'critical' | 'unknown';
+  detail: string;
+  value?: number;
+  unit?: string;
+};
+export type HealthSnapshot = {
+  checkedAt: string;
+  demo: boolean;
+  checks: HealthCheck[];
+  message: string;
+  refreshSeconds?: number;
+};
+type Check = HealthCheck;
 export function capacityStatus(used: number): Check['status'] {
   return used >= 95 ? 'critical' : used >= 85 ? 'warning' : 'ok';
 }
-let cached: { until: number; value: unknown } | undefined;
-let pending: Promise<unknown> | undefined;
+let cached: { until: number; value: HealthSnapshot } | undefined;
+let pending: Promise<HealthSnapshot> | undefined;
 export function invalidateHealth() {
   cached = undefined;
 }
-async function collect() {
+export async function collectHealth(): Promise<HealthSnapshot> {
   const checkedAt = new Date().toISOString();
   if (localConfig.runtimeMode === 'hosted-demo')
     return {
@@ -23,14 +38,27 @@ async function collect() {
       message: 'Real server diagnostics are hidden in the synthetic demo.',
     };
   const checks: Check[] = [];
-  const add = (name: string, status: Check['status'], detail: string) =>
-    checks.push({ name, status, detail });
+  const add = (
+    name: string,
+    status: Check['status'],
+    detail: string,
+    value?: number,
+    unit?: string,
+  ) =>
+    checks.push({
+      name,
+      status,
+      detail,
+      ...(value !== undefined && Number.isFinite(value) ? { value, unit } : {}),
+    });
   const gb = (n: number) => (n / 1073741824).toFixed(1) + ' GB';
   const seconds = Math.round(process.uptime());
   add(
     'Application',
     'ok',
     `Running for ${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m · Node ${process.versions.node}`,
+    seconds / 3600,
+    'hours uptime',
   );
   try {
     const disk = await statfs(process.cwd());
@@ -41,6 +69,8 @@ async function collect() {
       'Server storage',
       capacityStatus(used),
       `${gb(free)} available of ${gb(total)} · ${used.toFixed(1)}% used. Warning at 85%; critical at 95%.`,
+      used,
+      '% used',
     );
   } catch {
     add('Server storage', 'unknown', 'Storage readings are unavailable to the application.');
@@ -51,11 +81,15 @@ async function collect() {
     'Server memory',
     capacityStatus((1 - freeMemory / totalMemory) * 100),
     `${gb(freeMemory)} free of ${gb(totalMemory)}. File-system cache may be reclaimable.`,
+    (1 - freeMemory / totalMemory) * 100,
+    '% used',
   );
   add(
     'Application memory',
     'ok',
     `${gb(process.memoryUsage().rss)} resident memory · ${gb(process.memoryUsage().heapUsed)} JavaScript heap used.`,
+    process.memoryUsage().rss / 1048576,
+    'MB resident',
   );
   const load = os.loadavg()[0],
     cpus = os.availableParallelism();
@@ -65,11 +99,14 @@ async function collect() {
     process.platform === 'win32'
       ? 'Load average is unavailable on Windows.'
       : `${load.toFixed(2)} one-minute load across ${cpus} available CPU cores.`,
+    process.platform === 'win32' ? undefined : load,
+    'load',
   );
   const started = Date.now();
   try {
     await AppDataSource.query('SELECT 1');
-    add('Database', 'ok', `Read check completed in ${Date.now() - started} ms.`);
+    const duration = Date.now() - started;
+    add('Database', 'ok', `Read check completed in ${duration} ms.`, duration, 'ms');
   } catch {
     add(
       'Database',
@@ -95,20 +132,22 @@ async function collect() {
       'Backup worker',
       fresh ? 'ok' : 'warning',
       runtime
-        ? `Last heartbeat: ${new Date(runtime.heartbeat).toISOString()}.`
+        ? `Last heartbeat: ${organizationTimestamp(runtime.heartbeat)}.`
         : 'No worker heartbeat received. Local development does not run the VPS backup worker.',
     );
     add(
       'Last successful backup',
       latest ? 'ok' : 'warning',
       latest?.finishedAt
-        ? new Date(latest.finishedAt).toISOString()
+        ? organizationTimestamp(latest.finishedAt)
         : 'No successful scheduled/manual backup recorded.',
     );
     add(
       'Recent backup failures',
       failed ? 'warning' : 'ok',
       `${failed} unreviewed failed backup/recovery jobs in the last seven days. Reviewed failures stay in Backups & recovery history.`,
+      failed,
+      'unreviewed failures',
     );
     add(
       'Off-server recovery',
@@ -123,14 +162,14 @@ async function collect() {
       'Public HTTPS & network',
       fresh && recentHttps ? (https.ok ? 'ok' : 'critical') : 'unknown',
       recentHttps
-        ? `${https.ok ? 'Trusted HTTPS and HTTP redirect verified.' : 'HTTPS or redirect check failed.'} Checked ${https.checkedAt}.`
+        ? `${https.ok ? 'Trusted HTTPS and HTTP redirect verified.' : 'HTTPS or redirect check failed.'} Checked ${organizationTimestamp(https.checkedAt)}.`
         : 'No recent public HTTPS check. This probe covers DNS, outbound connectivity to this hostname, TLS, and the public health endpoint; it does not prove every client can connect.',
     );
     add(
       'Recovery test',
       state.lastVerifiedAt ? 'ok' : 'warning',
       state.lastVerifiedAt
-        ? `Last isolated restore: ${state.lastVerifiedAt}.`
+        ? `Last isolated restore: ${organizationTimestamp(state.lastVerifiedAt)}.`
         : 'No successful isolated recovery test recorded.',
     );
   } catch {
@@ -146,15 +185,15 @@ async function collect() {
     checks,
     refreshSeconds: 30,
     message:
-      'Read-only snapshot. Refresh to check again; this page does not send alerts or replace independent uptime monitoring.',
+      'Current checks with retained history. Samples are recorded every five minutes; brief issues between samples may not appear. No alert emails are sent.',
   };
 }
 export async function systemHealth() {
   // Never reuse a real-server snapshot in the public demo.
-  if (localConfig.runtimeMode === 'hosted-demo') return collect();
+  if (localConfig.runtimeMode === 'hosted-demo') return collectHealth();
   if (cached && cached.until > Date.now()) return cached.value;
   if (!pending)
-    pending = collect()
+    pending = collectHealth()
       .then((value) => {
         cached = { value, until: Date.now() + 30000 };
         return value;

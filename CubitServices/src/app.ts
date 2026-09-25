@@ -1,3 +1,4 @@
+import { startHealthHistory } from './system/history';
 import { organizationCurrency } from './organization/currency';
 import { organizationTimeZone } from './organization/time';
 import { startAutomationScheduler } from './billing/automation';
@@ -202,6 +203,7 @@ export async function startLocalApp() {
   const stopWaivers = startWaiverReconciliation();
   server.on('close', stopWaivers);
   server.on('close', startLoginHistoryRetention());
+  server.on('close', startHealthHistory());
   return server;
 }
 

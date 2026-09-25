@@ -262,6 +262,9 @@ Target: **Unassigned**. Sign-off: **Pending**.
 - [ ] Configure independent health, disk-space and backup-failure monitoring.
   The Settings & Automation health panel provides cached read-only diagnostics,
   not out-of-band monitoring or alert delivery. The demo hides real VPS readings.
+  Five-minute samples (seven days) and hourly summaries (90 days) now provide
+  diagnosis history; missing samples and failures between samples still require
+  independent monitoring. Verify sample collection and retention after deployment.
   Test alert delivery and acknowledgment. Name the on-call person and backup contact,
   with an incident/restore runbook accessible if this VPS is unavailable.
 - [ ] Record final acceptance: release SHA, backup snapshot, recovery evidence,
