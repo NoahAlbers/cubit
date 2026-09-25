@@ -8,8 +8,21 @@ import { BackupSettings, BackupJob, BackupRuntime } from '../../entity/backup';
 import { defaultBackupSettings, validateBackupSettings } from '../../backups/settings';
 import { recordAudit } from '../../staff/audit';
 import { fail } from '../../billing/payments';
+import { Member, ROLES } from '../../entity/member';
 const router = express.Router();
 router.use(staffOnly);
+async function requireBackupAdministrator(manager: typeof AppDataSource.manager, actor: Member) {
+  const current = await manager.findOneOrFail(Member, {
+    where: { id: actor.id },
+    lock: { mode: 'pessimistic_write' },
+  });
+  if (
+    current.role !== ROLES.ADMIN ||
+    current.loginDisabled ||
+    current.tokenVersion !== actor.tokenVersion
+  )
+    fail('Administration access is required to change backup settings or remove backups.', 403);
+}
 async function settings() {
   await AppDataSource.manager
     .createQueryBuilder()
@@ -46,18 +59,21 @@ router.get(
       runtime: r,
       jobs: jobs.map((j) => ({ ...j, result: j.result ? JSON.parse(j.result) : null })),
       hosted: localConfig.runtimeMode === 'hosted-review',
+      canManageSettings: req.member.role === ROLES.ADMIN,
     });
   }),
 );
 router.post(
   '/settings',
   route(bodies.backup, async (req, res) => {
+    if (req.member.role !== ROLES.ADMIN) fail('Administration access is required.', 403);
     const value = validateBackupSettings(req.body.settings),
       r = await runtime();
     if (value.offsiteEnabled && !r.offsiteConfigured)
       fail('Connect private off-server storage on the server before enabling copies.');
     await settings();
     const revision = await AppDataSource.transaction(async (m) => {
+      await requireBackupAdministrator(m, req.member);
       const s = await m.findOneOrFail(BackupSettings, {
         where: { id: 'default' },
         lock: { mode: 'pessimistic_write' },
@@ -83,6 +99,8 @@ router.post(
 router.post(
   '/jobs',
   route(bodies.job, async (req, res) => {
+    if (req.body.kind === 'prune' && req.member.role !== ROLES.ADMIN)
+      fail('Administration access is required to remove backups.', 403);
     if (
       !req.body ||
       typeof req.body !== 'object' ||
@@ -111,6 +129,7 @@ router.post(
       fail('This backup is no longer listed. Refresh the inventory.', 409);
     await settings();
     const job = await AppDataSource.transaction(async (m) => {
+      if (req.body.kind === 'prune') await requireBackupAdministrator(m, req.member);
       const s = await m.findOneOrFail(BackupSettings, {
         where: { id: 'default' },
         lock: { mode: 'pessimistic_write' },

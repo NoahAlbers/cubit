@@ -17,7 +17,8 @@
     }
     <div class="backup-status-grid"><div><b>Local storage</b><p>{{data.runtime.localReady?'Encrypted repository ready':'Not initialized'}}</p></div><div><b>Off-server storage</b><p>{{data.runtime.offsiteConfigured?(data.settings.offsiteEnabled?'Configured · copies enabled':'Configured · copies paused'):'Not connected'}}</p></div><div><b>Next scheduled backup</b><p>{{data.runtime.nextRunAt?(data.runtime.nextRunAt|date:'medium'):'Manual only / awaiting worker'}}</p></div><div><b>Last recovery test</b><p>{{data.runtime.lastVerifiedAt?(data.runtime.lastVerifiedAt|date:'medium'):'Not verified yet'}}</p></div></div>
     @if (form) {
-      <form #backupForm="ngForm" (ngSubmit)="save()">
+      @if(!data.canManageSettings){<p class="notice-strip">Administration manages backup schedules and retention. Staff can view backups, create a backup and test recovery.</p>}
+      <form #backupForm="ngForm" (ngSubmit)="save()"><fieldset [disabled]="!data.canManageSettings||busy">
         <div class="form-grid"><label>Backup schedule<select name="frequency" [(ngModel)]="form.frequency" (ngModelChange)="dirty=true"><option value="manual">Manual only</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></label>
         @if (form.frequency!=='manual') {
           <label>Time<input type="time" name="time" [(ngModel)]="form.time" (ngModelChange)="dirty=true" required></label>
@@ -42,7 +43,7 @@
         @if (!data.runtime.offsiteConfigured) {
           <p class="muted">Off-server storage is not connected. A server operator must configure a private S3-compatible bucket and its credentials before copies can be enabled.</p>
         }
-        <div class="actions"><button class="primary" [disabled]="busy||backupForm.invalid||!dirty">Save backup settings</button><button type="button" class="secondary" [disabled]="busy||running||!data.runtime.available" (click)="queue('backup')">Back up now</button><button type="button" class="secondary" [disabled]="busy||running||!data.runtime.available||!data.runtime.localReady" (click)="queue('verify')">Test recovery</button></div></form>
+        </fieldset><div class="actions">@if(data.canManageSettings){<button class="primary" [disabled]="busy||backupForm.invalid||!dirty">Save backup settings</button>}<button type="button" class="secondary" [disabled]="busy||running||!data.runtime.available" (click)="queue('backup')">Back up now</button><button type="button" class="secondary" [disabled]="busy||running||!data.runtime.available||!data.runtime.localReady" (click)="queue('verify')">Test recovery</button></div></form>
       }
       <div class="backup-https"><b>HTTPS</b><p>{{data.runtime.https?.ok?'Certificate and HTTP-to-HTTPS redirect verified':'Not verified yet'}}@if (data.runtime.https?.checkedAt) {
       <span> · {{data.runtime.https.checkedAt|date:'medium'}}</span>
@@ -51,7 +52,7 @@
   }</div>
   @if(data.hosted){
     <section class="backup-inventory" aria-label="Saved local backups">
-      <div class="section-heading"><div><h3>Saved local backups <span class="badge">{{data.runtime.snapshots?.length||0}}</span></h3><p class="muted">Newest first · keeping the latest {{data.settings.localKeep}} copies on this VPS.</p></div><button type="button" class="secondary" [disabled]="busy||running||dirty||!data.runtime.available||data.runtime.inventoryError||(data.runtime.snapshots?.length||0)<=data.settings.localKeep" (click)="prune()">Apply local retention now</button></div>
+      <div class="section-heading"><div><h3>Saved local backups <span class="badge">{{data.runtime.snapshots?.length||0}}</span></h3><p class="muted">Newest first · keeping the latest {{data.settings.localKeep}} copies on this VPS.</p></div><button type="button" class="secondary" [disabled]="!data.canManageSettings||busy||running||dirty||!data.runtime.available||data.runtime.inventoryError||(data.runtime.snapshots?.length||0)<=data.settings.localKeep" (click)="prune()">Apply local retention now</button></div>
       @if(data.runtime.inventoryError||!data.runtime.available){<p class="notice-strip">The inventory may be out of date. The worker will refresh it when available.</p>}
       @if(data.runtime.inventoryCheckedAt){<p class="muted">Inventory checked {{data.runtime.inventoryCheckedAt|date:'medium'}}. Sizes show the data captured; encrypted storage uses deduplication.</p>}
       <div class="table-scroll"><table><thead><tr><th>Created</th><th>Snapshot</th><th>Data captured</th><th><span class="sr-only">Actions</span></th></tr></thead><tbody>

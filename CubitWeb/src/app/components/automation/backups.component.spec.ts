@@ -17,6 +17,11 @@ describe('Local backup inventory',()=>{
   expect(fixture.nativeElement.textContent).toContain('1.0 MB');expect(fixture.nativeElement.textContent).toContain('Saved local backups');
   const button=Array.from(fixture.nativeElement.querySelectorAll('button')).find((b:HTMLButtonElement)=>b.textContent.includes('Test this backup')) as HTMLButtonElement;
   button.click();const request=http.expectOne('/api/backups/jobs');expect(request.request.body).toEqual({kind:'verify',snapshot:snapshot.id});request.flush({});http.expectOne('/api/backups').flush(data);
+  fixture.componentInstance.data.canManageSettings=false;fixture.detectChanges();
+  fixture.componentInstance.save();fixture.componentInstance.prune();fixture.componentInstance.queue('prune');
+  http.expectNone('/api/backups/settings');http.expectNone('/api/backups/jobs');
+  expect(fixture.nativeElement.querySelector('fieldset').disabled).toBe(true);
+  expect(fixture.nativeElement.textContent).toContain('Administration manages backup schedules');
   fixture.destroy();http.verify();
  });
 });
