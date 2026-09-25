@@ -32,7 +32,7 @@ export class AppComponent implements OnInit {
   workspaceLabel = '';
   menuOpen=false;
   sidebarCollapsed=false;
-  expandedGroups:Record<string,boolean>={members:true};
+  expandedGroups:Record<string,boolean>={};
   compactGroup:string|null=null;
   hoverLabel='';
   private flyoutClose:ReturnType<typeof setTimeout>|undefined;
@@ -47,8 +47,8 @@ export class AppComponent implements OnInit {
     {label:'Organization Management',icon:'organization',path:'/organization',administration:true},
   ];
   constructor(public organization:OrganizationService,public auth: AuthService, public router: Router, private http: HttpClient, public navigation:ListNavigationService) {
-    try {const saved=JSON.parse(localStorage.getItem('cubit.navigation')||'null');if(saved){this.sidebarCollapsed=saved.compact===true;for(const id of ['members','settings'])if(typeof saved.groups?.[id]==='boolean')this.expandedGroups[id]=saved.groups[id];}}catch{}
-    router.events.subscribe(e=>{if(e instanceof NavigationEnd){this.refreshAccountNotices();this.menuOpen=false;this.compactGroup=null;const active=this.staffNavigation.find(item=>item.children&&this.groupCurrent(item));if(active){this.expandedGroups[active.id]=true;this.saveNavigation();}}});
+    try {const saved=JSON.parse(localStorage.getItem('cubit.navigation')||'null');if(saved)this.sidebarCollapsed=saved.compact===true;}catch{}
+    router.events.subscribe(e=>{if(e instanceof NavigationEnd){this.refreshAccountNotices();this.menuOpen=false;this.compactGroup=null;for(const item of this.staffNavigation.filter(item=>item.children))this.expandedGroups[item.id]=this.groupCurrent(item);}});
   }
   get compactNavigation(){return this.sidebarCollapsed&&window.innerWidth>800;}
   get showWorkspace(){return this.isAuthenticated&&!['/','/app-login'].includes(this.router.url.split(/[?#]/)[0]);}
