@@ -1,3 +1,4 @@
+import { validCurrency } from '../../organization/currency';
 import express from 'express';
 import { z } from 'zod';
 import { In } from 'typeorm';
@@ -56,6 +57,7 @@ router.get(
       name: settings.name,
       supportEmail: settings.supportEmail,
       timezone: settings.timezone,
+      currency: settings.currency,
     });
   }),
 );
@@ -93,6 +95,7 @@ router.put(
         name: z.string().trim().min(1).max(120),
         supportEmail: email,
         timezone: z.string().refine(validTimeZone, 'Choose a valid IANA time zone.').optional(),
+        currency: z.string().refine(validCurrency, 'Choose an ISO currency.').optional(),
         revision: z.number().int().positive(),
       })
       .strict(),
@@ -116,6 +119,7 @@ router.put(
           name: settings.name,
           supportEmail: settings.supportEmail,
           timezone: settings.timezone,
+          currency: settings.currency,
         };
         Object.assign(settings, req.body, { revision: settings.revision + 1 });
         await manager.save(settings);
@@ -127,6 +131,7 @@ router.put(
             name: settings.name,
             supportEmail: settings.supportEmail,
             timezone: settings.timezone,
+            currency: settings.currency,
           },
         });
         return settings;

@@ -286,3 +286,5 @@ Separate staff identities remain planned; individual operational staff credentia
 permissions and MFA are mandatory even while logins share the member-record model.
 
 - [ ] Review login-history privacy and retention with the organization; configure and maintain a local City MMDB file if approximate login locations are wanted. Confirm reverse-proxy IP attribution before launch.
+
+- [ ] Confirm the organization time zone and ledger currency before operational import; currency selection changes labels only, not exchange rates. Validate provider currency matching before enabling any live payment imports.

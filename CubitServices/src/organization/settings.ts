@@ -1,3 +1,4 @@
+import { setOrganizationCurrency } from './currency';
 import { AppDataSource } from '../database';
 import { OrganizationSettings } from '../entity/organization';
 import { setOrganizationTimeZone } from './time';
@@ -5,6 +6,7 @@ let checked = 0;
 let pending: Promise<void> | undefined;
 export function acceptOrganizationSettings(settings: OrganizationSettings) {
   setOrganizationTimeZone(settings.timezone);
+  setOrganizationCurrency(settings.currency);
   checked = Date.now();
 }
 export async function refreshOrganizationSettings() {

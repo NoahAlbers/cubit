@@ -88,7 +88,7 @@
           @if (overdue) {
             <td><b>{{m.daysPastDue}} days</b><small>Since {{m.oldestUnpaidDate |orgDate:'MMM d, y':'UTC'}}</small></td>
           }
-          <td class="number"><b [class.debt]="m.pastDue > 0">{{(overdue ? m.pastDue : m.balance) | currency}}</b>@if (m.finalBillingDate) {
+          <td class="number"><b [class.debt]="m.pastDue > 0">{{(overdue ? m.pastDue : m.balance) |orgCurrency}}</b>@if (m.finalBillingDate) {
           <small>Ended {{m.finalBillingDate |orgDate:'MMM d, y':'UTC'}}</small>
           }@if (m.balance < 0) {
           <small>Credit</small>
@@ -108,7 +108,7 @@
   <option value="amount">Past due amount</option>
   }</select></label><button class="secondary" (click)="filters.order=filters.order==='asc'?'desc':'asc';apply()">{{filters.order==='asc'?'Ascending':'Descending'}} <app-arrow [name]="filters.order==='asc'?'sort-ascending':'sort-descending'"></app-arrow></button></div>
   @for (m of data.rows; track m) {
-    <article class="member-summary"><div class="section-heading"><div class="member-cell"><svg class="avatar member-identicon" width="36" height="36" [appMemberIcon]="m.id" aria-hidden="true" focusable="false"></svg><a class="member-name" [routerLink]="['/member',m.id]" [queryParams]="navigation.memberQuery">{{m.firstName}} {{m.lastName}}</a></div><span class="badge" [appMemberStatus]="m.status">{{m.status}}</span></div><p><b>{{m.accessAllowed?'Entry allowed':'Entry blocked'}}</b> · {{m.accessAllowed?(m.pastDue?'Within grace period':'Current'):m.statusReason||(!m.enabledKeys?'No enabled key':'Review membership')}}</p><div class="section-heading"><span>{{m.planName}}</span><b>{{overdue?'Past due':m.balance<0?'Credit':m.balance>0?'Amount due':'Balance'}}: {{(overdue?m.pastDue:m.balance<0?-m.balance:m.balance)|currency}}</b></div><small>{{overdue?m.daysPastDue+' days behind':'Last key use: '+(m.lastKeyUsage?(m.lastKeyUsage|orgDate:'MMM d, y'):'Never')}}</small><details><summary>Contact details</summary><a [href]="'mailto:'+m.email">{{m.email}}</a><p>{{(m.phone | phone)||'No phone on file'}}</p>@if (m.paypalEmail&&m.paypalEmail!==m.email) {
+    <article class="member-summary"><div class="section-heading"><div class="member-cell"><svg class="avatar member-identicon" width="36" height="36" [appMemberIcon]="m.id" aria-hidden="true" focusable="false"></svg><a class="member-name" [routerLink]="['/member',m.id]" [queryParams]="navigation.memberQuery">{{m.firstName}} {{m.lastName}}</a></div><span class="badge" [appMemberStatus]="m.status">{{m.status}}</span></div><p><b>{{m.accessAllowed?'Entry allowed':'Entry blocked'}}</b> · {{m.accessAllowed?(m.pastDue?'Within grace period':'Current'):m.statusReason||(!m.enabledKeys?'No enabled key':'Review membership')}}</p><div class="section-heading"><span>{{m.planName}}</span><b>{{overdue?'Past due':m.balance<0?'Credit':m.balance>0?'Amount due':'Balance'}}: {{(overdue?m.pastDue:m.balance<0?-m.balance:m.balance)|orgCurrency}}</b></div><small>{{overdue?m.daysPastDue+' days behind':'Last key use: '+(m.lastKeyUsage?(m.lastKeyUsage|orgDate:'MMM d, y'):'Never')}}</small><details><summary>Contact details</summary><a [href]="'mailto:'+m.email">{{m.email}}</a><p>{{(m.phone | phone)||'No phone on file'}}</p>@if (m.paypalEmail&&m.paypalEmail!==m.email) {
     <p>PayPal: {{m.paypalEmail}}</p>
   }</details>@if (overdue) {
   <a [routerLink]="['/member',m.id]" [queryParams]="navigation.memberQuery" fragment="access-keys">Manage access <app-arrow name="arrow-right"></app-arrow></a>

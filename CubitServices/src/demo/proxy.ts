@@ -69,6 +69,7 @@ export function demoProxy(enabled: boolean, port = 5002): RequestHandler {
           'content-disposition',
           'retry-after',
           'x-cubit-timezone',
+          'x-cubit-currency',
         ])
           if (response.headers[key]) res.setHeader(key, response.headers[key]!);
         response.on('error', () => res.destroy());

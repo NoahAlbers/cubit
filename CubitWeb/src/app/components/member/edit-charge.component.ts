@@ -9,7 +9,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 <button type="button" class="quiet" (click)="amount=0" [disabled]="busy">Waive this charge</button>
 <label>Reason for change<input name="reason" [(ngModel)]="reason" maxlength="500" required [disabled]="busy" placeholder="e.g. Approved waiver or incorrect amount"></label>
 @if (validAmount()) {
-  <p class="billing-edit-preview">Charge: {{data.charge.amount | currency}} <span class="sr-only">to</span> <app-arrow name="arrow-right"></app-arrow> <b>{{amount | currency}}</b><br>Account balance: {{data.balance | currency}} <span class="sr-only">to</span> <app-arrow name="arrow-right"></app-arrow> <b>{{newBalance() | currency}}</b></p>
+  <p class="billing-edit-preview">Charge: {{data.charge.amount |orgCurrency}} <span class="sr-only">to</span> <app-arrow name="arrow-right"></app-arrow> <b>{{amount |orgCurrency}}</b><br>Account balance: {{data.balance |orgCurrency}} <span class="sr-only">to</span> <app-arrow name="arrow-right"></app-arrow> <b>{{newBalance() |orgCurrency}}</b></p>
 }
 @if (error) {
   <p class="error" role="alert">{{error}}</p>

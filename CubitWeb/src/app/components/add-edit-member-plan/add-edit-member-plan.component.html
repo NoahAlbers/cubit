@@ -1,5 +1,5 @@
 <div class="cubit-dialog" [appDraft]="planForm.dirty"><span class="eyebrow">MEMBERSHIP</span><h2 mat-dialog-title>Add a plan</h2><form [formGroup]="planForm" (ngSubmit)="Save()"><label>Plan<select formControlName="planId" required><option value="">Choose a plan</option>@for (plan of plans | async; track plan) {
-<option [value]="plan.id">{{plan.name}} · {{plan.monthlyCost | currency}} / month</option>
+<option [value]="plan.id">{{plan.name}} · {{plan.monthlyCost |orgCurrency}} / month</option>
 }</select></label><label>Start date<input type="date" formControlName="startDate" required></label><p class="muted">The first charge is due on this date. To cancel later, use End billing on the member profile.</p>@if (error) {
 <p class="error" role="alert">{{error}}</p>
 }@if (planForm.invalid) {

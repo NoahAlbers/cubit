@@ -1,3 +1,4 @@
+import { organizationCurrency } from './organization/currency';
 import { organizationTimeZone } from './organization/time';
 import { startAutomationScheduler } from './billing/automation';
 import { startLoginHistoryRetention } from './security/login-history';
@@ -117,6 +118,7 @@ app.use(async (_req, _res, next) => {
   try {
     await refreshOrganizationSettings();
     _res.setHeader('X-Cubit-Timezone', organizationTimeZone);
+    _res.setHeader('X-Cubit-Currency', organizationCurrency);
     next();
   } catch (error) {
     next(error);

@@ -1,3 +1,5 @@
+import { OrganizationService } from '../../services/organization.service';
+import { formatMoney } from '../../services/org-currency.pipe';
 import { organizationDay } from '../../services/org-time';
 import { Component, OnInit, OnDestroy, HostListener, ChangeDetectionStrategy } from '@angular/core';
 import { Subscription } from 'rxjs';
@@ -27,7 +29,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
   private clickReset:any;
   get partialComparison(){if(!this.comparison||!this.data)return false;const end=new Date(this.data.to+'T00:00:00Z');const monthEnd=new Date(Date.UTC(end.getUTCFullYear(),end.getUTCMonth()+1,0)).getUTCDate();return (this.comparison.first===0&&this.data.from.slice(8)!=='01')||(this.comparison.last===this.data.months.length-1&&end.getUTCDate()!==monthEnd);}
   comparisonLabel(field:ComparisonField){return {activeMembers:'Active members',netPayments:'Payments',visits:'Total check-ins',uniqueVisitors:'Unique check-ins'}[field];}
-  comparisonValue(value:number,field:ComparisonField){return field==='netPayments'?new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(value):value.toLocaleString('en-US');}
+  comparisonValue(value:number,field:ComparisonField){return field==='netPayments'?formatMoney(value,this.organization.currency):value.toLocaleString('en-US');}
   selectedRow(field:ComparisonField,index:number){return this.comparison?.field===field&&index>=this.comparison.first&&index<=this.comparison.last;}
   private placeComparison(x:number,y:number){this.comparisonX=Math.max(8,Math.min(window.innerWidth-292,x+16));this.comparisonY=Math.max(8,Math.min(window.innerHeight-260,y+16));}
   private chartRows(field:ComparisonField){return Array.from(document.querySelectorAll<HTMLElement>('.report-bar-list [data-series="'+field+'"]'));}
@@ -94,7 +96,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
     {id:'transactions',name:'Transactions',detail:'Payments, refunds and correction entries in the selected period'},
     {id:'overdue',name:'Overdue memberships',detail:'Current ongoing memberships with past-due charges'},
     {id:'checkins',name:'Check-ins',detail:'Successful and denied entries in the selected period'}];
-  constructor(private http:HttpClient, private route:ActivatedRoute, private router:Router, public navigation:ListNavigationService){}
+  constructor(public organization:OrganizationService,private http:HttpClient, private route:ActivatedRoute, private router:Router, public navigation:ListNavigationService){}
   ngOnInit(){const period=reportPeriod(3),q=this.route.snapshot.queryParams;this.from=q.from||period.from;this.to=q.to||period.to;this.growthView=q.growth==='bars'?'bars':'line';this.busyView=q.busy==='monthDays'?'monthDays':'weekHours';this.checkinsView=q.checkins==='unique'?'unique':'total';this.load();}
   choosePeriod(months:number){Object.assign(this,reportPeriod(months));this.load();}
   isPeriod(months:number){const p=reportPeriod(months);return this.from===p.from&&this.to===p.to;}

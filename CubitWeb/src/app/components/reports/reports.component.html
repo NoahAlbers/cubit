@@ -17,14 +17,14 @@
   @if (data && !loading) {
     <div class="report-grid">
       <div class="report-column">
-        <div class="stats report-summary"><div class="stat"><span>CURRENT ACTIVE MEMBERS</span><strong>{{data.summary.active}}</strong></div><div class="stat"><span>NET PAYMENTS · SELECTED PERIOD</span><strong>{{data.summary.netPayments | currency}}</strong></div><div class="stat"><span>CURRENT PAST DUE MEMBERS</span><strong>{{data.summary.overdueMembers}}</strong></div><div class="stat"><span>UNIQUE VISITORS · SELECTED PERIOD</span><strong>{{data.summary.uniqueVisitors}}</strong></div></div>
+        <div class="stats report-summary"><div class="stat"><span>CURRENT ACTIVE MEMBERS</span><strong>{{data.summary.active}}</strong></div><div class="stat"><span>NET PAYMENTS · SELECTED PERIOD</span><strong>{{data.summary.netPayments |orgCurrency}}</strong></div><div class="stat"><span>CURRENT PAST DUE MEMBERS</span><strong>{{data.summary.overdueMembers}}</strong></div><div class="stat"><span>UNIQUE VISITORS · SELECTED PERIOD</span><strong>{{data.summary.uniqueVisitors}}</strong></div></div>
         <section class="panel detail-panel"><h2>Current Membership Status</h2>@for (s of data.statuses; track s) {
         <div class="status-report"><span>{{s.status}}</span><div class="bar-track"><div class="chart-bar" [style.width.%]="data.summary.members ? s.count / data.summary.members * 100 : 0"></div></div><b>{{s.count}}</b></div>
         }<p class="muted">{{data.summary.members}} accounts total. Active includes members within the billing grace period.</p></section>
-        <section class="panel detail-panel"><h2>Payments by month</h2><p class="muted">Recorded payments less refunds and reversals, in USD.</p><div class="report-bar-list" role="group" aria-label="Payments by month comparison">@for (m of data.months; track m; let i = $index) {
+        <section class="panel detail-panel"><h2>Payments by month</h2><p class="muted">Recorded payments less refunds and reversals, in {{''|currencyCode}}.</p><div class="report-bar-list" role="group" aria-label="Payments by month comparison">@for (m of data.months; track m; let i = $index) {
         <div class="chart-row selectable-bar" tabindex="0" aria-describedby="bar-range-help" [attr.data-series]="'netPayments'" [class.range-selected]="selectedRow('netPayments',i)" (pointerdown)="startComparison($event,'netPayments',i)" (keydown)="compareWithKeyboard($event,'netPayments',i)" [attr.aria-label]="m.month+': '+comparisonValue(m.netPayments,'netPayments')+(selectedRow('netPayments',i)?', selected':'')"><span>{{monthLabel(m.month)}}@if (monthScope(m.month)) {
           <small>{{monthScope(m.month)}}</small>
-          }</span><div class="bar-track"><div class="chart-bar" [class.negative]="m.netPayments < 0" [style.width.%]="width(m.netPayments,'netPayments')"></div></div><b>{{m.netPayments | currency}}</b></div>
+          }</span><div class="bar-track"><div class="chart-bar" [class.negative]="m.netPayments < 0" [style.width.%]="width(m.netPayments,'netPayments')"></div></div><b>{{m.netPayments |orgCurrency}}</b></div>
         }</div></section>
       </div>
       <div class="report-column">

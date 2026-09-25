@@ -51,7 +51,10 @@ export const bodies = {
     amount: money.optional(),
     payerEmail: z.string().max(254).optional(),
     payerName: z.string().max(150).optional(),
-    currency: z.literal('USD').optional(),
+    currency: z
+      .string()
+      .regex(/^[A-Z]{3}$/)
+      .optional(),
   }),
   match: z.strictObject({
     memberId: z.string().max(150).optional(),

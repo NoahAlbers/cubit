@@ -1,3 +1,4 @@
+import { OrgCurrencyPipe, CurrencyCodePipe } from './services/org-currency.pipe';
 import { OrgDatePipe } from './services/org-date.pipe';
 import { AccountSecurityComponent } from './components/account-security/account-security.component';
 import { OrganizationComponent } from './components/organization/organization.component';
@@ -75,7 +76,7 @@ import { AccessLogService } from './services/access-log.service';
         AddTransactionComponent,
         AccessLogComponent,
     ],
-    bootstrap: [AppComponent], imports: [OrgDatePipe, SystemHealthComponent, AccountSecurityComponent, AppRoutingModule,
+    bootstrap: [AppComponent], imports: [OrgCurrencyPipe, CurrencyCodePipe, OrgDatePipe, SystemHealthComponent, AccountSecurityComponent, AppRoutingModule,
         AppMaterialModule,
         BrowserModule,
         BrowserAnimationsModule,

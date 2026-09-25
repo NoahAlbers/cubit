@@ -1,3 +1,4 @@
+import { organizationCurrency } from '../organization/currency';
 import { organizationDay } from '../organization/time';
 import { validEmail } from '../contact/validation';
 import { recordAudit, snapshot, profileFields } from '../staff/audit';
@@ -15,8 +16,8 @@ export async function receiveSimulation(body: any, author: string) {
   const payerEmail = paymentEmail(body.payerEmail || '', false),
     payerName = String(body.payerName || '').trim();
   if (payerName.length > 150) fail('Payer name may be at most 150 characters.');
-  if (body.currency && body.currency !== 'USD')
-    fail('Only USD payments can be reviewed in this workspace.');
+  if (body.currency && body.currency !== organizationCurrency)
+    fail(`Only ${organizationCurrency} test events can be reviewed in this workspace.`);
   const input = {
     id: requestKey(body.id),
     kind: String(body.kind),

@@ -8,6 +8,7 @@ import { validEmail } from '../../services/contact-format';
 
 @Component({selector:'app-organization',standalone:false,templateUrl:'./organization.component.html',changeDetection:ChangeDetectionStrategy.Eager})
 export class OrganizationComponent implements OnInit {
+  currencies=Intl.supportedValuesOf('currency'); currencyName(code:string){return new Intl.DisplayNames(['en'],{type:'currency'}).of(code)||code;}
   zones=['America/New_York',...Intl.supportedValuesOf('timeZone').filter(z=>z!=='America/New_York'),'UTC'];
   settings:any;baseline='';staff:any[]=[];currentUserId='';loading=true;busy=false;error='';message='';
   edit:any=null;editBaseline='';search='';candidates:any[]=[];searched=false;searching=false;link='';expiresAt='';
@@ -20,7 +21,7 @@ export class OrganizationComponent implements OnInit {
   discardDraft(){if(this.baseline)this.settings=JSON.parse(this.baseline);this.edit=null;this.link='';}
   roleLabel(role:string){return role==='admin'?'Administration':role==='staff'?'Staff User':'Member';}
   validSettings(){return !!this.settings?.name?.trim()&&this.settings.name.trim().length<=120&&validEmail(this.settings.supportEmail);}
-  async saveSettings(){if(this.busy||!this.validSettings())return;this.busy=true;this.error='';this.message='';try{const d:any=await firstValueFrom(this.http.put('/api/organization/settings',{name:this.settings.name,supportEmail:this.settings.supportEmail,timezone:this.settings.timezone,revision:this.settings.revision}));this.settings=d;this.baseline=JSON.stringify(d);this.organization.accept(d);this.message='Organization details saved. The login page and contact-help links now use these details.';}catch(e){this.error=e.error?.message||'Could not save organization details.';}finally{this.busy=false;}}
+  async saveSettings(){if(this.busy||!this.validSettings())return;this.busy=true;this.error='';this.message='';try{const d:any=await firstValueFrom(this.http.put('/api/organization/settings',{name:this.settings.name,supportEmail:this.settings.supportEmail,timezone:this.settings.timezone,currency:this.settings.currency,revision:this.settings.revision}));this.settings=d;this.baseline=JSON.stringify(d);this.organization.accept(d);this.message='Organization details saved. The login page and contact-help links now use these details.';}catch(e){this.error=e.error?.message||'Could not save organization details.';}finally{this.busy=false;}}
   async select(person?:any){if(this.accountDirty&&!await this.drafts.confirmDiscard())return;this.edit=person?{...person,reason:''}:{firstName:'',lastName:'',email:'',role:'staff',loginDisabled:false,reason:''};this.editBaseline=JSON.stringify(this.edit);this.link='';this.error='';this.message='';}
   async closeEditor(){if(this.accountDirty&&!await this.drafts.confirmDiscard())return;this.edit=null;this.link='';}
   async findMembers(){if(this.search.trim().length<2||this.searching)return;this.searching=true;this.error='';try{const d:any=await firstValueFrom(this.http.get('/api/organization/candidates',{params:{q:this.search.trim()}}));this.candidates=d.rows;this.searched=true;}catch(e){this.error=e.error?.message||'Could not find members.';}finally{this.searching=false;}}

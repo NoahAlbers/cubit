@@ -2,6 +2,7 @@ import { Entity, Column, PrimaryColumn } from 'typeorm';
 
 @Entity({ name: 'organization_settings' })
 export class OrganizationSettings {
+  @Column({ length: 3, default: 'USD' }) currency: string;
   @Column({ length: 64, default: 'America/New_York' }) timezone: string;
   @PrimaryColumn({ type: 'varchar', length: 32 }) id: string;
   @Column({ type: 'varchar', length: 120 }) name: string;

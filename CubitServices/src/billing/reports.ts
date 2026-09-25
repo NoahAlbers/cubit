@@ -1,3 +1,4 @@
+import { organizationCurrency } from '../organization/currency';
 import { organizationTimestamp } from '../organization/time';
 import { organizationDay } from '../organization/time';
 import { AppDataSource } from '../database';
@@ -125,8 +126,8 @@ export function exportReport(type: string, data: Awaited<ReturnType<typeof repor
         'Phone',
         'Status',
         'Plan',
-        'Balance',
-        'Past due',
+        `Balance (${organizationCurrency})`,
+        `Past due (${organizationCurrency})`,
         'Access enabled',
         'Last successful check-in (organization time)',
       ],
@@ -151,7 +152,7 @@ export function exportReport(type: string, data: Awaited<ReturnType<typeof repor
         'Transaction ID',
         'Member',
         'Date',
-        'Amount (USD)',
+        `Amount (${organizationCurrency})`,
         'Method',
         'Description',
         'Confirmation',
@@ -179,7 +180,7 @@ export function exportReport(type: string, data: Awaited<ReturnType<typeof repor
         'Name',
         'Email',
         'Phone',
-        'Past due (USD)',
+        `Past due (${organizationCurrency})`,
         'Days behind',
         'Access enabled',
         'Plan',

@@ -13,16 +13,16 @@
       <section class="panel detail-panel portal-welcome"><div><h2>{{data.profile.firstName}} {{data.profile.lastName}}</h2><span class="badge" [appMemberStatus]="data.status">{{data.status}}</span><p><strong>{{data.entryAllowed?'Entry allowed':'Entry blocked'}}</strong>@if (data.status==='Active'&&!data.enabledKeys) {
       <span> — Contact staff to arrange an enabled access key.</span>
       }</p><p class="muted access-message">{{data.accessMessage==='Current'?'Your membership is current.':data.accessMessage}}</p></div></section>
-      <div class="stats"><a class="stat stat-link" routerLink="/portal/billing"><span>ACCOUNT BALANCE</span><strong>{{data.billing.balance | currency}}</strong>@if (data.billing.balance<0) {
+      <div class="stats"><a class="stat stat-link" routerLink="/portal/billing"><span>ACCOUNT BALANCE</span><strong>{{data.billing.balance |orgCurrency}}</strong>@if (data.billing.balance<0) {
       <small>Credit available</small>
-      }</a><a class="stat stat-link" routerLink="/portal/billing"><span>PAST DUE</span><strong>{{data.billing.pastDue | currency}}</strong></a><a class="stat stat-link" routerLink="/portal/waivers"><span>WAIVERS TO SIGN</span><strong>{{data.waivers.missing}}</strong></a></div>
+      }</a><a class="stat stat-link" routerLink="/portal/billing"><span>PAST DUE</span><strong>{{data.billing.pastDue |orgCurrency}}</strong></a><a class="stat stat-link" routerLink="/portal/waivers"><span>WAIVERS TO SIGN</span><strong>{{data.waivers.missing}}</strong></a></div>
       @if (data.waivers.missing) {
         <div class="notice-strip"><b>{{data.waivers.missing}} required waiver{{data.waivers.missing===1?'':'s'}} to review.</b> <a routerLink="/portal/waivers">View waivers <app-arrow name="arrow-right"></app-arrow></a></div>
       }
       <section class="panel detail-panel"><h2>Current plan</h2>@for (p of currentPlans; track p) {
       <div class="portal-plan"><div><h3>{{p.name}}</h3><p class="muted">Since {{p.startDate |orgDate:'MMM d, y':'UTC'}}@if (p.finalBillingDate) {
       <span> · Ends {{p.finalBillingDate |orgDate:'MMM d, y':'UTC'}}</span>
-      }</p></div><b>{{p.monthlyRate | currency}} / month</b></div>
+      }</p></div><b>{{p.monthlyRate |orgCurrency}} / month</b></div>
       }@if (!currentPlans.length) {
       <p class="muted">You do not have a current plan. @if(organization.supportEmail){<a [href]="organization.contactUrl">Contact staff</a>}@else{Contact your organization’s staff} to get set up.</p>
       }<p class="muted">For plan, payment or sign-in help, @if(organization.supportEmail){<a [href]="organization.contactUrl">contact staff</a>}@else{contact your organization’s staff}.</p></section>
@@ -34,8 +34,8 @@
     }</div>
     @if (rows.length) {
       <div class="table-scroll"><table class="record-table"><thead><tr><th>Date</th><th>Entry</th><th class="number">Amount</th><th>Status</th></tr></thead><tbody>@for (row of visibleRows; track row) {
-      <tr><td data-label="Date">{{row.date |orgDate:'MMM d, y':'UTC'}}</td><td class="billing-entry" data-label="Entry"><b>{{row.kind}}</b><small>{{row.description}}</small></td><td data-label="Amount" class="number" [class.payment-amount]="row.amount<0">{{row.amount>0?'+':row.amount<0?'−':''}}{{abs(row.amount)|currency}}</td><td data-label="Status"><span class="badge" [class.canceled]="row.status==='Past due'">{{row.status}}</span>@if (row.status==='Part-paid') {
-      <small>{{row.charge.outstanding|currency}} unpaid</small>
+      <tr><td data-label="Date">{{row.date |orgDate:'MMM d, y':'UTC'}}</td><td class="billing-entry" data-label="Entry"><b>{{row.kind}}</b><small>{{row.description}}</small></td><td data-label="Amount" class="number" [class.payment-amount]="row.amount<0">{{row.amount>0?'+':row.amount<0?'−':''}}{{abs(row.amount)|orgCurrency}}</td><td data-label="Status"><span class="badge" [class.canceled]="row.status==='Past due'">{{row.status}}</span>@if (row.status==='Part-paid') {
+      <small>{{row.charge.outstanding|orgCurrency}} unpaid</small>
     }</td></tr>
   }</tbody></table></div>
   }@if (!rows.length) {
