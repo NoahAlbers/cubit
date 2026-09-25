@@ -494,3 +494,6 @@ select:not([multiple]):not([size]){appearance:none;-webkit-appearance:none;paddi
 .access-log-page .directory-panel > app-loading.compact { padding-inline: 23px; }
 @media(max-width:650px) { .access-log-page .directory-panel > app-loading.compact { padding-inline: 16px; } }
 @media(max-width:480px) { .directory-page .directory-panel > app-loading.compact { padding-inline: 12px; } }
+
+.access-warning { padding:14px 16px; margin:16px 0; border:1px solid #e5c98b; border-left:3px solid #ae7b1b; border-radius:7px; background:#fff9eb; color:#684d1b; }
+.access-warning p { margin:6px 0 0; font-size:13px; }

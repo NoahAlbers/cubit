@@ -196,6 +196,19 @@ Target: **Unassigned**. Sign-off: **Pending**.
   HMAC with per-device keys, timestamps and replay protection). Return only
   allow/deny; protect and rate-limit any fob-list endpoint. Keep legacy `/ACON`
   blocked until the replacement is tested with the actual door maintainers.
+- [ ] **Prove membership revocation at every physical door before launch.** Entry
+  requires an Active membership AND an enabled assigned key; staff blocks always
+  deny entry. Test Inactive, Canceled, no current plan, grace expiry, disabled key,
+  and future/current final billing dates using an actual card at every controller.
+  Record the maximum revocation delay and a controller acknowledgment/version.
+- [ ] Define and implement expiration for cached door permissions. A stale/offline
+  allowlist must not grant indefinite access. Test disconnection, reconnect,
+  controller restart and clock drift; agree on a bounded expiry and staff-assisted
+  fallback with the door maintainers. Never affect emergency egress.
+- [ ] Test payment/grace restoration without clearing staff blocks or individually
+  disabled keys. An enabled key in Cubit is not evidence that a physical door has
+  received a change. Keep review disconnected and use the current system for
+  urgent access revocation until cutover is approved.
 - [ ] Test valid, unknown, refused, replayed, offline and revoked-device cases;
   agree on door fail-safe behavior and a staffed rollback procedure before cutover.
 - [ ] Implement verified PayPal webhook signatures, expected currency and payment

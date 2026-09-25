@@ -53,7 +53,7 @@ Access eligibility and ending billing are separate decisions: suspending access 
 
 The access log supports date ranges beyond the last 30 days, search, result filters, sorting, and pagination. Profiles show member activity and per-key activity where recorded events support that association. Events without a key association are not presented as proven use of a particular key.
 
-The hosted review displays copied records. It does not receive live door events, update a controller, or change physical access.
+The hosted review displays copied records. It does not receive live door events, update a controller, or change physical access. Entry eligibility requires both an Active membership and an enabled key; an Inactive or Canceled membership is ineligible even when its key remains enabled. Member profiles highlight this combination. Before cutover, prove revocation on every physical controller, including cached/offline permission expiry and controller acknowledgment. Use the current door system for urgent revocations until that integration is approved.
 
 ### Staff audit history and notification preferences
 
