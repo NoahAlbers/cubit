@@ -17,6 +17,8 @@ describe('Local backup inventory',()=>{
   const data={hosted:true,revision:2,settings:{frequency:'manual',localKeep:3,remoteKeep:30,verifyDays:0,offsiteEnabled:false},runtime:{available:true,localReady:true,snapshots:[snapshot],inventoryCheckedAt:snapshot.createdAt},jobs:[]};
   http.expectOne('/api/backups').flush(data);fixture.detectChanges();
   expect(fixture.nativeElement.textContent).toContain('1.0 MB');expect(fixture.nativeElement.textContent).toContain('Saved local backups');
+  const inventory=fixture.nativeElement.querySelector('details[aria-label="Saved local backups"]') as HTMLDetailsElement;
+  expect(inventory.open).toBe(false);inventory.querySelector('summary')!.click();expect(inventory.open).toBe(true);
   const button=Array.from(fixture.nativeElement.querySelectorAll('button')).find((b:HTMLButtonElement)=>b.textContent.includes('Test this backup')) as HTMLButtonElement;
   button.click();const request=http.expectOne('/api/backups/jobs');expect(request.request.body).toEqual({kind:'verify',snapshot:snapshot.id});request.flush({});http.expectOne('/api/backups').flush(data);
   fixture.componentInstance.data.canManageSettings=false;fixture.detectChanges();
