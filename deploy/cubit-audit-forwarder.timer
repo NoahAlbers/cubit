@@ -1,0 +1,8 @@
+[Unit]
+Description=Retry pending audit delivery every 15 seconds
+[Timer]
+OnBootSec=20s
+OnUnitInactiveSec=15s
+AccuracySec=1s
+[Install]
+WantedBy=timers.target

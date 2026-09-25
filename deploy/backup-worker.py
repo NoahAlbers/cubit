@@ -8,6 +8,8 @@ confined to a networkless temporary MySQL container, with no host bind mounts.
 import base64, calendar, datetime as dt, gzip, hashlib, json, os, pathlib
 import re, secrets, shutil, sqlite3, subprocess, sys, tarfile, tempfile, time, uuid
 import threading
+import urllib.request
+import importlib.util
 from contextlib import closing
 from zoneinfo import ZoneInfo
 from urllib.parse import urlparse
@@ -70,9 +72,11 @@ def private_config():
     u=urlparse(c['publicUrl'])
     if u.scheme!='https' or not u.hostname or u.username or u.password or u.query or u.fragment or u.path not in ('','/'): raise ValueError('Invalid HTTPS URL')
     if c.get('remote'):
-        r=c['remote'];u=urlparse(r['repository'][3:])
-        if not r['repository'].startswith('s3:https://') or not u.hostname or u.username or u.password or u.query or u.fragment or u.path in ('','/'): raise ValueError('Use a private HTTPS S3 repository')
-        if not r.get('accessKey') or not r.get('secretKey'): raise ValueError('Missing storage credentials')
+        r=c['remote'];is_rest=r.get('type')=='rest';prefix='rest:' if is_rest else 's3:';u=urlparse(r['repository'][len(prefix):])
+        if not r['repository'].startswith(prefix+'https://') or not u.hostname or u.username or u.password or u.query or u.fragment or u.path in ('','/'): raise ValueError('Use a private HTTPS repository')
+        if is_rest:
+            if not r.get('username') or not r.get('password'):raise ValueError('Missing REST credentials')
+        elif not r.get('accessKey') or not r.get('secretKey'): raise ValueError('Missing storage credentials')
         if r.get('retentionProtected') is not True: raise ValueError('Confirm independent immutable/versioned retention before connecting off-server storage')
     return c
 
@@ -84,7 +88,19 @@ def restic(args,remote=False,cwd=None):
             raise ValueError('Remote deletion and maintenance are forbidden on this VPS')
         r=cfg.get('remote')
         if not r: raise RuntimeError('Off-server storage is not configured')
-        repo=r['repository'];env.update(AWS_ACCESS_KEY_ID=r['accessKey'],AWS_SECRET_ACCESS_KEY=r['secretKey'],AWS_DEFAULT_REGION=r.get('region','us-east-1'))
+        repo=r['repository']
+        if r.get('type')=='rest':
+            if args[0]=='init':raise ValueError('Only the backup-server operator initializes repositories')
+            env.update(RESTIC_REST_USERNAME=r['username'],RESTIC_REST_PASSWORD=r['password'])
+        else:env.update(AWS_ACCESS_KEY_ID=r['accessKey'],AWS_SECRET_ACCESS_KEY=r['secretKey'],AWS_DEFAULT_REGION=r.get('region','us-east-1'))
+    if remote and cfg['remote'].get('type')=='rest':
+        # Restic copy still needs temporary locks. Keep them in an authenticated
+        # loopback gateway; no lock or deletion request reaches the backup server.
+        spec=importlib.util.spec_from_file_location('vault_client',pathlib.Path(__file__).with_name('vault-client.py'))
+        client=importlib.util.module_from_spec(spec);spec.loader.exec_module(client)
+        with client.gateway(cfg['remote']) as (loopback,password):
+            env.update(RESTIC_REST_USERNAME='crm',RESTIC_REST_PASSWORD=password)
+            return run(['restic','--repo',loopback,*args],env=env,cwd=cwd)
     return run(['restic','--repo',repo,*args],env=env,cwd=cwd)
 
 def snapshots(remote=False): return json.loads(restic(['snapshots','--json','--tag',TAG],remote)) or []
@@ -97,6 +113,7 @@ def local_inventory():
 
 def prune_local(settings):
     validate(settings)
+    if settings['offsiteEnabled']: sync_remote()
     before=local_inventory()
     if len(before)<=settings['localKeep']: return {'message':'All local backups are within the retention limit.','removed':0}
     restic(['check'])
@@ -150,12 +167,26 @@ def backup(settings):
         summary=next(json.loads(line) for line in reversed(lines) if json.loads(line).get('message_type')=='summary')
         snapshot=summary['snapshot_id'];remote=False
         if settings['offsiteEnabled']:
-            restic(['copy','--from-repo',REPO,'--from-password-file',KEY,snapshot],True)
+            sync_remote()
             remote=True
         # Never prune after a failed capture or copy; only this worker's snapshots.
         restic(['forget','--tag',TAG,'--group-by','host,tags','--keep-last',str(settings['localKeep']),'--prune'])
         return {'snapshot':snapshot[:12],'remote':remote,'message':'Encrypted backup saved'+(' locally and off-server.' if remote else ' locally. Off-server copies are not enabled.')}
     finally: shutil.rmtree(payload,ignore_errors=True)
+
+def sync_remote():
+    """Copy every retained snapshot before local cleanup; retry gaps after outages.
+
+    Restic remembers original snapshot IDs and skips copies already accepted.
+    The CRM never runs retention against the destination.
+    """
+    marker=STATE/'remote-sync.json'
+    state={'checkedAt':nowstr(),'ok':False}
+    try:
+        restic(['copy','--from-repo',REPO,'--from-password-file',KEY,'--tag',TAG],True)
+        state['ok']=True
+    finally:
+        temporary=marker.with_suffix('.tmp');temporary.write_text(json.dumps(state));temporary.chmod(0o600);temporary.replace(marker)
 
 def safe_extract(archive,destination):
     with tarfile.open(archive) as t:
@@ -242,6 +273,15 @@ def heartbeat():
     if not state.get('https') or (now-dt.datetime.fromisoformat(state['https']['checkedAt'])).total_seconds()>3600: state['https']=https_check()
     verified=sql("SELECT DATE_FORMAT(finishedAt,'%Y-%m-%dT%H:%i:%sZ') FROM backup_job WHERE kind='verify' AND status='Succeeded' ORDER BY finishedAt DESC LIMIT 1")
     state.update(localReady=pathlib.Path(REPO,'config').exists(),offsiteConfigured=bool(cfg.get('remote')),nextRunAt=upcoming[1].isoformat() if upcoming else None,lastVerifiedAt=verified or None)
+    marker=STATE/'remote-sync.json'
+    if marker.exists():state['remoteSync']=json.loads(marker.read_text())
+    if cfg.get('remote',{}).get('type')=='rest':
+        try:
+            c=json.loads(pathlib.Path('/etc/cubit-backup/audit.json').read_text())
+            req=urllib.request.Request(c['url'].rstrip('/')+'/status',headers={'Authorization':'Bearer '+c['readToken']})
+            with urllib.request.urlopen(req,timeout=8) as response:state['vault']=json.load(response)
+            state['vaultError']=False
+        except Exception:state['vaultError']=True
     try:
         state.update(snapshots=local_inventory(),inventoryCheckedAt=nowstr(),inventoryError=False)
     except Exception:
@@ -259,6 +299,11 @@ def cycle():
     # flock guarantees no live worker owns these; recover interrupted operations visibly.
     sql("UPDATE backup_job SET status='Failed',finishedAt=UTC_TIMESTAMP(),result='{"+'"message":"Worker interrupted; retry the operation. Never restored over the working database."'+"}' WHERE status='Running'")
     settings=json.loads(sql("SELECT settings FROM backup_settings WHERE id='default'"));settings['timezone']=sql("SELECT timezone FROM organization_settings WHERE id='default'");settings=validate(settings)
+    marker=STATE/'remote-sync.json'
+    previous=json.loads(marker.read_text()) if marker.exists() else {}
+    if settings['offsiteEnabled'] and (not previous or (not previous.get('ok') and (dt.datetime.now(UTC)-dt.datetime.fromisoformat(previous['checkedAt'])).total_seconds()>300)):
+        try:sync_remote()
+        except Exception:print('Off-server copy will retry in five minutes.',file=sys.stderr)
     now=dt.datetime.now(UTC);due,_=slots(settings,now)
     if due:
         jid=str(uuid.uuid5(uuid.NAMESPACE_URL,'cubit-backup:'+cfg['database']+':'+due[0]))

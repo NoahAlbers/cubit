@@ -17,6 +17,7 @@ import { auditDetail, recordAudit } from '../../staff/audit';
 import { defaultPreferences, planAccessAlerts } from '../../staff/access-alerts';
 import { fail } from '../../billing/payments';
 import { validDay } from '../../billing/ledger';
+import { archivedAudit, vaultConfigured } from '../../staff/vault';
 const router = express.Router();
 router.use(staffOnly);
 const text = (v: unknown, max = 200) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
@@ -32,6 +33,22 @@ router.get(
       search = text(q.q);
     if ((from && !validDay(from)) || (to && !validDay(to)) || (from && to && from > to))
       fail('Choose a valid date range.');
+    let archive: { source: string; configured: boolean; message?: string } = {
+      source: 'local',
+      configured: false,
+    };
+    if (vaultConfigured()) {
+      try {
+        return res.json(await archivedAudit({ ...q, from, to, memberId, author, kind, q: search }));
+      } catch {
+        archive = {
+          source: 'local-fallback',
+          configured: true,
+          message:
+            'The off-server archive is unavailable. Showing local records, which may not include all archived history.',
+        };
+      }
+    }
     const order = q.order === 'asc' ? 'ASC' : 'DESC',
       sort = q.sort === 'action' || q.sort === 'staff' || q.sort === 'member' ? q.sort : 'date';
     const pageSize = [20, 50, 100].includes(Number(q.pageSize)) ? Number(q.pageSize) : 20;
@@ -93,6 +110,7 @@ router.get(
       memberId ? AppDataSource.manager.findOneBy(Member, { id: memberId }) : null,
     ]);
     res.json({
+      archive,
       rows: rows.map((a) => ({ ...auditDetail(a), memberName: a.memberName })),
       total,
       page,

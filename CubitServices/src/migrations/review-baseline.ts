@@ -1,3 +1,4 @@
+import { AuditOutbox1790360000000 } from './audit-outbox';
 import { HealthHistory1790359000000 } from './health-history';
 import { OrganizationCurrency1790357000000 } from './organization-currency';
 import { BackupReviews1790358000000 } from './backup-reviews';
@@ -162,4 +163,5 @@ export const migrations = [
   OrganizationCurrency1790357000000,
   BackupReviews1790358000000,
   HealthHistory1790359000000,
+  AuditOutbox1790360000000,
 ];

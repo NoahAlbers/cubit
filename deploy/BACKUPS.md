@@ -1,6 +1,7 @@
 # Backup and recovery operations
 
-Staff manage schedules, retention, and recovery tests in **Settings & Automation**.
+Administration manages schedules and local retention in **Settings & Automation**.
+Staff can inspect backups, create a backup and request a recovery test.
 The **Saved local backups** inventory shows the actual retained repository snapshots,
 creation times, and captured data sizes, refreshed by the worker every minute.
 **Test this backup** checks a selected local copy in isolation. **Apply local
@@ -47,10 +48,33 @@ workspaces cannot. Settings edits, requests, and completed operations are audite
 Failures appear in Backup history; there are no automatic email notifications.
 Check `journalctl -u cubit-backup` for operator diagnostics.
 
-## Connect private off-server storage later
+## Dedicated backup and audit VPS
 
-Off-server storage is deliberately unconfigured until an operator supplies a
-private S3-compatible bucket. Block public access and limit the VPS credential
+The review environment uses the [dedicated vault setup](vault/README.md).
+Encrypted restic copies and audit records travel over HTTPS with separate scoped
+credentials. The CRM cannot delete or overwrite retained objects or change remote
+retention. Remote audit reads use the protected archive, with an explicit local
+fallback warning during outages. Audit writes are captured in a transactional
+outbox and delivered every 15 seconds; unacknowledged records retry.
+
+The backup server controls its own minimum 30-day retention using receiver-owned
+timestamps. It preserves the last verified recovery point until another passes.
+Audit records have no automatic deletion. Restic's temporary locks remain on the
+CRM, so the vault rejects all HTTP deletion requests, including lock deletion.
+Backup-server maintenance temporarily stops its repository receiver to exclude
+writers; interrupted copies retry after service returns. Local cleanup checks
+off-server copying first when remote copies are enabled.
+
+With explicit owner approval, private service configuration is retained separately
+in a root-only archive on the backup VPS. It is inaccessible through either the
+repository or audit API. Refresh it through a trusted operator workstation after
+secret rotation. Ordinary data backups continue to exclude service configuration.
+The backup operator and hosting account remain trusted; keep independent
+credentials/recovery keys in the organization's password manager.
+
+## Alternative: private S3-compatible storage
+
+An operator may instead supply a private S3-compatible bucket. Block public access and limit the VPS credential
 to the backup prefix. Restic needs list/read/write access; it cannot use a
 literally write-only credential. Deny deletion of backup data and object versions,
 and deny changes to bucket versioning, lifecycle, and retention. Restic lock
@@ -62,7 +86,8 @@ cannot shorten. A separate operator identity outside this server owns expiry
 and maintenance. Test that the VPS credential cannot delete a saved snapshot,
 its data, or protected previous versions. Record those results and the retention
 window before setting `retentionProtected: true`; that setting is an operator
-attestation, not a substitute for a bucket policy. No provider is configured yet.
+attestation, not a substitute for a bucket policy. This alternative is not used by
+the dedicated backup VPS.
 
 Add a `remote` object to the root-only config (never application settings):
 

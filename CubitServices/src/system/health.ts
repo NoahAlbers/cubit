@@ -151,11 +151,45 @@ export async function collectHealth(): Promise<HealthSnapshot> {
     );
     add(
       'Off-server recovery',
-      state.offsiteConfigured ? 'ok' : 'warning',
-      state.offsiteConfigured
-        ? 'Off-server destination configured; verify successful copies and restoration in Backups & recovery.'
-        : 'No off-server destination configured. Local backups do not protect against losing this VPS.',
+      state.offsiteConfigured &&
+        !state.vaultError &&
+        (!state.vault ||
+          (state.vault.backup?.snapshots?.length > 0 &&
+            state.vault.backup?.lastRestore?.ok &&
+            !state.vault.backup?.error))
+        ? 'ok'
+        : 'warning',
+      state.vaultError
+        ? 'The backup server is unreachable; retained status may be stale.'
+        : state.vault
+          ? `${state.vault.backup?.snapshots?.length || 0} remote snapshots; independent recovery ${state.vault.backup?.lastRestore?.ok ? 'passed' : 'not verified'}. Audit archive: ${state.vault.audit?.count || 0} records.`
+          : state.offsiteConfigured
+            ? 'Off-server destination configured; verify successful copies and restoration in Backups & recovery.'
+            : 'No off-server destination configured. Local backups do not protect against losing this VPS.',
     );
+    if (state.vault) {
+      const audit = await AppDataSource.manager.findOneBy(BackupRuntime, { id: 'audit-vault' });
+      const delivery = audit ? JSON.parse(audit.detail) : {};
+      const freshAudit = !!audit && Date.now() - new Date(audit.heartbeat).getTime() < 180000;
+      add(
+        'Off-server audit delivery',
+        freshAudit && delivery.ok && !state.vault.audit?.conflicts ? 'ok' : 'warning',
+        `${delivery.pending ?? 'Unknown'} queued records. ${state.vault.audit?.conflicts || 0} archive conflicts. ${delivery.message || 'Awaiting sender status.'}`,
+        typeof delivery.pending === 'number' ? delivery.pending : undefined,
+        'queued records',
+      );
+      const storage = state.vault.storage;
+      if (storage?.totalBytes) {
+        const used = (1 - storage.freeBytes / storage.totalBytes) * 100;
+        add(
+          'Backup server storage',
+          state.vaultError ? 'unknown' : capacityStatus(used),
+          `${gb(storage.freeBytes)} available of ${gb(storage.totalBytes)} on the backup server.`,
+          used,
+          '% used',
+        );
+      }
+    }
     const https = state.https,
       recentHttps = https?.checkedAt && Date.now() - Date.parse(https.checkedAt) < 7200000;
     add(

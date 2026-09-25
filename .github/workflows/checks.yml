@@ -13,6 +13,7 @@ jobs:
         image: mysql:8.4.11
         env:
           MYSQL_ROOT_PASSWORD: ci-root-only
+          MYSQL_ROOT_HOST: '%'
           MYSQL_DATABASE: cubit_demo
           MYSQL_USER: cubit_demo
           MYSQL_PASSWORD: ci-demo-only
@@ -48,6 +49,10 @@ jobs:
       - run: node tests/remembered-greeting.cjs && node tests/login-greeting-integration.cjs
         working-directory: CubitServices
       - run: node tests/backup-settings.cjs && node tests/contact-validation.cjs && node tests/local-safety.cjs && node tests/hosted-safety.cjs && node tests/hosted-demo.cjs && node tests/billing.cjs && node tests/activity-patterns.cjs && node tests/review-controls.cjs
+        working-directory: CubitServices
+      - run: node dev/prepare-ci-mysql.cjs
+      - run: python3 deploy/vault/test-vault.py
+      - run: node tests/audit-vault.cjs
         working-directory: CubitServices
       - run: node tests/migration-baseline.cjs
         working-directory: CubitServices

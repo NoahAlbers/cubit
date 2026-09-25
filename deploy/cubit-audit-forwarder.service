@@ -1,0 +1,14 @@
+[Unit]
+Description=Archive committed Cubit audit events off-server
+After=mysql.service network-online.target
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /opt/cubit/current/deploy/audit-forwarder.py
+UMask=0077
+TimeoutStartSec=5min
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/run
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6

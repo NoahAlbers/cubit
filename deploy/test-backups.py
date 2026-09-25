@@ -14,6 +14,20 @@ spec=importlib.util.spec_from_file_location('worker',pathlib.Path(__file__).with
 w=importlib.util.module_from_spec(spec);spec.loader.exec_module(w)
 
 class BackupTests(unittest.TestCase):
+    def test_failed_copy_retries_without_pruning_local(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=pathlib.Path(directory)
+            with patch.object(w,'STATE',root),patch.object(w,'restic',side_effect=RuntimeError('offline')) as command:
+                with self.assertRaises(RuntimeError):w.sync_remote()
+                self.assertFalse(json.loads((root/'remote-sync.json').read_text())['ok'])
+                self.assertEqual(command.call_args.args[0][0],'copy')
+            with patch.object(w,'STATE',root),patch.object(w,'restic',return_value=b'') as command:
+                w.sync_remote();self.assertTrue(json.loads((root/'remote-sync.json').read_text())['ok'])
+                self.assertNotIn('forget',command.call_args.args[0])
+    def test_manual_cleanup_waits_for_offserver_copy(self):
+        with patch.object(w,'sync_remote',side_effect=RuntimeError('offline')),patch.object(w,'local_inventory') as inventory:
+            with self.assertRaises(RuntimeError):w.prune_local({**w.DEFAULTS,'offsiteEnabled':True})
+            inventory.assert_not_called()
     def test_data_capture_excludes_private_service_configuration(self):
         with tempfile.TemporaryDirectory() as directory:
             root=pathlib.Path(directory);source=root/'documents';source.mkdir()

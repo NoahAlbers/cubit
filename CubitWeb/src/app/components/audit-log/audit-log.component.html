@@ -3,6 +3,8 @@
     <div class="page-heading"><div class="actions"><a class="button secondary" routerLink="/audit" [queryParams]="navigation.query('/audit')">All staff activity</a></div></div>
   }
   <p class="muted">Recorded changes, including preserved history. Older actions may have missing details; actions that were never logged cannot be recovered.</p>
+  @if(data?.archive?.source==='vault'){<p class="notice-strip">Reading the protected off-server archive. @if(data.archive.pending){ {{data.archive.pending}} recent records are waiting to be archived. }@if(!data.archive.deliveryHealthy){ Delivery status needs attention; the latest actions may not be here yet. }@if(data.archive.lastSyncedAt){ Last synchronized {{data.archive.lastSyncedAt|orgDate:'medium'}}. }</p>}
+  @if(data?.archive?.source==='local-fallback'){<p class="notice-strip" role="alert">{{data.archive.message}}</p>}
   <section class="panel detail-panel">
     <form class="filter-row" (ngSubmit)="apply()"><label>Search<input name="q" type="search" [(ngModel)]="q" maxlength="200" placeholder="Member, staff or details"></label><label>From<input name="from" type="date" [(ngModel)]="from"></label><label>Through<input name="to" type="date" [(ngModel)]="to"></label><label>Staff<select name="author" [(ngModel)]="author"><option value="">All staff</option>@for (a of data?.authors; track a) {
     <option [value]="a">{{a}}</option>
