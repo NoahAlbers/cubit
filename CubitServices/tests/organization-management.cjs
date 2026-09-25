@@ -23,10 +23,10 @@ module.exports=async({request,db,administrator,member})=>{
     ['/api/organization/staff',{firstName:'Bad',lastName:'Create',email:'bad.create@example.test',role:'admin'},'POST'],
     ['/member',{id:person.id,role:'admin'},'PUT'],['/member',{id:member.id,role:'staff'},'PUT'],
     ['/member',{id:administrator.id,email:'changed.admin@example.test'},'PUT'],
-    ['/member',{id:administrator.id,password:'staff-cannot-reset-an-administrator'},'PUT'],
     ['/api/account/members/'+administrator.id+'/link',{purpose:'reset'},'POST'],
     ['/api/account/members/'+person.id+'/link',{purpose:'invite'},'POST'],
   ])assert.equal((await request(path,body,method,staffToken)).status,403,`${path} must not let Staff Users manage staff`);
+  assert.equal((await request('/member',{id:member.id,password:'staff-cannot-set-password'},'PUT',staffToken)).status,400);
   assert.equal((await request('/member',{id:member.id,phone:'321-555-0119'},'PUT',staffToken)).status,200);
   assert.equal((await request('/api/account/members/'+member.id+'/link',{purpose:'invite'},'POST',staffToken)).status,201,'Staff may invite ordinary members');
   const selfUpdate={firstName:administrator.firstName,lastName:administrator.lastName,email:administrator.email,role:'member',loginDisabled:false,staffVersion:0,reason:'Do not remove your own administrative access'};

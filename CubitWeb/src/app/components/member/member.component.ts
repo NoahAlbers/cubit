@@ -62,7 +62,7 @@ import { DraftGuard } from '../../services/draft-guard';
 export class MemberComponent implements OnInit, OnDestroy {
   @ViewChild(StaffToolsComponent) staffTools?:StaffToolsComponent;
   originalContact:any; saving=false; saveError=''; created=false;contactLoading=false;
-  emptyContact(id='New'){return {id,firstName:'',lastName:'',email:'',paypalEmail:'',phone:'',emergencyContact:'',emergencyEmail:'',emergencyPhone:'',password:'',role:'member'};}
+  emptyContact(id='New'){return {id,firstName:'',lastName:'',email:'',paypalEmail:'',phone:'',emergencyContact:'',emergencyEmail:'',emergencyPhone:'',role:'member'};}
   historyFrom='';historyTo='';historyType='';historyPage=1;historySize=20;
   cutoffOriginal=''; changingPlan=false;
   planGoal:'change'|'cancel'|'activate'='change'; planStep:'cutoff'|'assign'|'done'='cutoff';
@@ -391,13 +391,16 @@ export class MemberComponent implements OnInit, OnDestroy {
     this.router.navigateByUrl(this.returnUrl);
   }
 
+  emailChangeReason='';
   async save(navigateAfterCreate=true):Promise<boolean> {
     this.form.markAllAsTouched();if(this.form.invalid||this.saving||this.contactLoading)return false;
     this.saving=true;this.saveError='';
-    const submitted=this.form.getRawValue();delete submitted.role;this.form.disable();
+    const submitted=this.form.getRawValue();delete submitted.role;delete submitted.password;
+    if(this.memberId!=='New'&&this.contactFieldChanged('email')){if(!this.emailChangeReason.trim()){this.saving=false;this.saveError='Give a reason for changing the login email.';return false;}submitted.reason=this.emailChangeReason.trim();}
+    this.form.disable();
     try{
       const data=await this.memberService.saveMember(submitted).pipe(take(1)).toPromise();
-      const isNew=this.memberId==='New';this.form.patchValue(data);this.originalContact={...this.form.getRawValue()};this.form.markAsPristine();
+      const isNew=this.memberId==='New';this.emailChangeReason='';this.form.patchValue(data);this.originalContact={...this.form.getRawValue()};this.form.markAsPristine();
       if(isNew&&navigateAfterCreate){this.created=true;await this.router.navigate(['/member',data.id],{queryParams:{returnTo:this.returnUrl},replaceUrl:true});}
       this.snackBar.open(isNew?'Member created':'Contact details saved',null,{duration:2500});return true;
     }catch(err){this.saveError=err.error?.message||'Could not save contact details. Please try again.';return false;}

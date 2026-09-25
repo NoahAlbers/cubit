@@ -12,7 +12,7 @@ const fields = new Set([
   'emergencyPhone',
   'picture',
   'role',
-  'password',
+  'reason',
 ]);
 
 export function memberInput(body: unknown, creating = false): any {
@@ -33,7 +33,8 @@ export function memberInput(body: unknown, creating = false): any {
     invalid('Choose Member, Staff User, or Administration.');
   if ('picture' in input && input.picture !== null && typeof input.picture !== 'string')
     invalid('Picture must be a string or null.');
-  if ('password' in input && typeof input.password !== 'string') invalid('Password must be text.');
+  if ('reason' in input && (typeof input.reason !== 'string' || input.reason.trim().length > 500))
+    invalid('Enter a reason up to 500 characters.');
   if (
     'emergencyContact' in input &&
     input.emergencyContact !== null &&
