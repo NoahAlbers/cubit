@@ -62,7 +62,7 @@ import { AccessLogComponent } from './components/access-log/access-log.component
 import { AccessLogService } from './services/access-log.service';
 
 @NgModule({ declarations: [
-        LoadingComponent, ContactFieldsDirective, PhonePipe, CopyFieldDirective, MemberStatusDirective, DraftDialogComponent, DraftExitDirective, FieldFeedbackDirective, MemberIconDirective, ArrowComponent, InfoComponent, WaiverDocumentsComponent,
+        LoadingComponent, ContactFieldsDirective, PhonePipe, CopyFieldDirective, MemberStatusDirective, DraftDialogComponent, DraftExitDirective, FieldFeedbackDirective, MemberIconDirective, ArrowComponent, WaiverDocumentsComponent,
         DirectoryComponent, OrganizationComponent,
         PaymentMatchingComponent, PlanCatalogComponent, AuditLogComponent, StaffSettingsComponent,
         StaffToolsComponent, EditChargeComponent, ReportsComponent, AutomationComponent, BackupsComponent, PortalComponent, WaiversComponent, MemberWaiversComponent,
@@ -77,7 +77,7 @@ import { AccessLogService } from './services/access-log.service';
         AddTransactionComponent,
         AccessLogComponent,
     ],
-    bootstrap: [AppComponent], imports: [BackupHistoryComponent, OrgCurrencyPipe, CurrencyCodePipe, OrgDatePipe, SystemHealthComponent, AccountSecurityComponent, AppRoutingModule,
+    bootstrap: [AppComponent], imports: [InfoComponent, BackupHistoryComponent, OrgCurrencyPipe, CurrencyCodePipe, OrgDatePipe, SystemHealthComponent, AccountSecurityComponent, AppRoutingModule,
         AppMaterialModule,
         BrowserModule,
         BrowserAnimationsModule,
@@ -100,3 +100,4 @@ import { AccessLogService } from './services/access-log.service';
         provideHttpClient(withXhr(), withInterceptorsFromDi()),
     ] })
 export class AppModule {}
+
