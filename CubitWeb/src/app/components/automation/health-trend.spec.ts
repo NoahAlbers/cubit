@@ -7,6 +7,7 @@ describe('Health history charts',()=>{
   expect(healthTrend('Application',history([4,5,0.1,0.2])).paths).toHaveLength(2);
  });
  it('does not fabricate historical readings',()=>{expect(healthTrend('Application',null).points).toHaveLength(0);});
+ it('retains the true low value when plotting summarized peaks',()=>{const h:any=history([80]);h.points[0].checks[0].min=20;h.points[0].checks[0].max=80;const model=healthTrend('Application',h);expect(model.min).toBe(20);expect(model.max).toBe(80);});
  it('plots numeric values and separates incomplete buckets',()=>{
   const h:any=history([1,4,5]);h.points[1].gap=true;const model=healthTrend('Application',h);expect(model.min).toBe(1);expect(model.max).toBe(5);expect(model.paths).toHaveLength(3);
  });

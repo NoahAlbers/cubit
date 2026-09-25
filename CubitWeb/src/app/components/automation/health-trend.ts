@@ -2,7 +2,10 @@ export function healthTrend(name:string,history:any){
  const start=Date.parse(history?.from),end=Date.parse(history?.to),interval=(history?.intervalSeconds||300)*1000;
  const points=(history?.points||[]).flatMap((bucket:any)=>{const check=bucket.checks.find((c:any)=>c.name===name);return check?[{...check,time:bucket.at,firstAt:bucket.firstAt,lastAt:bucket.lastAt,count:bucket.count,x:Math.max(0,Math.min(600,(Date.parse(bucket.at)-start)/(end-start)*600)),gap:bucket.gap}]:[];});
  const values=points.filter((p:any)=>typeof p.value==='number'&&Number.isFinite(p.value)).map((p:any)=>p.value);
- const numeric=values.length>0,min=values.length?Math.min(...values):0,max=values.length?Math.max(...values):0;
+ const numeric=values.length>0;
+ const lows=points.map((p:any)=>p.min??p.value).filter((v:any)=>typeof v==='number'&&Number.isFinite(v));
+ const highs=points.map((p:any)=>p.max??p.value).filter((v:any)=>typeof v==='number'&&Number.isFinite(v));
+ const min=lows.length?Math.min(...lows):0,max=highs.length?Math.max(...highs):0;
  const low=min===max?Math.max(0,min-1):min,high=min===max?max+1:max;
  let previous:any;const paths:string[]=[];let path='';
  for(const p of points){p.y=typeof p.value==='number'?80-(p.value-low)/Math.max(1e-9,high-low)*64:48;
