@@ -11,6 +11,7 @@ import { demoMemberId } from '../demo/identity';
 import { lockIdentities } from '../billing/member-identity';
 import { recordAudit } from '../staff/audit';
 import { validateNewPassword } from './password-policy';
+import { reserveMfaAttempt, clearMfaAttempts } from './mfa-throttle';
 
 const fail = (message: string, status = 400): never => {
   throw Object.assign(Error(message), { status });
@@ -98,6 +99,7 @@ export async function verifyMfa(
       code: 'MFA_REQUIRED',
     });
   const input = code.trim();
+  const reservation = await reserveMfaAttempt(member.id);
   let accepted = false;
   if (/^\d{6}$/.test(input)) {
     const now = Date.now(),
@@ -126,6 +128,7 @@ export async function verifyMfa(
   if (!accepted)
     fail('That authenticator or recovery code is invalid or has already been used.', 401);
   await manager.save(AccountMfa, settings);
+  await clearMfaAttempts(manager, reservation);
   return true;
 }
 
@@ -257,6 +260,7 @@ export async function confirmMfa(memberId: string, password: unknown, code: unkn
     const current = settings!,
       now = Date.now(),
       secret = decryptSecret(current.pendingSecret!, memberId);
+    const reservation = await reserveMfaAttempt(memberId);
     const delta =
       typeof code === 'string' && /^\d{6}$/.test(code)
         ? totp(secret).validate({ token: code, window: 1, timestamp: now })
@@ -273,6 +277,7 @@ export async function confirmMfa(memberId: string, password: unknown, code: unkn
       recoveryHashes: JSON.stringify(recoveryCodes.map(digest)),
     });
     await manager.increment(Member, { id: memberId }, 'tokenVersion', 1);
+    await clearMfaAttempts(manager, reservation);
     await recordAudit(manager, {
       memberId,
       kind: 'Authenticator enabled',

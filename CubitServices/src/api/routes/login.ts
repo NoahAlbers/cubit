@@ -53,6 +53,11 @@ router.post('/', async (req, res) => {
       },
     });
   } catch (err: any) {
+    if (err?.status === 429)
+      return res
+        .set('Retry-After', String(err.retryAfter || 300))
+        .status(429)
+        .json({ message: err.message });
     if (err?.code === 'MFA_REQUIRED')
       return res.status(401).json({ message: err.message, code: 'MFA_REQUIRED' });
     if (err?.status === 403) return res.status(403).json({ message: err.message });

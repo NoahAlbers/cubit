@@ -25,6 +25,8 @@ const route =
     try {
       await fn(req, res);
     } catch (error) {
+      if (error && typeof error === 'object' && 'retryAfter' in error)
+        res.setHeader('Retry-After', String(error.retryAfter));
       next(error);
     }
   };
