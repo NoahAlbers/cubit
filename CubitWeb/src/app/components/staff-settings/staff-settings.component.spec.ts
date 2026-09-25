@@ -26,7 +26,7 @@ describe('Staff settings and authenticator enrollment',()=>{
     saving.flush({email:'staff@example.test',topics,preferences:{...p,revision:2},deliveryEnabled:false});
     expect(c.preferencesDirty()).toBe(false);expect(c.message).toContain('delivery remains off');
     c.previewAlerts();http.expectOne('/api/cubit/staff/preferences/preview').flush({results:[],examples:[{topic:'Backup failed',group:'Operations & recovery',decision:'Quiet hours: defer'}]});
-    expect(c.topicPreview[0].decision).toContain('Quiet hours');http.verify();fixture.destroy();
+    expect(c.topicPreview[0].decision).toContain('Quiet hours');http.match('/api/account/logins?page=1').forEach(r=>r.flush({rows:[],total:0,page:1,pageSize:10}));http.verify();fixture.destroy();
   });
   it('keeps recovery codes visible and blocks other requests after MFA revokes the session',async()=>{
     await TestBed.configureTestingModule({imports:[AppModule],providers:[provideHttpClient(withXhr()),provideHttpClientTesting(),{provide:AuthService,useValue:{isStaff:true,isAdmin:true,accountLabel:'staff@example.test',roleLabel:'Administration',logout:vi.fn()}}]}).compileComponents();
@@ -42,7 +42,7 @@ describe('Staff settings and authenticator enrollment',()=>{
     c.security!.code='123456';const confirming=c.security!.confirmMfa();http.expectOne('/api/account/mfa/confirm').flush({recoveryCodes:['fictional-recovery-code']});await confirming;fixture.detectChanges();
     expect(c.hasUnsavedChanges()).toBe(true);expect(c.protectingCodes).toBe(true);
     expect(fixture.nativeElement.textContent).toContain('fictional-recovery-code');
-    c.previewAlerts();c.acknowledge('notice');c.load();c.loadNotices();http.verify();
+    c.previewAlerts();c.acknowledge('notice');c.load();c.loadNotices();http.match('/api/account/logins?page=1').forEach(r=>r.flush({rows:[],total:0,page:1,pageSize:10}));http.verify();
     expect(TestBed.inject(AuthService).logout).not.toHaveBeenCalled();
     c.security!.finishSetup();expect(TestBed.inject(AuthService).logout).toHaveBeenCalled();expect(c.hasUnsavedChanges()).toBe(false);
     fixture.destroy();

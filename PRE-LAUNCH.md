@@ -284,3 +284,5 @@ Optional features such as photos, extra reports and broader member lifecycle wor
 do not block launch unless the makerspace explicitly adds them to these gates.
 Separate staff identities remain planned; individual operational staff credentials,
 permissions and MFA are mandatory even while logins share the member-record model.
+
+- [ ] Review login-history privacy and retention with the organization; configure and maintain a local City MMDB file if approximate login locations are wanted. Confirm reverse-proxy IP attribution before launch.

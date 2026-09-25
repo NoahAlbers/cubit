@@ -1,5 +1,6 @@
 import { TrustedComputers1790353000000 } from './trusted-computers';
 import { TrustedDeviceDetails1790354000000 } from './trusted-device-details';
+import { LoginHistory1790355000000 } from './login-history';
 import { StaffNotificationOptions1790261000000 } from './staff-notifications';
 import { UploadAccountLimits1790352000000 } from './upload-security';
 import { OrganizationManagement1790260000000 } from './organization';
@@ -152,4 +153,5 @@ export const migrations = [
   UploadAccountLimits1790352000000,
   TrustedComputers1790353000000,
   TrustedDeviceDetails1790354000000,
+  LoginHistory1790355000000,
 ];

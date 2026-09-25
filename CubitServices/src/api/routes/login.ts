@@ -1,5 +1,6 @@
 import { trustCookie } from '../../security/trusted-computers';
 import { requestDevice } from '../../security/device';
+import { recordLogin } from '../../security/login-history';
 import { validEmail } from '../../contact/validation';
 import express from 'express';
 import { Member } from '../../entity/member';
@@ -47,6 +48,7 @@ router.post('/', async (req, res) => {
       requestDevice(req),
     );
     const token = jwtHelper.GenerateJWT(member, member.mfaVerified, member.mfaFresh);
+    await recordLogin(req, member, member.mfaVerified, member.mfaFresh);
     res.setHeader('Cache-Control', 'no-store');
     greeting.remember(res, member);
     res.status(200).json({

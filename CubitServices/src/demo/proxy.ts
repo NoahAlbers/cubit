@@ -40,8 +40,14 @@ export function demoProxy(enabled: boolean, port = 5002): RequestHandler {
       accept: req.headers.accept || 'application/json',
       'x-forwarded-for': req.ip,
     };
-    for (const key of ['authorization', 'x-cubit-filename'])
+    for (const key of ['authorization', 'x-cubit-filename', 'user-agent'])
       if (req.headers[key]) headers[key] = req.headers[key];
+    const trustCookies = req.headers.cookie
+      ?.split(';')
+      .map((value) => value.trim())
+      .filter((value) => /^(?:__Host-)?cubit-trust-[a-f0-9]{12}=[A-Za-z0-9_-]{43}$/.test(value))
+      .join('; ');
+    if (trustCookies) headers.cookie = trustCookies;
     if (binary) {
       headers['content-type'] = 'application/octet-stream';
       if (req.headers['content-length']) headers['content-length'] = req.headers['content-length'];
@@ -54,6 +60,10 @@ export function demoProxy(enabled: boolean, port = 5002): RequestHandler {
       { hostname: '127.0.0.1', port, path: req.originalUrl, method: req.method, headers },
       (response) => {
         res.status(response.statusCode || 502);
+        const cookies = response.headers['set-cookie']?.filter((value) =>
+          /^(?:__Host-)?cubit-trust-[a-f0-9]{12}=/.test(value),
+        );
+        if (cookies?.length) res.setHeader('Set-Cookie', cookies);
         for (const key of ['content-type', 'content-disposition', 'retry-after'])
           if (response.headers[key]) res.setHeader(key, response.headers[key]!);
         response.on('error', () => res.destroy());

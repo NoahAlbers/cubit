@@ -1,4 +1,5 @@
 import { startAutomationScheduler } from './billing/automation';
+import { startLoginHistoryRetention } from './security/login-history';
 import { startWaiverReconciliation } from './waivers/reconcile';
 import { localConfig } from './dev/config';
 import { AppDataSource, assertSchemaReady } from './database';
@@ -186,6 +187,7 @@ export async function startLocalApp() {
   server.on('close', stopScheduler);
   const stopWaivers = startWaiverReconciliation();
   server.on('close', stopWaivers);
+  server.on('close', startLoginHistoryRetention());
   return server;
 }
 

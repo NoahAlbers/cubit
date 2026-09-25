@@ -1,3 +1,4 @@
+import { LoginHistoryComponent } from './login-history.component';
 import qr from 'qrcode-generator';
 import { Component, OnInit, ChangeDetectionStrategy, HostListener, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -7,7 +8,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../services/security/auth.service';
 
-@Component({selector:'app-account-security',standalone:true,imports:[CommonModule,FormsModule,RouterLink],
+@Component({selector:'app-account-security',standalone:true,imports:[CommonModule,FormsModule,RouterLink,LoginHistoryComponent],
   changeDetection:ChangeDetectionStrategy.Eager,templateUrl:'./account-security.component.html',
   host:{'[class.embedded]':'embedded'},
   styles:[`:host.embedded{max-width:none;margin:0}:host.embedded .panel{padding:0;border:0;box-shadow:none;margin:0}:host{display:block;max-width:780px;margin:auto}.panel{padding:24px;margin-bottom:18px}label{display:grid;gap:6px;margin:16px 0}input,textarea{width:100%;box-sizing:border-box}code{display:block;overflow-wrap:anywhere;padding:12px;background:#eef4fc}li{padding:4px} .actions{display:flex;gap:8px;flex-wrap:wrap} .error{color:#a71924}`]})

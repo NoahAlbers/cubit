@@ -343,3 +343,9 @@ After a successful authenticator or recovery-code sign-in, users may trust their
 ### Release storage
 
 The VPS retains only the current application release after a successful update. The updater keeps the previous release available while activating and checking the new one, then removes inactive code directories under `/opt/cubit/releases`. Cleanup shares the deployment lock, validates paths, and refuses releases referenced by running processes or containing mounts. Cleanup failure leaves the healthy application running and reports an operator warning. Database backups, uploaded documents and secrets are not removed. Returning to older code after a completed update requires rebuilding a revision from Git; GitHub does not replace database backups or a tested data-restoration plan. Operators can preview cleanup with `sudo python3 deploy/prune-releases.py` from a trusted checkout and add `--apply` to remove the listed inactive code releases.
+
+### Sign-in visibility
+
+Staff account settings show trusted-browser device/IP details and a private, paginated successful sign-in history (up to 500 entries within 180 days). History starts with this release. Browser labels are self-reported; the shared demo does not retain visitor sign-in history or expose IP addresses.
+
+Approximate location is optional: set `GEOIP_DATABASE_PATH` to an operator-maintained GeoLite2/GeoIP2 City MMDB file outside the release directory, readable by the service, and restart after updating it. Cubit uses the local [MaxMind database reader](https://github.com/runk/node-maxmind); it never sends IPs to a remote lookup service. Without a readable database or a match, it displays “Location unavailable.” A location is not proof of a person’s whereabouts.

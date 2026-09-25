@@ -21,6 +21,7 @@ import {
 } from '../../security/accounts';
 import { localConfig } from '../../dev/config';
 import { demoMemberId } from '../../demo/identity';
+import { loginHistory } from '../../security/login-history';
 
 const router = express.Router(),
   limit = loginLimit();
@@ -83,6 +84,17 @@ router.post(
         'Password-reset email is not connected. Ask an administrator for a private reset link.',
       deliveryEnabled: false,
     });
+  }),
+);
+router.get(
+  '/logins',
+  signedIn,
+  route(async (req, res) => {
+    const page = Number(req.query.page || 1);
+    if (!Number.isSafeInteger(page) || page < 1 || page > 10000)
+      return res.status(400).json({ message: 'Choose a valid login-history page.' });
+    res.setHeader('Cache-Control', 'no-store');
+    res.json(await loginHistory(req.member!.id, page));
   }),
 );
 router.get(
