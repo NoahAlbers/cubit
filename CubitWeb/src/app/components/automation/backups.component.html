@@ -61,8 +61,8 @@
     </details>
   }
   @if(data.hosted){
-    <section class="backup-inventory remote-backups" aria-labelledby="remote-backups-title">
-      <div class="section-heading"><h3 id="remote-backups-title">Saved off-server backups</h3><span class="badge" [class.badge-warning]="!remoteHealthy">{{remoteHealthy?'Connected':'Needs attention'}}</span></div>
+    <details class="backup-inventory remote-backups" aria-label="Saved off-server backups">
+      <summary>Saved off-server backups <span class="badge" [class.badge-warning]="!remoteHealthy">{{remoteHealthy?'Connected':'Needs attention'}}</span></summary>
       @if(data.runtime.vault;as vault){
         @if(!remoteFresh){<p class="notice-strip" role="alert">The backup server status is unavailable or out of date. These are the last recorded readings.</p>}
         @if(!data.settings.offsiteEnabled){<p class="notice-strip">Off-server copies are paused. Retained backups and audit records remain on the backup server.</p>}
@@ -81,7 +81,7 @@
         @if(!vault.backup?.snapshots?.length){<p class="muted">No off-server backups recorded yet.</p>}
         @if(vault.backup?.snapshots?.length>remoteInventoryLimit){<button class="secondary" type="button" (click)="remoteInventoryLimit=remoteInventoryLimit+8">Show more off-server backups</button>}
       }@else{<p class="notice-strip">{{data.runtime.offsiteConfigured?'Waiting for the backup server to report its inventory and health.':'Off-server storage is not connected. Ask the operator to configure a protected destination.'}}</p>}
-    </section>
+    </details>
   }
   <details (toggle)="historyOpen=historyOpen||$any($event.target).open"><summary>Operation history</summary>@if(historyOpen){<app-backup-history [canReview]="data.canManageSettings" (draftChange)="reviewDirty=$event" (reviewed)="reviewed.emit();load()"></app-backup-history>}</details>
 }
