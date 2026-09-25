@@ -7,7 +7,7 @@
     <app-loading label="Loading waivers…"></app-loading>
   }
   @if (data) {
-    <div class="notice-strip">{{data.docusealConnected ? 'DocuSeal is connected. Local demo signatures are labeled separately.' : 'Local waiver demo · DocuSeal is not connected. Demo signatures are not legal agreements.'}}</div>
+    <div class="notice-strip">{{data.docusealConnected ? 'DocuSeal is connected.' : 'DocuSeal is not connected. Signed paper waivers can be uploaded for review.'}} @if(data.demoAllowed){Demo signatures are not legal agreements.}@else{Demo records are retained for reference but never count toward compliance.}</div>
     <div class="stats"><div class="stat"><span>ACTIVE MEMBERS</span><strong>{{data.summary.active}}</strong></div><div class="stat"><span>MISSING REQUIRED WAIVERS</span><strong class="debt">{{data.summary.required?data.summary.missing:'—'}}</strong></div><div class="stat"><span>UP TO DATE</span><strong>{{data.summary.required?data.summary.complete:'—'}}</strong></div></div>
     @if (!data.summary.required) {
       <div class="notice-strip"><h2>No required waivers configured</h2><p>Compliance is not configured. Publish a required waiver before tracking signatures.</p><button class="secondary" (click)="edit()">Set up a required waiver</button></div>
@@ -19,7 +19,7 @@
           <div class="section-heading"><h2>{{editing?'Publish new version':'New waiver'}}</h2><button class="quiet" (click)="cancelEdit()" [disabled]="busy">Cancel</button></div>
           @if (hasUnsavedChanges()) {
             <p class="draft-indicator">Unpublished changes</p>
-            }<p>Waiver name, description and document details are required. Confirm publication before saving.</p><form #waiverForm="ngForm" (ngSubmit)="publish()"><div class="form-grid"><label>Waiver name<input name="name" [(ngModel)]="form.name" required maxlength="150"></label><label>Signing method<select name="provider" [(ngModel)]="form.provider"><option value="paper">Upload signed paper waiver</option><option value="demo">Local demo</option><option value="docuseal" [disabled]="!data.docusealConnected">DocuSeal{{data.docusealConnected?'':' (not connected)'}}</option></select></label></div>
+            }<p>Waiver name, description and document details are required. Confirm publication before saving.</p><form #waiverForm="ngForm" (ngSubmit)="publish()"><div class="form-grid"><label>Waiver name<input name="name" [(ngModel)]="form.name" required maxlength="150"></label><label>Signing method<select name="provider" [(ngModel)]="form.provider"><option value="paper">Upload signed paper waiver</option>@if(data.demoAllowed){<option value="demo">Local demo</option>}<option value="docuseal" [disabled]="!data.docusealConnected">DocuSeal{{data.docusealConnected?'':' (not connected)'}}</option></select></label></div>
             @if (form.provider!=='demo') {
               <label>Original waiver PDF<input type="file" accept="application/pdf" (change)="uploadTemplate($event)" [disabled]="busy"></label>
               }@if (form.provider!=='demo') {
@@ -73,7 +73,7 @@
 <p>No signing requests yet.</p>
 }</details>
 <details class="panel detail-panel"><summary>DocuSeal connection</summary><p>Documents and signature fields are designed in DocuSeal. Cubit publishes versions, opens individual signing requests, and verifies completion with the DocuSeal API.</p>@if (!data.docusealConnected) {
-<p>The local demo works without an account. To test DocuSeal, configure a sandbox key on the server, restart Cubit, and publish a waiver with a DocuSeal template ID. Keep API keys out of waiver text.</p>
+<p>Demo signing is available only in local and synthetic-demo workspaces. To test DocuSeal, configure a sandbox key on the server, restart Cubit, and publish a waiver with a DocuSeal template ID. Keep API keys out of waiver text.</p>
 }<a href="https://www.docuseal.com/docs/api" target="_blank" rel="noopener noreferrer">DocuSeal documentation <app-arrow name="external-link"></app-arrow></a></details>
 }
 </section>

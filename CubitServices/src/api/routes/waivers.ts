@@ -11,6 +11,7 @@ import { docusealConfig } from '../../waivers/docuseal';
 import { fail } from '../../billing/payments';
 import { WaiverDocument } from '../../entity/waiverDocument';
 import { limitWaiverUploads } from '../../waivers/upload-limit';
+import { demoWaiversAllowed, usableWaiverProvider, countsAsSigned } from '../../waivers/policy';
 import {
   documentLimit,
   uploadDocument,
@@ -87,12 +88,13 @@ router.get(
       order: { createdAt: 'DESC' },
     });
     const accepted = (memberId: string, versionId: string) =>
-      signatures.some(
-        (s) => s.memberId === memberId && s.versionId === versionId && s.status === 'Signed',
+      usableWaiverProvider(versions.find((v) => v.id === versionId)?.provider || 'demo') &&
+      (signatures.some(
+        (s) => s.memberId === memberId && s.versionId === versionId && countsAsSigned(s),
       ) ||
-      documents.some(
-        (d) => d.memberId === memberId && d.versionId === versionId && d.status === 'Accepted',
-      );
+        documents.some(
+          (d) => d.memberId === memberId && d.versionId === versionId && d.status === 'Accepted',
+        ));
     const compliance = members.map((m) => ({
       id: m.id,
       name: `${m.firstName} ${m.lastName}`,
@@ -105,6 +107,7 @@ router.get(
     }));
     res.json({
       docusealConnected: docusealConfig().enabled,
+      demoAllowed: demoWaiversAllowed(),
       docusealUrl: docusealConfig().publicUrl,
       documents: documents.map((d) => ({
         ...publicDocument(d),
@@ -120,8 +123,7 @@ router.get(
           .filter((v) => v.waiverId === w.id)
           .map((v) => ({
             ...v,
-            signedCount: signatures.filter((s) => s.versionId === v.id && s.status === 'Signed')
-              .length,
+            signedCount: signatures.filter((s) => s.versionId === v.id && countsAsSigned(s)).length,
           })),
       })),
       compliance,

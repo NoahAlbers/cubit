@@ -14,6 +14,7 @@ import {
 } from './docuseal';
 import { WaiverDocument } from '../entity/waiverDocument';
 import { publicDocument, inspectDocument } from './documents';
+import { requireUsableWaiverProvider, usableWaiverProvider, countsAsSigned } from './policy';
 
 export function publicSignature(s: WaiverSignature) {
   return {
@@ -21,7 +22,7 @@ export function publicSignature(s: WaiverSignature) {
     versionId: s.versionId,
     waiverId: s.waiverId,
     provider: s.provider,
-    status: s.status,
+    status: usableWaiverProvider(s.provider) ? s.status : 'Demo only',
     signerName: s.signerName,
     completedAt: s.completedAt,
     createdAt: s.createdAt,
@@ -77,10 +78,11 @@ export async function memberWaivers(memberId: string, includeTemplates = true) {
   const items = current.map((w) => ({
     ...w,
     complete:
-      w.signature?.status === 'Signed' ||
-      documents.some(
-        (d) => d.memberId === memberId && d.versionId === w.version.id && d.status === 'Accepted',
-      ),
+      usableWaiverProvider(w.version.provider) &&
+      (countsAsSigned(w.signature) ||
+        documents.some(
+          (d) => d.memberId === memberId && d.versionId === w.version.id && d.status === 'Accepted',
+        )),
   }));
   const records = versions
     .filter(
@@ -93,7 +95,9 @@ export async function memberWaivers(memberId: string, includeTemplates = true) {
       const currentWaiver = items.find((w) => w.version.id === v.id);
       const signature = signatures.find((s) => s.versionId === v.id);
       const files = documents.filter((d) => d.memberId === memberId && d.versionId === v.id);
-      const complete = signature?.status === 'Signed' || files.some((d) => d.status === 'Accepted');
+      const complete =
+        usableWaiverProvider(v.provider) &&
+        (countsAsSigned(signature) || files.some((d) => d.status === 'Accepted'));
       const pending = files.some((d) => d.status === 'Pending review');
       return {
         version: publicVersion(v),
@@ -132,6 +136,7 @@ export async function memberWaivers(memberId: string, includeTemplates = true) {
 }
 
 export async function publishWaiver(id: string | undefined, input: any, author: string) {
+  requireUsableWaiverProvider(input.provider);
   const name = reasonText(input.name, 150),
     description = reasonText(input.description, 2000);
   if (
@@ -220,6 +225,7 @@ export async function publishWaiver(id: string | undefined, input: any, author: 
 export async function startSigning(member: Member, versionId: string) {
   const version = await AppDataSource.manager.findOneBy(WaiverVersion, { id: versionId });
   if (!version) fail('Waiver not found.', 404);
+  requireUsableWaiverProvider(version.provider);
   if (version.provider === 'paper')
     fail(
       'Download this waiver, sign it, then upload the completed PDF or photos for staff review.',
@@ -272,6 +278,7 @@ export async function startSigning(member: Member, versionId: string) {
 }
 
 export async function completeDemo(memberId: string, id: string, input: any) {
+  requireUsableWaiverProvider('demo');
   const name = reasonText(input.name, 150);
   if (input.acknowledged !== true) fail('Confirm that this is a demonstration.');
   return AppDataSource.transaction(async (manager) => {
@@ -306,7 +313,10 @@ export async function completeDemo(memberId: string, id: string, input: any) {
 export async function syncSigning(memberId: string, id: string) {
   const signature = await AppDataSource.manager.findOneBy(WaiverSignature, { id, memberId });
   if (!signature) fail('Signing request not found.', 404);
-  if (signature.provider === 'demo') return publicSignature(signature);
+  if (signature.provider === 'demo') {
+    requireUsableWaiverProvider('demo');
+    return publicSignature(signature);
+  }
   if (
     signature.status === 'Signed' &&
     (await AppDataSource.manager.countBy(WaiverDocument, {
