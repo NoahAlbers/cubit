@@ -10,9 +10,17 @@
 
 Cubit brings member records, billing, access history, reports, and member self-service into one application. It builds on the makerspace's Tonic codebase, with a redesigned interface and ongoing work to make everyday administration clearer and easier to maintain.
 
-**Current stage: working prototype and isolated hosted review.** Cubit has not replaced the operational membership or door system. Payment-provider integration, door integration, account provisioning, and production waiver signing still need work before a live rollout.
+**Current stage: hosted review with a read-only parallel workspace.** Cubit has not replaced the operational membership or door system. The dedicated Parallel workspace receives validated Tonic snapshots every 15 minutes. The ordinary review screens remain a separate editable test copy, and the synthetic demo remains isolated. Payment-provider integration, door integration, account provisioning, and production waiver signing still need work before a live rollout.
 
 ## What works today
+
+### Read-only parallel workspace
+
+- Browse copied members, memberships, payments, plans, keys and recorded scans, with snapshot time and freshness visible. Tonic continues to handle all operational changes and doors.
+- A column-restricted SELECT exporter sends consistent snapshots through a forced-command SSH intake. A separate publisher atomically updates the mirror; failed batches preserve the last good snapshot. The web reader cannot write to that database.
+- Compare a member's source balance with a clearly labelled Cubit estimate. Legacy price/end-date gaps still require review; these estimates do not post charges or change access.
+- Record a verified PayPal subscription ID against a specific source membership, with staff identity, reason and revision history. These annotations survive refreshes. Email can suggest a candidate, but cannot establish a subscription ID or trigger cancellation.
+- Encrypted off-server backups include the mirror. An isolated restoration has verified dataset counts, payment totals and table integrity. See the [operator runbook](deploy/PARALLEL-OPERATIONS.md) and [parallel-run plan](deploy/PARALLEL-RUN-PLAN.md) for scope and remaining observation/cutover gates.
 
 ### Member directory and profiles
 

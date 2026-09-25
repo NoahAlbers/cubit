@@ -1,8 +1,24 @@
 # Cubit alongside Tonic: read-only parallel run
 
-Prepared 2026-09-25. **Proposed implementation, not an enabled connection.**
+Updated 2026-09-25. Implementation and rollout evidence are recorded below.
 Tonic remains the operational CRM until the makerspace approves a cutover.
 No source credentials, member exports or private server addresses belong in this plan.
+
+## Implementation status
+
+Release `0d8093f` was deployed on 2026-09-25 after CI passed. The restricted source
+exporter and 15-minute timer are enabled; the destination publishes every minute.
+Both a manual export and a scheduled cycle validated successfully. Exact replay
+returned Duplicate, and the unchanged scheduled snapshot produced no record changes.
+Source service uptime/restart counts were unchanged. The backup VPS independently
+restored and verified the mirror along with the review/demo data. See the
+[operator runbook](PARALLEL-OPERATIONS.md) for configuration and stopping the feed.
+
+The implemented UI is a dedicated read-only workspace with source lists, member
+details and a pure billing estimate. Ordinary review screens still use the editable
+review copy. Subscription annotations are separate and audited. Independent PayPal
+reporting, actual subscription-ID population, full access-discrepancy reports,
+controller inventory, full-day/monthly observation and cutover approval remain open.
 
 ## Recommended approach
 
@@ -89,13 +105,14 @@ Do not insert Cubit as a proxy or add synchronous Cubit requests to the live doo
 - `dev/export-legacy-data.cjs` exports six allowlisted datasets using a consistent,
   read-only InnoDB transaction: members, plans, memberships, transactions, keys and
   access logs. It excludes passwords and includes schema information, row counts
-  and a completion marker. It is a useful starting point, not an installed sync job.
+  and a completion marker. The restricted scheduled wrapper is `deploy/parallel-source.py`.
 - `dev/import-legacy-data.cjs` is a **one-time local review importer**. It requires
   an empty local schema, recalculates charges/statuses and creates test credentials.
   Do not schedule it or adapt it by simply removing the empty-database safeguard.
-- `CubitServices/src/dev/config.ts` currently permits specific local/review/demo
-  configurations. A separately validated parallel-run mode needs to be added;
-  no existing environment flag turns the application into a safe read-only mirror.
+- The implemented `/parallel` workspace uses a separate SELECT-only connection to
+  `cubit_parallel`. Review authentication, audit and subscription annotations remain
+  in the control database. `PARALLEL_ENABLED` enables only these dedicated routes;
+  it does not make ordinary review routes read-only. The synthetic demo is denied.
 - Hosted code in `CubitServices/src/app.ts` blocks `/paypal` and `/ACON`. Keep those
   blocks. The old ACON handlers can log events or update membership information,
   including on GET requests, so they are not safe discovery endpoints.
@@ -127,11 +144,14 @@ Unknown ownership or controller behavior remains an explicit blocker for that in
 
 ## Phase 2 — Build and prove the read-only boundary
 
-Add a distinct parallel-run mode before installing a connection to Tonic.
+Use a distinct read-only data boundary before installing a connection to Tonic.
 
-- Start a separate Cubit service/database, with its own authentication audience and
-  secrets. Keep the editable review and fictional demo clearly separated. Select an
-  unused loopback port and a protected HTTPS route; no new domain purchase is required.
+- Implemented boundary: a separate mirror database and SELECT-only pool behind
+  dedicated staff routes in the existing authenticated review service. Existing MFA
+  and account controls apply; imported members never become login identities. This
+  avoids routing ordinary billing GET handlers to the mirror. A separate service
+  remains an option for stronger process isolation later. The editable review and
+  fictional demo remain separate.
 - Split mirrored business data from Cubit's local account/security/operations data.
   The web application's database account gets SELECT access to mirrored tables.
   Only the controlled sync worker can publish imported business records.

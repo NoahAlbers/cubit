@@ -12,11 +12,21 @@ evidence, the tested release, and a named reviewer. Passing CI or deploying to
 review alone does not approve launch. Owners marked **Unassigned** must be named
 by the makerspace; target dates and sign-off dates must not be invented.
 
-The proposed [read-only parallel-run plan](deploy/PARALLEL-RUN-PLAN.md) keeps Tonic
-operational while Cubit mirrors validated snapshots and compares results. This is
-not enabled yet and does not waive any cutover or integration gate below.
+The [read-only parallel-run plan](deploy/PARALLEL-RUN-PLAN.md) keeps Tonic operational.
+The dedicated mirror feed is enabled; ordinary review screens remain an independent
+editable copy. This does not waive any cutover or integration gate below.
 
 ## Verified foundations
+
+On 2026-09-25, Codex deployed `0d8093f` after [GitHub CI 36182116117](https://github.com/NoahAlbers/cubit/actions/runs/36182116117) passed. A manual and a scheduled source snapshot published successfully; the next source run was scheduled 15 minutes later. Export/delivery took approximately 3–4 seconds. An exact replay was rejected as a duplicate without adding records. Source service start times and restart counts were unchanged. The source account has column-level SELECT only and password-column access was denied. Cubit's mirror reader has SELECT only; isolated tests rejected business writes, stale/conflicting links, demo access, malformed snapshots and interrupted imports. Desktop/mobile synthetic UI checks and the deployed reader passed. The backup VPS independently restored all three databases, including mirror counts/payment totals/table integrity, with no working database replaced. Recovery configuration was refreshed in the authorized root-only archive. Existing staff MFA was not bypassed for browser verification.
+
+- [ ] Observe at least a full day of scheduled snapshots, including Tonic's nightly
+  payment import; investigate failures and reconciliation differences. Owner: Unassigned.
+- [ ] Complete the longer billing/access comparison period and controller inventory
+  in the parallel-run plan before any operational cutover. Owner: Unassigned.
+- [ ] Obtain actual PayPal subscription identifiers through an approved export or
+  scoped reader, then verify membership links. Email-only matches are not sufficient;
+  subscription cancellation processing remains disabled. Owner: Unassigned.
 
 On 2026-09-25, Codex deployed `f7300c3` after [GitHub CI 36163957957](https://github.com/NoahAlbers/cubit/actions/runs/36163957957) passed. Trusted-browser metadata, private successful-sign-in history, organization time zone/currency, administrator backup-failure reviews, and retained health charts passed isolated database/browser tests and desktop/mobile layout checks. Fresh and existing schemas matched the entities. Both hosted workspaces applied migrations 14–19 after backups; HTTPS, the administrator MFA challenge, services and backup-worker heartbeat passed. Review health samples were confirmed in storage; demo sample storage remained empty. Eastern Time (`America/New_York`) and USD remain the defaults. Approximate sign-in location still requires an operator-maintained local City MMDB file. Real administrator pages were not accessed by bypassing MFA; their interaction checks used the local/isolated workspaces. These results do not close the operational gates below.
 
