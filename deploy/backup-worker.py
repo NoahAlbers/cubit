@@ -249,6 +249,14 @@ def verify(settings,selected=None):
                         (STATE/'last-import-error.txt').write_bytes(diagnostic)
                         code=re.search(rb'ERROR \d+ \([A-Z0-9]+\)(?: at line \d+)?',diagnostic)
                         raise RuntimeError('Isolated database restore failed'+(': '+code[0].decode() if code else ' (see private import diagnostic)'))
+                if schema=='cubit_parallel':
+                    query="SELECT g.counts FROM parallel_current c JOIN parallel_generation g ON g.id=c.generation WHERE c.id=1; SELECT JSON_OBJECT('member',SUM(kind='member'),'plan',SUM(kind='plan'),'member_plan',SUM(kind='member_plan'),'transaction',SUM(kind='transaction'),'member_key',SUM(kind='member_key'),'access_log',SUM(kind='access_log')) FROM parallel_record r JOIN parallel_current c ON c.generation=r.generation; SELECT COALESCE(SUM(CAST(JSON_UNQUOTE(JSON_EXTRACT(payload,'$.amount')) AS DECIMAL(12,2))*100),0) FROM parallel_record r JOIN parallel_current c ON c.generation=r.generation WHERE kind='transaction'; CHECK TABLE parallel_generation,parallel_current,parallel_record,parallel_change,parallel_run"
+                    rows=run(['docker','exec','--env','MYSQL_PWD',container,'mysql','-uroot','-N',schema,'-e',query],env=env).decode().splitlines()
+                    if len(rows)!=8:raise RuntimeError('Restored parallel snapshot is incomplete')
+                    expected=json.loads(rows[0]);actual=json.loads(rows[1])
+                    if any(expected.get(kind)!=n for kind,n in actual.items()) or int(float(rows[2]))!=expected['paymentCents'] or any(not row.endswith('\tOK') for row in rows[3:]):raise RuntimeError('Restored parallel snapshot counts/tables failed verification')
+                    counts[schema]=actual
+                    continue
                 query='SELECT COUNT(*) FROM member; SELECT COUNT(*) FROM transaction; SELECT COUNT(*) FROM waiver_document WHERE SHA2(content,256)<>sha256 OR OCTET_LENGTH(content)<>bytes; CHECK TABLE member,transaction,waiver_document,waiver_version'
                 rows=run(['docker','exec','--env','MYSQL_PWD',container,'mysql','-uroot','-N',schema,'-e',query],env=env).decode().splitlines()
                 if len(rows)<7 or rows[2]!='0' or any(not row.endswith('\tOK') for row in rows[3:]): raise RuntimeError('Restored tables or waiver BLOBs failed verification')
