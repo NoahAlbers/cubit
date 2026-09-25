@@ -1,4 +1,6 @@
 const assert=require('node:assert/strict');
+// This parser test never connects to a database or depends on a developer's .env.
+Object.assign(process.env,{CUBIT_MODE:'hosted-demo',LOCAL_DEVELOPMENT:'false',HOST:'127.0.0.1',PORT:'5002',DATABASE_URI:'127.0.0.1',DATABASE_NAME:'cubit_demo',DATABASE_USERNAME:'cubit_demo',DATABASE_PASSWORD:'unused-parser-fixture',JWT_SECRET:'parser-fixture-signing-key-not-used-for-tokens-2026'});
 const {deviceDetails}=require('../dist/security/device');
 const edge=deviceDetails('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140.0.0.0 Safari/537.36 Edg/140.0.1','::ffff:192.0.2.1');
 assert.deepEqual(edge,{browser:'Edge 140.0.1',os:'Windows',device:'Computer',ip:'192.0.2.1'});
