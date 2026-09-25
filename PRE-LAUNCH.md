@@ -287,6 +287,10 @@ Target: **Unassigned**. Sign-off: **Pending**.
   Five-minute samples (seven days) and hourly summaries (90 days) now provide
   diagnosis history; missing samples and failures between samples still require
   independent monitoring. Verify sample collection and retention after deployment.
+  Charts now use recorded coverage, capacity percentages and availability bars.
+  Saved off-server backups groups remote inventory, audit delivery, recovery tests,
+  disk space and RAM, with stale-reading and failed-copy warnings. Confirm these
+  warnings during a controlled outage before launch; CRM access remains append-only.
   Test alert delivery and acknowledgment. Name the on-call person and backup contact,
   with an incident/restore runbook accessible if this VPS is unavailable.
 - [ ] Record final acceptance: release SHA, backup snapshot, recovery evidence,
