@@ -12,6 +12,10 @@ evidence, the tested release, and a named reviewer. Passing CI or deploying to
 review alone does not approve launch. Owners marked **Unassigned** must be named
 by the makerspace; target dates and sign-off dates must not be invented.
 
+The proposed [read-only parallel-run plan](deploy/PARALLEL-RUN-PLAN.md) keeps Tonic
+operational while Cubit mirrors validated snapshots and compares results. This is
+not enabled yet and does not waive any cutover or integration gate below.
+
 ## Verified foundations
 
 On 2026-09-25, Codex deployed `f7300c3` after [GitHub CI 36163957957](https://github.com/NoahAlbers/cubit/actions/runs/36163957957) passed. Trusted-browser metadata, private successful-sign-in history, organization time zone/currency, administrator backup-failure reviews, and retained health charts passed isolated database/browser tests and desktop/mobile layout checks. Fresh and existing schemas matched the entities. Both hosted workspaces applied migrations 14–19 after backups; HTTPS, the administrator MFA challenge, services and backup-worker heartbeat passed. Review health samples were confirmed in storage; demo sample storage remained empty. Eastern Time (`America/New_York`) and USD remain the defaults. Approximate sign-in location still requires an operator-maintained local City MMDB file. Real administrator pages were not accessed by bypassing MFA; their interaction checks used the local/isolated workspaces. These results do not close the operational gates below.
