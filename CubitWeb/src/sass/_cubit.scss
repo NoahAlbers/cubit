@@ -488,3 +488,9 @@ select:not([multiple]):not([size]){appearance:none;-webkit-appearance:none;paddi
 .authenticator-enrollment{margin:18px 0}.authenticator-qr{display:block;width:240px;height:240px;max-width:100%;object-fit:contain;background:white;image-rendering:pixelated;border:1px solid #e2e8f0;border-radius:8px}.authenticator-manual{margin:14px 0}.authenticator-enrollment .muted{font-size:12px}
 
 .alert-topic-group{border-top:1px solid #e2e8f0;padding:6px 0}.alert-topic-group summary{font-weight:600;display:list-item}.alert-topic-group summary span{float:right;color:#64748b;font-size:11px;font-weight:400}.alert-topic{display:flex;flex-direction:row;align-items:flex-start;gap:10px;margin:12px 0}.alert-topic input{width:16px;height:16px;flex:0 0 16px;margin-top:3px}.alert-topic span{min-width:0}.alert-topic small{font-weight:400;line-height:1.5;margin-top:3px}.alert-topic-group>.muted{font-size:12px}.alert-delivery-options{border-top:1px solid #e2e8f0;padding-top:18px;margin-top:18px}.alert-delivery-options>.form-grid{margin:14px 0}.alert-delivery-options>.muted{font-size:12px;margin-top:10px}
+
+/* Keep inline list loading states aligned with the search controls. */
+.directory-panel > app-loading.compact { padding: 14px 18px; }
+.access-log-page .directory-panel > app-loading.compact { padding-inline: 23px; }
+@media(max-width:650px) { .access-log-page .directory-panel > app-loading.compact { padding-inline: 16px; } }
+@media(max-width:480px) { .directory-page .directory-panel > app-loading.compact { padding-inline: 12px; } }

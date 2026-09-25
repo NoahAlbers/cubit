@@ -13,7 +13,7 @@ export class AccessLogComponent implements OnInit, OnDestroy {
   private request?:Subscription;
   private searchTimer?:ReturnType<typeof setTimeout>;
   ngOnDestroy(){this.request?.unsubscribe();clearTimeout(this.searchTimer);}
-  rows:any[]=[]; loading=true; error='';
+  rows:any[]=[]; loading=true; hasLoaded=false; error='';
   search=''; period='30'; result='all'; sort='timestamp'; order='desc'; page=1; pageSize=20; total=0; pages=1;
   sizes=[10,20,50,100];
   constructor(private accessLogService:AccessLogService, private router:Router, private route:ActivatedRoute, public navigation:ListNavigationService){}
@@ -36,7 +36,7 @@ export class AccessLogComponent implements OnInit, OnDestroy {
     this.loading=true;this.error='';this.rows=[];
     const params={period:this.period,search:this.search,result:this.result,sort:this.sort,order:this.order,page:this.page,pageSize:this.pageSize};
     this.request=this.accessLogService.getAccessLog(params).subscribe({next:data=>{
-      this.rows=data.rows;this.total=data.total;this.page=data.page;this.pages=data.pages;this.loading=false;
+      this.hasLoaded=true;this.rows=data.rows;this.total=data.total;this.page=data.page;this.pages=data.pages;this.loading=false;
       this.router.navigate([],{relativeTo:this.route,queryParams:{...params,page:this.page},replaceUrl:true}).then(()=>{if(restore)this.navigation.restoreScroll();});
     },error:()=>{this.error='Could not load the access log. Please refresh.';this.loading=false;}});
   }
