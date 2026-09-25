@@ -9,4 +9,6 @@ export class TrustedComputer {
   @Column({ type: 'datetime' }) createdAt: Date;
   @Column({ type: 'datetime' }) expiresAt: Date;
   @Column({ type: 'datetime', nullable: true }) lastUsedAt: Date | null;
+  @Column({ type: 'text', nullable: true }) deviceDetails: string | null;
+  @Column({ type: 'text', nullable: true }) lastDeviceDetails: string | null;
 }

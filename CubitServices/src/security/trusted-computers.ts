@@ -9,6 +9,7 @@ import { localConfig } from '../dev/config';
 import { jwtHelper } from '../api/common/jwtHelper';
 import { recordAudit } from '../staff/audit';
 import { demoMemberId } from '../demo/identity';
+import { requestDevice } from './device';
 
 export const TRUST_LIFETIME = 30 * 86400000;
 const digest = (value: string) => createHash('sha256').update(value).digest('hex');
@@ -42,6 +43,7 @@ export async function verifyTrustedComputer(
   manager: EntityManager,
   member: Member,
   token?: string,
+  device?: ReturnType<typeof requestDevice>,
 ) {
   if (!token || !/^[A-Za-z0-9_-]{43}$/.test(token)) return false;
   const row = await manager.findOneBy(TrustedComputer, {
@@ -53,7 +55,10 @@ export async function verifyTrustedComputer(
   if (!row) return false;
   const mfa = await manager.findOneBy(AccountMfa, { memberId: member.id });
   if (!mfa?.secret) return false;
-  await manager.update(TrustedComputer, row.tokenHash, { lastUsedAt: new Date() });
+  await manager.update(TrustedComputer, row.tokenHash, {
+    lastUsedAt: new Date(),
+    ...(device ? { lastDeviceDetails: JSON.stringify(device) } : {}),
+  });
   return true; // Absolute expiry is never extended by use.
 }
 export async function rememberComputer(req: Request, res: Response) {
@@ -109,6 +114,7 @@ export async function rememberComputer(req: Request, res: Response) {
       createdAt: new Date(now),
       expiresAt,
       lastUsedAt: null,
+      deviceDetails: JSON.stringify(requestDevice(req)),
     });
     await recordAudit(manager, {
       memberId: member.id,
@@ -131,9 +137,19 @@ export async function trustedComputerSummary(member: Member) {
     },
     order: { createdAt: 'DESC' },
     take: 10,
-    select: { createdAt: true, expiresAt: true, lastUsedAt: true },
+    select: {
+      createdAt: true,
+      expiresAt: true,
+      lastUsedAt: true,
+      deviceDetails: true,
+      lastDeviceDetails: true,
+    },
   });
-  return rows;
+  return rows.map(({ deviceDetails, lastDeviceDetails, ...row }) => ({
+    ...row,
+    device: deviceDetails ? JSON.parse(deviceDetails) : null,
+    lastDevice: lastDeviceDetails ? JSON.parse(lastDeviceDetails) : null,
+  }));
 }
 export async function forgetComputers(req: Request, res: Response) {
   await AppDataSource.transaction(async (manager) => {

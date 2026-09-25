@@ -43,7 +43,7 @@ jobs:
       - run: pnpm --dir CubitWeb exec playwright install --with-deps chromium
       - run: node dev/verify-login.cjs
       - run: pnpm --dir CubitServices build
-      - run: node tests/security-hardening.cjs
+      - run: node tests/security-hardening.cjs && node tests/device-details.cjs
         working-directory: CubitServices
       - run: node tests/remembered-greeting.cjs && node tests/login-greeting-integration.cjs
         working-directory: CubitServices

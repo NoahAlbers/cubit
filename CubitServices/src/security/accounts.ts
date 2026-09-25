@@ -1,4 +1,5 @@
 import { verifyTrustedComputer } from './trusted-computers';
+import { requestDevice } from './device';
 import { authorizeAccountChange, isStaffRole } from './staff-permissions';
 import { createCipheriv, createDecipheriv, createHash, randomBytes, timingSafeEqual } from 'crypto';
 import { compare, hash } from 'bcrypt';
@@ -137,6 +138,7 @@ export async function authenticateSecondFactor(
   member: Member,
   code: unknown,
   trustedToken?: string,
+  device?: ReturnType<typeof requestDevice>,
 ) {
   return AppDataSource.transaction(async (manager) => {
     const current = await lockAccount(manager, member.id);
@@ -144,7 +146,7 @@ export async function authenticateSecondFactor(
       fail('Please sign in again.', 401);
     if (
       (!code || (typeof code === 'string' && !code.trim())) &&
-      (await verifyTrustedComputer(manager, current, trustedToken))
+      (await verifyTrustedComputer(manager, current, trustedToken, device))
     )
       return Object.assign(current, { mfaVerified: true, mfaFresh: false });
     const mfaVerified = await verifyMfa(

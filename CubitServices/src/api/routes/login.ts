@@ -1,4 +1,5 @@
 import { trustCookie } from '../../security/trusted-computers';
+import { requestDevice } from '../../security/device';
 import { validEmail } from '../../contact/validation';
 import express from 'express';
 import { Member } from '../../entity/member';
@@ -39,7 +40,12 @@ router.post('/', async (req, res) => {
       req.body.email.trim().toLowerCase(),
       req.body.password,
     );
-    const member = await authenticateSecondFactor(passwordMember, req.body.code, trustCookie(req));
+    const member = await authenticateSecondFactor(
+      passwordMember,
+      req.body.code,
+      trustCookie(req),
+      requestDevice(req),
+    );
     const token = jwtHelper.GenerateJWT(member, member.mfaVerified, member.mfaFresh);
     res.setHeader('Cache-Control', 'no-store');
     greeting.remember(res, member);

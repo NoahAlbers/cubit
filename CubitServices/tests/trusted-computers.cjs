@@ -22,7 +22,7 @@ module.exports=async({db,base,Member,jwtHelper})=>{
  assert.equal(jwtHelper.ValidateJWT(trusted.body.token).mfaVerified,true);
  assert.equal((await call('/api/account/trusted-computers',{},trusted.body.token)).status,403,'Trusted login cannot extend its own trust');
  assert.equal((await db.manager.findOneByOrFail(TrustedComputer,{memberId:member.id})).expiresAt.getTime(),stored.expiresAt.getTime());
- const info=await call('/api/account',null,trusted.body.token);assert.equal(info.body.trustedComputers.length,1);assert.ok(!JSON.stringify(info.body).includes(stored.tokenHash));
+ const info=await call('/api/account',null,trusted.body.token);assert.equal(info.body.trustedComputers.length,1);assert.deepEqual(info.body.trustedComputers[0].device,{browser:'Demo browser',os:'Demo OS',device:'Demo device',ip:null});assert.equal(info.body.trustedComputers[0].lastDevice.ip,null);assert.ok(!JSON.stringify(info.body).includes(stored.tokenHash));
  assert.equal((await call('/login',{email:member.email,password:'wrong password'},null,cookie)).status,401);
  assert.equal((await call('/login',{email:member.email,password},null,trustCookieName()+'='+randomBytes(32).toString('base64url'))).body.code,'MFA_REQUIRED');
  const another=await db.manager.save(Member,db.manager.create(Member,{firstName:'Other',lastName:'Fixture',email:'other.trusted@example.test',paypalEmail:'other.trusted@example.test',role:'admin',password:member.password}));
