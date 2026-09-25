@@ -49,7 +49,6 @@
     <p class="muted">{{data.runtime.https.message}}</p>
   }</div>
   @if(data.hosted){
-    @if(data.runtime.vault){<section class="backup-inventory" aria-label="Protected off-server storage"><h3>Backup & audit server</h3><p class="muted">Append-only connection. This CRM cannot delete or overwrite archived backups or audit records.</p>@if(data.runtime.vaultError){<p class="notice-strip" role="alert">The backup server is unreachable. The information below may be stale.</p>}<div class="backup-status-grid"><div><b>Remote snapshots</b><p>{{data.runtime.vault.backup?.snapshots?.length||0}}</p></div><div><b>Archived audit records</b><p>{{data.runtime.vault.audit?.count||0}}</p></div><div><b>Free storage</b><p>{{formatBytes(data.runtime.vault.storage?.freeBytes)}}</p></div><div><b>Independent recovery test</b><p>{{data.runtime.vault.backup?.lastRestore?.ok?'Passed':'Not verified / needs attention'}}</p></div></div><p>Retention: at least {{data.runtime.vault.backup?.retentionDays||30}} days, controlled on the backup server. Audit records have no automatic deletion.</p>@if(data.runtime.vault.backup?.lastRestore?.checkedAt){<p>Recovery checked {{data.runtime.vault.backup.lastRestore.checkedAt|orgDate:'medium'}}.</p>}@if(data.runtime.vault.backup?.error){<p class="notice-strip">{{data.runtime.vault.backup.error}}</p>}<details><summary>Saved off-server backups</summary><div class="table-scroll"><table><thead><tr><th>Received by backup server</th><th>Snapshot</th><th>Protected until at least</th></tr></thead><tbody>@for(s of data.runtime.vault.backup?.snapshots||[];track s.id){<tr><td>{{s.receivedAt|orgDate:'medium'}}</td><td><code>{{s.id.slice(0,12)}}</code></td><td>{{s.protectedUntil|orgDate:'medium'}}</td></tr>}</tbody></table></div></details></section>}
     <details class="backup-inventory" aria-label="Saved local backups"><summary>Saved local backups <span class="badge">{{data.runtime.snapshots?.length||0}}</span></summary>
       <div class="section-heading"><div><p class="muted">Newest first · keeping the latest {{data.settings.localKeep}} copies on this VPS.</p></div><button type="button" class="secondary" [disabled]="!data.canManageSettings||busy||running||dirty||!data.runtime.available||data.runtime.inventoryError||(data.runtime.snapshots?.length||0)<=data.settings.localKeep" (click)="prune()">Apply local retention now</button></div>
       @if(data.runtime.inventoryError||!data.runtime.available){<p class="notice-strip">The inventory may be out of date. The worker will refresh it when available.</p>}
@@ -60,6 +59,28 @@
       @if(!data.runtime.snapshots?.length){<p class="muted">{{data.runtime.inventoryCheckedAt?'No managed local backups are currently retained.':'Waiting for the worker to read the repository.'}}</p>}
       @if(data.runtime.snapshots?.length>inventoryLimit){<button type="button" class="secondary" (click)="inventoryLimit=inventoryLimit+8">Show more backups</button>}
     </details>
+  }
+  @if(data.hosted){
+    <section class="backup-inventory remote-backups" aria-labelledby="remote-backups-title">
+      <div class="section-heading"><h3 id="remote-backups-title">Saved off-server backups</h3><span class="badge" [class.badge-warning]="!remoteHealthy">{{remoteHealthy?'Connected':'Needs attention'}}</span></div>
+      @if(data.runtime.vault;as vault){
+        @if(!remoteFresh){<p class="notice-strip" role="alert">The backup server status is unavailable or out of date. These are the last recorded readings.</p>}
+        @if(!data.settings.offsiteEnabled){<p class="notice-strip">Off-server copies are paused. Retained backups and audit records remain on the backup server.</p>}
+        <div class="backup-status-grid remote-status-grid">
+          <div><b>Saved backups</b><p>{{vault.backup?.snapshots?.length||0}} retained</p><small>{{remoteFresh&&!vault.backup?.error?'Repository reachable':'Check connection / repository'}}</small></div>
+          <div><b>Audit archive</b><p>{{vault.audit?.count||0}} records</p><small>{{auditHealthy?'Delivery healthy':'Delivery needs attention'}} · {{data.runtime.auditDelivery?.pending??'Unknown'}} queued · {{vault.audit?.conflicts||0}} conflicts</small></div>
+          <div><b>Independent recovery test</b><p>{{vault.backup?.lastRestore?.ok?'Passed':'Not verified / needs attention'}}</p>@if(vault.backup?.lastRestore?.checkedAt){<small>{{vault.backup.lastRestore.checkedAt|orgDate:'medium'}}</small>}</div>
+          <div><b>Backup server storage</b><p>{{formatBytes(vault.storage?.totalBytes-vault.storage?.freeBytes)}} / {{formatBytes(vault.storage?.totalBytes)}}</p>@if(vault.storage?.totalBytes){<meter min="0" max="100" low="80" high="90" optimum="20" [value]="usage(vault.storage.totalBytes,vault.storage.freeBytes)" aria-label="Backup server disk usage"></meter>}<small>{{formatBytes(vault.storage?.freeBytes)}} available</small></div>
+          <div><b>Backup server memory (RAM)</b><p>{{vault.memory?formatBytes(vault.memory.totalBytes-vault.memory.availableBytes):'Not recorded'}} / {{formatBytes(vault.memory?.totalBytes)}}</p>@if(vault.memory?.totalBytes){<meter min="0" max="100" low="80" high="90" optimum="20" [value]="usage(vault.memory.totalBytes,vault.memory.availableBytes)" aria-label="Backup server memory usage"></meter>}<small>{{formatBytes(vault.memory?.availableBytes)}} available</small></div>
+        </div>
+        <p class="muted">Checked {{vault.checkedAt|orgDate:'medium'}}. Retained for at least {{vault.backup?.retentionDays||30}} days. Audit records have no automatic deletion. This CRM cannot delete or overwrite either archive.</p>
+        @if(vault.backup?.error){<p class="notice-strip" role="alert">{{vault.backup.error}}</p>}
+        @if(data.runtime.auditDelivery?.message&&!auditHealthy){<p class="notice-strip" role="alert">{{data.runtime.auditDelivery.message}}</p>}
+        <div class="table-scroll"><table><thead><tr><th>Received by backup server</th><th>Snapshot</th><th>Protected until at least</th></tr></thead><tbody>@for(s of visibleRemoteBackups;track s.id){<tr><td>{{s.receivedAt|orgDate:'medium'}}</td><td><code>{{s.id.slice(0,12)}}</code></td><td>{{s.protectedUntil|orgDate:'medium'}}</td></tr>}</tbody></table></div>
+        @if(!vault.backup?.snapshots?.length){<p class="muted">No off-server backups recorded yet.</p>}
+        @if(vault.backup?.snapshots?.length>remoteInventoryLimit){<button class="secondary" type="button" (click)="remoteInventoryLimit=remoteInventoryLimit+8">Show more off-server backups</button>}
+      }@else{<p class="notice-strip">{{data.runtime.offsiteConfigured?'Waiting for the backup server to report its inventory and health.':'Off-server storage is not connected. Ask the operator to configure a protected destination.'}}</p>}
+    </section>
   }
   <details (toggle)="historyOpen=historyOpen||$any($event.target).open"><summary>Operation history</summary>@if(historyOpen){<app-backup-history [canReview]="data.canManageSettings" (draftChange)="reviewDirty=$event" (reviewed)="reviewed.emit();load()"></app-backup-history>}</details>
 }

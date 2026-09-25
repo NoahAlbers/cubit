@@ -26,6 +26,15 @@ describe('Local backup inventory',()=>{
   http.expectNone('/api/backups/settings');http.expectNone('/api/backups/jobs');
   expect(fixture.nativeElement.querySelector('fieldset').disabled).toBe(true);
   expect(fixture.nativeElement.textContent).toContain('Administration manages backup schedules');
+  const component=fixture.componentInstance;
+  component.data.runtime.vault={checkedAt:new Date().toISOString(),backup:{snapshots:[{id:snapshot.id,receivedAt:snapshot.createdAt,protectedUntil:'2026-10-24T10:00:00Z'}],lastRestore:{ok:true}},audit:{count:5,conflicts:0},storage:{totalBytes:1000000000,freeBytes:800000000},memory:{totalBytes:1000000000,availableBytes:500000000}};
+  component.data.runtime.auditDelivery={available:true,ok:true,pending:0};component.data.settings.offsiteEnabled=true;fixture.detectChanges();
+  expect(component.remoteHealthy).toBe(true);expect(component.usage(100,80)).toBeCloseTo(20);
+  const inventories=Array.from(fixture.nativeElement.querySelectorAll('.backup-inventory')) as HTMLElement[];
+  expect(inventories[0].textContent).toContain('Saved local backups');expect(inventories[1].textContent).toContain('Saved off-server backups');
+  expect(inventories[1].textContent).toContain('Backup server memory (RAM)');expect(inventory.open).toBe(true);
+  component.data.runtime.vaultError=true;fixture.detectChanges();expect(component.remoteHealthy).toBe(false);expect(component.auditHealthy).toBe(false);expect(inventories[1].textContent).toContain('last recorded readings');
+  component.data.runtime.vaultError=false;component.data.runtime.vault.checkedAt='2020-01-01T00:00:00Z';expect(component.remoteHealthy).toBe(false);
   fixture.destroy();http.verify();
  });
 });

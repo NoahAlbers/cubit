@@ -76,6 +76,14 @@ def append(values):
                 (v['id'],v['createdAt'],received,v['memberId'],v['memberName'],v['memberEmail'],v['author'],v['kind'],actor,encoded,digest,previous,chain))
         head=db.execute('SELECT sequence,chain_hash,received_at FROM records ORDER BY sequence DESC LIMIT 1').fetchone()
     return {'accepted':[v[0]['id'] for v in parsed],'receipt':dict(head)}
+def memory_status():
+    try:
+        fields={line.split(':')[0]:int(line.split()[1])*1024 for line in pathlib.Path('/proc/meminfo').read_text().splitlines() if line.startswith(('MemTotal:', 'MemAvailable:'))}
+        total,available=fields['MemTotal'],fields['MemAvailable']
+        if total<=0 or not 0<=available<=total: return None
+        return {'totalBytes':total,'availableBytes':available}
+    except (OSError,ValueError,KeyError,IndexError): return None
+
 def status():
     with connect() as db:
         head=db.execute('SELECT sequence,received_at,chain_hash FROM records ORDER BY sequence DESC LIMIT 1').fetchone()
@@ -83,7 +91,7 @@ def status():
     try: backup=json.loads(STATUS.read_text())
     except (OSError,ValueError): backup={'ready':False,'message':'Awaiting backup-server maintenance'}
     disk=shutil.disk_usage(STATE)
-    return {'checkedAt':now(),'audit':{'count':total,'head':dict(head) if head else None,'conflicts':conflicts},'backup':backup,'storage':{'freeBytes':disk.free,'totalBytes':disk.total},'appendOnly':True}
+    return {'checkedAt':now(),'audit':{'count':total,'head':dict(head) if head else None,'conflicts':conflicts},'backup':backup,'storage':{'freeBytes':disk.free,'totalBytes':disk.total},'memory':memory_status(),'appendOnly':True}
 def query(params):
     allowed={'from','to','memberId','author','kind','q','actor','sort','order','page','pageSize'}
     if set(params)-allowed:raise ValueError('Unknown filter')

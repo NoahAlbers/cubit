@@ -39,8 +39,17 @@ async function settings() {
 async function runtime() {
   const r = await AppDataSource.manager.findOneBy(BackupRuntime, { id: 'default' });
   const detail = r ? JSON.parse(r.detail) : {};
+  const audit =
+    localConfig.runtimeMode === 'hosted-review'
+      ? await AppDataSource.manager.findOneBy(BackupRuntime, { id: 'audit-vault' })
+      : null;
   return {
     ...detail,
+    auditDelivery: {
+      ...(audit ? JSON.parse(audit.detail) : {}),
+      heartbeat: audit?.heartbeat,
+      available: !!audit && Date.now() - new Date(audit.heartbeat).getTime() < 180000,
+    },
     heartbeat: r?.heartbeat,
     available:
       localConfig.runtimeMode === 'hosted-review' &&

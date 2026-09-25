@@ -9,8 +9,14 @@ export class BackupsComponent implements OnInit,OnDestroy {
  @Output() ready=new EventEmitter<void>(); @Output() reviewed=new EventEmitter<void>(); historyOpen=false;reviewDirty=false;
  data:any;form:any;revision=0;error='';message='';busy=false;dirty=false;private timer:any;
  inventoryLimit=8;
+ remoteInventoryLimit=8;
+ get visibleRemoteBackups(){return (this.data?.runtime?.vault?.backup?.snapshots||[]).slice(0,this.remoteInventoryLimit);}
+ get remoteFresh(){const r=this.data?.runtime;return !!r?.available&&!r.vaultError&&Date.now()-Date.parse(r.vault?.checkedAt)<180000;}
+ get auditHealthy(){const r=this.data?.runtime;return this.remoteFresh&&r?.auditDelivery?.available&&r.auditDelivery.ok&&!r.vault?.audit?.conflicts;}
+ get remoteHealthy(){const r=this.data?.runtime,b=r?.vault?.backup;return this.remoteFresh&&this.auditHealthy&&this.data?.settings?.offsiteEnabled&&b?.snapshots?.length>0&&b?.lastRestore?.ok&&!b.error&&this.usage(r.vault?.storage?.totalBytes,r.vault?.storage?.freeBytes)<80&&(!r.vault?.memory||this.usage(r.vault.memory.totalBytes,r.vault.memory.availableBytes)<90);}
+ usage(total:number,available:number){return total>0?Math.max(0,Math.min(100,100*(1-available/total))):0;}
  get visibleBackups(){return (this.data?.runtime?.snapshots||[]).slice(0,this.inventoryLimit);}
- formatBytes(value:number){if(value==null)return 'Not recorded';const units=['B','KB','MB','GB'];let i=0;while(value>=1024&&i<3){value/=1024;i++;}return value.toFixed(i?1:0)+' '+units[i];}
+ formatBytes(value:number){if(value==null||!Number.isFinite(value))return 'Not recorded';const units=['B','KB','MB','GB'];let i=0;while(value>=1024&&i<3){value/=1024;i++;}return value.toFixed(i?1:0)+' '+units[i];}
  prune(){if(!this.data?.canManageSettings)return;if(window.confirm('Keep the newest '+this.data.settings.localKeep+' local backups and remove older local copies? Off-server copies will not be changed.'))this.queue('prune');}
  days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
  zones=['America/New_York','America/Chicago','America/Denver','America/Los_Angeles','America/Anchorage','Pacific/Honolulu','UTC'];

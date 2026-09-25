@@ -30,6 +30,11 @@ class GatewayTests(unittest.TestCase):
             upstream.assert_not_called()
 
 class ReceiverTests(unittest.TestCase):
+    def test_memory_capacity_and_unavailable_readings(self):
+        with patch.object(pathlib.Path,'read_text',return_value='MemTotal: 4096 kB\nMemAvailable: 3072 kB\nOther: 1 kB\n'):
+            self.assertEqual(v.memory_status(),{'totalBytes':4194304,'availableBytes':3145728})
+        with patch.object(pathlib.Path,'read_text',side_effect=OSError('Unavailable')):
+            self.assertIsNone(v.memory_status())
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.root=pathlib.Path(self.temp.name)
         self.state=patch.object(v,'STATE',self.root);self.state.start();self.status=patch.object(v,'STATUS',self.root/'status.json');self.status.start();v.initialize()
