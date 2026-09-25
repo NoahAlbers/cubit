@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { OrgDatePipe } from '../../services/org-date.pipe';
 import { healthTrend } from './health-trend';
 @Component({selector:'app-health-trend',standalone:true,imports:[CommonModule,OrgDatePipe],changeDetection:ChangeDetectionStrategy.Eager,
-template:`@if(model.points.length){<div class="trend-meta"><span>{{model.numeric?'Min–max: '+number(model.min)+'–'+number(model.max)+' '+model.unit:'Recorded availability'}}</span><span>{{model.numeric?'Scale '+number(model.low)+'–'+number(model.high)+(model.capacity?'%':' '+model.unit):'Gaps = no reading'}}</span></div>
+template:`@if(model.points.length){<div class="trend-meta"><span>{{model.numeric?'Min–max: '+number(model.min)+'–'+number(model.max)+' '+model.unit:(name==='Application'?'Recorded availability':'Recorded status')}}</span><span>{{model.numeric?'Scale '+number(model.low)+'–'+number(model.high)+(model.capacity?'%':' '+model.unit):'Gaps = no reading'}}</span></div>
 <svg viewBox="0 0 600 100" preserveAspectRatio="none" role="img" tabindex="0" [attr.aria-label]="name+' history. Use left and right arrow keys to inspect recorded readings.'" (pointermove)="hover($event)" (pointerleave)="active=null" (focus)="select(model.points.length-1)" (blur)="active=null" (keydown)="key($event)">
 <path d="M0,86H600" stroke="#dce5ef" stroke-width="1" fill="none"/>
 @if(model.numeric){@for(path of model.paths;track $index){<path [attr.d]="path" fill="none" stroke="#094fa3" stroke-width="2" vector-effect="non-scaling-stroke"/>}
@@ -23,3 +23,4 @@ export class HealthTrendComponent implements OnChanges {
  hover(event:PointerEvent){const rect=(event.currentTarget as SVGElement).getBoundingClientRect();const x=(event.clientX-rect.left)/rect.width*600;let best=0;this.model.points.forEach((p:any,i:number)=>{if(Math.abs(p.x-x)<Math.abs(this.model.points[best].x-x))best=i;});this.select(best);}
  key(event:KeyboardEvent){if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();this.select(event.key==='Home'?0:event.key==='End'?this.model.points.length-1:this.index+(event.key==='ArrowLeft'?-1:1));}}
 }
+
