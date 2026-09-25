@@ -71,7 +71,16 @@ describe('Core workflow rendering and submissions', () => {
     const search = http.expectOne(r => r.url === '/api/cubit/members');
     expect(search.request.params.get('page')).toBe('1'); expect(search.request.params.get('q')).toBe('casey');
     search.flush({page: 1, pageSize: 20, pages: 1, total: 0, rows: [], sort: 'contact', order: 'desc', summary: {}});
-    fixture.detectChanges(); expect(fixture.nativeElement.textContent).toContain('No members match'); fixture.destroy();
+    fixture.detectChanges(); expect(fixture.nativeElement.textContent).toContain('No members match');
+    const activityLink=fixture.nativeElement.querySelector('a[aria-label="View successful check-ins in the last 30 days"]');
+    expect(activityLink.getAttribute('href')).toContain('/accessLog?period=30&result=granted&page=1');
+    fixture.nativeElement.querySelector('button[aria-label="Show active members"]').click();fixture.detectChanges();
+    await new Promise(resolve=>setTimeout(resolve,230));
+    const active=http.expectOne(r=>r.url==='/api/cubit/members');
+    expect(active.request.params.get('status')).toBe('Active');expect(active.request.params.get('page')).toBe('1');
+    expect(active.request.params.get('q')).toBe('');expect(active.request.params.get('sort')).toBe('contact');
+    active.flush({page:1,pageSize:20,pages:1,total:0,rows:[],sort:'contact',order:'desc',summary:{}});
+    fixture.destroy();
   });
 
   it('renders a new member profile and preserves an unsaved contact draft after a failed save', async () => {

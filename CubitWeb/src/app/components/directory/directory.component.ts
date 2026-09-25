@@ -50,6 +50,11 @@ export class DirectoryComponent implements OnInit, OnDestroy {
     if (this.filters.status === 'Canceled') this.filters.includeEnded = true;
     this.filters.page = 1; this.loading = true; this.changes.next();
   }
+  showActive() {
+    // Summary counts cover all members; clear filters that would hide that group.
+    this.filters = {...this.filters, q:'', field:'all', status:'Active', plan:'', activity:'', access:'', minDays:'', includeEnded:false};
+    this.filtersOpen=true; this.apply();
+  }
   toggleEnded() {
     if (!this.filters.includeEnded && this.filters.status === 'Canceled') this.filters.status = '';
     this.apply();

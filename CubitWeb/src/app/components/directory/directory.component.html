@@ -3,9 +3,9 @@
     @if (data) {
       <div class="stats compact-stats">
         @if (!overdue) {
-          <div class="stat"><span>ACTIVE MEMBERS</span><strong>{{data.summary.active}}</strong></div>
+          <button type="button" class="stat stat-link" (click)="showActive()" aria-label="Show active members"><span>ACTIVE MEMBERS</span><strong>{{data.summary.active}}</strong></button>
           <a class="stat stat-link" routerLink="/overdue"><span>PAST DUE MEMBERS</span><strong>{{data.summary.overdue}}</strong></a>
-          <div class="stat"><span>UNIQUE CHECK-INS · LAST 30 DAYS</span><strong>{{data.summary.uniqueCheckins30Days}}</strong></div>
+          <a class="stat stat-link" routerLink="/accessLog" [queryParams]="{period:'30',result:'granted',page:1}" aria-label="View successful check-ins in the last 30 days"><span>UNIQUE CHECK-INS · LAST 30 DAYS</span><strong>{{data.summary.uniqueCheckins30Days}}</strong></a>
         }
         @if (overdue) {
           <div class="stat"><span>PAST DUE MEMBERS</span><strong>{{data.total}}</strong></div>
