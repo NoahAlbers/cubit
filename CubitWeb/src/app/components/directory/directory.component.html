@@ -23,8 +23,8 @@
   </div>
   <section class="panel directory-panel" aria-label="Member directory">
     <div class="search-row">
-      <label class="search-box"><span aria-hidden="true">⌕</span><input aria-label="Search members" type="search" [(ngModel)]="filters.q" (ngModelChange)="apply()" placeholder="Search members…"></label>
-      <label class="field-select"><span class="sr-only">Search field</span><select [(ngModel)]="filters.field" (ngModelChange)="apply()"><option value="all">All contact fields</option><option value="firstName">First name</option><option value="lastName">Last name</option><option value="email">Email</option><option value="paypalEmail">PayPal email</option><option value="phone">Phone number</option></select></label>
+      <label class="search-box"><span aria-hidden="true">⌕</span><input aria-label="Search members" type="search" [(ngModel)]="filters.q" (ngModelChange)="apply()" placeholder="Search members or access keys…"></label>
+      <label class="field-select"><span class="sr-only">Search field</span><select [(ngModel)]="filters.field" (ngModelChange)="apply()"><option value="all">All fields</option><option value="firstName">First name</option><option value="lastName">Last name</option><option value="email">Email</option><option value="paypalEmail">PayPal email</option><option value="phone">Phone number</option><option value="accessKeys">Access key</option></select></label>
       <button class="secondary" (click)="filtersOpen=!filtersOpen" [attr.aria-expanded]="filtersOpen" aria-controls="directory-filters">Filters{{activeFilters?' ('+activeFilters+')':''}}</button>@if (activeFilters||filters.q) {
       <button class="quiet" (click)="reset()">Clear filters</button>
     }

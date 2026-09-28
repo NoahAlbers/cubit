@@ -20,6 +20,10 @@ module.exports=async({base,db,staff,member})=>{
   assert.equal((await get('/api/cubit/members','GET',null,{},null)).status,401);
   assert.equal((await get('/api/cubit/members','GET',null,{},jwtHelper.GenerateJWT(member))).status,403);
   const list=await get('/api/cubit/members?q=demo');assert.equal(list.status,200);assert.equal(list.data.total,1);assert.equal(list.data.rows[0].email,'demo@example.test');assert.equal(list.data.rows[0].status,'Inactive');assert.equal(list.data.rows[0].sourceBalance,999);assert.equal(list.data.rows[0].balance,999);
+  assert.equal((await get('/api/cubit/members?q=fakekey&field=accessKeys')).data.total,1);
+  assert.equal((await get('/api/cubit/members?q=FAKEKEY')).data.total,1);
+  assert.equal((await get('/api/cubit/members?q=0000abcd&field=accessKeys')).data.rows[0].enabledKeys,1,'Disabled keys searchable without enabling access');
+  assert.equal((await get('/api/cubit/members?q=unassigned-key&field=accessKeys')).data.total,0);assert.equal(list.headers.get('X-Cubit-Snapshot'),snapshot.id);
   const profile=await get('/member/'+member.id);assert.equal(profile.data.email,'demo@example.test');
   const billing=await get('/api/cubit/members/'+member.id+'/billing');assert.equal(billing.data.estimated,true);assert.equal(billing.data.sourceBalance,999);assert.ok(billing.data.charges.every(c=>c.id.startsWith('estimate:')));
   for(const path of ['/member/plans/'+member.id,'/key/memberActivity/'+member.id,'/transaction/memberTransactions/'+member.id,'/accessLog/events?period=all','/api/cubit/reports?from=2026-08-01&to=2026-09-01','/api/cubit/plan-catalog','/api/cubit/automation'])assert.equal((await get(path)).status,200,path);

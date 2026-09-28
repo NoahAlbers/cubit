@@ -26,7 +26,7 @@ Parallel mode preserves source status and stored balance. Past-due amounts and h
 
 ### Member directory and profiles
 
-- Search by name, contact email, PayPal email, and phone number; filter by membership status, plan, and recent activity.
+- Search by name, contact email, PayPal email, phone number, and enabled or disabled access keys; filter by membership status, plan, and recent activity.
 - Sort by name, contact, status, plan, last key use, and balance. Choose a page size and jump between pages.
 - Members, Overdue and Access log use matching pagination controls above and below the list. First/Previous appear only after page one.
 - Return from a profile with the previous list's filters, sort, page, and scroll position preserved. Overdue and access lists also retain their state.

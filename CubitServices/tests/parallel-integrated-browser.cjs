@@ -19,6 +19,9 @@ module.exports = async ({base, token, member, snapshot}) => {
     await page.goto(base+'/memberlist');
     await page.locator('.directory-desktop .member-name').filter({hasText:'Demo Person'}).waitFor();
     assert.equal(await page.getByRole('button',{name:'Add member',exact:true}).count(),0);
+    await page.getByRole('combobox',{name:'Search field'}).selectOption('accessKeys');
+    await page.getByRole('searchbox',{name:'Search members'}).fill('fakekey');
+    await page.waitForResponse(r=>r.url().includes('/api/cubit/members?')&&r.url().includes('q=fakekey'));
     await page.locator('.directory-desktop .member-name').filter({hasText:'Demo Person'}).waitFor();
     await page.locator('.directory-desktop .member-name').filter({hasText:'Demo Person'}).click();
     await page.waitForFunction(()=>document.querySelector('input[formcontrolname=email]')?.value==='demo@example.test');

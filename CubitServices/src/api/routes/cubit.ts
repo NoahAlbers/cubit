@@ -19,7 +19,9 @@ router.get('/members', async (req, res, next) => {
     const q = req.query;
     if (
       q.field &&
-      !['all', 'firstName', 'lastName', 'email', 'paypalEmail', 'phone'].includes(String(q.field))
+      !['all', 'firstName', 'lastName', 'email', 'paypalEmail', 'phone', 'accessKeys'].includes(
+        String(q.field),
+      )
     )
       return res.status(400).json({ message: 'Invalid search field.' });
     return res.json(filterDirectory(await directoryRows(), q));

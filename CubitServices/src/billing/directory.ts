@@ -12,7 +12,9 @@ import { byMember, directoryBilling } from './directory-snapshot';
 
 export function matchesSearch(member: any, query: string, field = 'all') {
   const fields =
-    field === 'all' ? ['firstName', 'lastName', 'email', 'paypalEmail', 'phone'] : [field];
+    field === 'all'
+      ? ['firstName', 'lastName', 'email', 'paypalEmail', 'phone', 'accessKeys']
+      : [field];
   const normalized = query.trim().toLowerCase();
   if (!normalized) return true;
   const phone = String(member.phone || '').replace(/\D/g, '');
