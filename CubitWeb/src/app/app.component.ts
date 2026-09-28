@@ -45,7 +45,7 @@ export class AppComponent implements OnInit {
     {label:'Access log',icon:'access',path:'/accessLog'},
     {label:'Audit log',icon:'audit',path:'/audit'},
     {label:'Reports',icon:'reports',path:'/reports'},
-    {label:'Snapshot & subscription links',icon:'reports',path:'/parallel',liveOnly:true},
+    {label:'Snapshot status',icon:'reports',path:'/parallel',liveOnly:true},
     {id:'settings',label:'Settings & automation',icon:'settings',path:'/automation',children:[{label:'Billing & processing',path:'/automation'},{label:'Plan catalog',path:'/plans'},{label:'Backups & recovery',path:'/automation',fragment:'backups'},{label:'System health',path:'/automation',fragment:'system-health'}]},
     {label:'Organization Management',icon:'organization',path:'/organization',administration:true},
   ];

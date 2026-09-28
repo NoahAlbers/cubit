@@ -31,9 +31,10 @@ On 2026-09-25, Codex deployed `0d8093f` after [GitHub CI 36182116117](https://gi
   payment import; investigate failures and reconciliation differences. Owner: Unassigned.
 - [ ] Complete the longer billing/access comparison period and controller inventory
   in the parallel-run plan before any operational cutover. Owner: Unassigned.
-- [ ] Obtain actual PayPal subscription identifiers through an approved export or
-  scoped reader, then verify membership links. Email-only matches are not sufficient;
-  subscription cancellation processing remains disabled. Owner: Unassigned.
+- [ ] Build and validate a PayPal export/import workflow for subscription identifiers
+  and membership matching. Manual subscription linking has been removed. Email-only
+  matches are not sufficient; subscription cancellation processing remains disabled.
+  Owner: Unassigned.
 
 On 2026-09-25, Codex deployed `f7300c3` after [GitHub CI 36163957957](https://github.com/NoahAlbers/cubit/actions/runs/36163957957) passed. Trusted-browser metadata, private successful-sign-in history, organization time zone/currency, administrator backup-failure reviews, and retained health charts passed isolated database/browser tests and desktop/mobile layout checks. Fresh and existing schemas matched the entities. Both hosted workspaces applied migrations 14–19 after backups; HTTPS, the administrator MFA challenge, services and backup-worker heartbeat passed. Review health samples were confirmed in storage; demo sample storage remained empty. Eastern Time (`America/New_York`) and USD remain the defaults. Approximate sign-in location still requires an operator-maintained local City MMDB file. Real administrator pages were not accessed by bypassing MFA; their interaction checks used the local/isolated workspaces. These results do not close the operational gates below.
 

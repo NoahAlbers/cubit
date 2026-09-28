@@ -16,7 +16,7 @@ restored and verified the mirror along with the review/demo data. See the
 
 The implemented UI is a dedicated read-only workspace with source lists, member
 details and a pure billing estimate. Ordinary review screens still use the editable
-review copy. Subscription annotations are separate and audited. Independent PayPal
+review copy. Manual subscription linking is removed; a future PayPal export will supply subscription details. Independent PayPal
 reporting, actual subscription-ID population, full access-discrepancy reports,
 controller inventory, full-day/monthly observation and cutover approval remain open.
 
@@ -110,7 +110,7 @@ Do not insert Cubit as a proxy or add synchronous Cubit requests to the live doo
   an empty local schema, recalculates charges/statuses and creates test credentials.
   Do not schedule it or adapt it by simply removing the empty-database safeguard.
 - The normal staff screens and `/parallel` inspector use a separate SELECT-only connection to
-  `cubit_parallel`. Review authentication, audit and subscription annotations remain
+  `cubit_parallel`. Review authentication and audit remain
   in the control database. `PARALLEL_INTEGRATED` enables the normal-screen adapter;
   `PARALLEL_REQUIRED` retires the editable review option. The source database remains
   SELECT-only to the application. The synthetic demo cannot read it.

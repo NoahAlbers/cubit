@@ -51,7 +51,7 @@ membership flags do not verify physical controller behavior.
 Waivers/documents, staff notes, staff audit history, unresolved PayPal events and
 portal identities are not in the feed. Their pages state this instead of using old
 review records. Account security, staff administration, system health and backups
-continue to manage Cubit itself. Subscription annotations remain local and audited.
+continue to manage Cubit itself.
 
 ## Retiring the old review business data
 
@@ -62,7 +62,7 @@ The script refuses unexpected schemas or an absent enabled administrator, verifi
 its preview, rolls back on failure, and checks zero remaining business rows plus
 unchanged staff credential fingerprints before committing. It preserves staff
 accounts/security, organization/backup settings, audit history, waiver templates,
-and source subscription annotations. Member-linked documents remain recoverable
+and retained historical records. Member-linked documents remain recoverable
 from the archive. The source mirror, demo and live Tonic are not deleted.
 
 Keep all three flags enabled after retirement. Disabling them does not restore the
@@ -77,18 +77,13 @@ The deployed source adapter and administrator sign-ins passed post-retirement
 checks. Use the manifest and protected archive for operator recovery; never
 restore that archive over Tonic or the running mirror.
 
-## Subscription matching
+## Future PayPal export
 
-Store confirmed merchant account + subscription ID + source membership ID in the
-separate review control database, with reason, staff identity and optimistic revision.
-The source membership is never edited. One subscription cannot be assigned to two
-memberships. Cancellation processing remains disabled.
-
-Email is a candidate lookup, not a subscription identity. A payer can fund multiple
-members or replace a subscription. Obtain actual IDs from an authorized provider
-export or separate reporting app; do not infer an ID, auto-confirm by email, or change
-the operational PayPal importer. Modern `I-` subscription IDs are supported by this
-linking form; legacy agreements require an explicit identifier mapping before use.
+Subscription details will come from a future authorized PayPal export/import workflow.
+Manual subscription linking is removed. Email can help identify candidates but does
+not prove which subscription belongs to a membership. Import validation and staff
+acceptance are required before cancellation processing can be enabled. No PayPal
+connection or automatic cancellation handling is enabled by this change.
 
 ## Observe, stop and recover
 
