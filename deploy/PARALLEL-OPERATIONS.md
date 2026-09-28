@@ -69,6 +69,14 @@ Keep all three flags enabled after retirement. Disabling them does not restore t
 old copy: use the operator recovery archive if rollback is needed. The app must not
 silently create a new editable member database or provision source identities.
 
+The review VPS completed this retirement on 2026-09-28 with release `2c1d132`.
+The protected final archive and outcome manifest are under
+`/var/lib/cubit-retirement/20260928T123335Z` on both hosts. Four staff accounts
+remain in the control database; the mirror and synthetic demo remain separate.
+The deployed source adapter and administrator sign-ins passed post-retirement
+checks. Use the manifest and protected archive for operator recovery; never
+restore that archive over Tonic or the running mirror.
+
 ## Subscription matching
 
 Store confirmed merchant account + subscription ID + source membership ID in the

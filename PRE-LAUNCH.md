@@ -1,6 +1,6 @@
 # Cubit pre-launch checklist
 
-Last reviewed: **2026-09-25**. **Not cleared for operational launch.**
+Last reviewed: **2026-09-28**. **Not cleared for operational launch.**
 
 This is the release gate for replacing the existing membership system, not a
 feature wish list. The review VPS must keep live doors, PayPal imports and email
@@ -22,6 +22,8 @@ old editable member-data copy is retired after a recovery checkpoint. This does 
   mutations; preserve source status/balance and label projections.
 - [ ] Complete staff acceptance testing against the same Tonic snapshot, including
   canceled, overdue and credit cases and key ownership searches. Owner: Unassigned.
+
+On 2026-09-28, Codex deployed `2c1d132` after [GitHub CI 36420790584](https://github.com/NoahAlbers/cubit/actions/runs/36420790584) passed. The fresh off-server recovery checkpoint restored successfully into an isolated database, including waiver files and checksums. A final SQL recovery archive was retained root-only on both hosts before retiring the disposable review business records. All four staff identities and credential fingerprints were preserved, along with operational settings and audit history. Mandatory parallel mode is enabled; the old editable workspace cannot be selected. The deployed adapter matched every source member's identity, status and stored balance, all six dataset counts and the payment total. Every enabled and disabled key found its owner through member search. Three explicitly provisioned administrator accounts passed normal HTTPS sign-in, organization access and snapshot access after retirement. Recovery configuration was refreshed on the backup host. These checks do not establish physical door enforcement or approve operational cutover; historic billing projections remain estimates.
 
 On 2026-09-25, Codex deployed `0d8093f` after [GitHub CI 36182116117](https://github.com/NoahAlbers/cubit/actions/runs/36182116117) passed. A manual and a scheduled source snapshot published successfully; the next source run was scheduled 15 minutes later. Export/delivery took approximately 3–4 seconds. An exact replay was rejected as a duplicate without adding records. Source service start times and restart counts were unchanged. The source account has column-level SELECT only and password-column access was denied. Cubit's mirror reader has SELECT only; isolated tests rejected business writes, stale/conflicting links, demo access, malformed snapshots and interrupted imports. Desktop/mobile synthetic UI checks and the deployed reader passed. The backup VPS independently restored all three databases, including mirror counts/payment totals/table integrity, with no working database replaced. Recovery configuration was refreshed in the authorized root-only archive. Existing staff MFA was not bypassed for browser verification.
 
