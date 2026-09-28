@@ -37,7 +37,8 @@ module.exports=async({base,db,staff,member})=>{
   assert.equal(await fingerprint(),before,'Parallel GETs and blocked writes leave review business rows unchanged');
   const review=await get('/member/'+member.id,'GET',null,{'X-Cubit-Workspace':'review'});assert.equal(review.data.email,member.email,'Explicit review remains a separate dataset');
   if(process.env.CUBIT_BROWSER_TESTS==='yes') await require('./parallel-integrated-browser.cjs')({base,token:token(),member,snapshot});
-  process.env.PARALLEL_REQUIRED='true';assert.equal((await get('/member/'+member.id,'GET',null,{'X-Cubit-Workspace':'review'})).status,403);delete process.env.PARALLEL_REQUIRED;
+  process.env.PARALLEL_REQUIRED='true';assert.equal((await get('/member/'+member.id,'GET',null,{'X-Cubit-Workspace':'review'})).status,403);
+  process.env.PARALLEL_ENABLED='false';assert.equal((await get('/member/'+member.id)).status,503,'Required feed fails closed when disconnected');process.env.PARALLEL_ENABLED='true';delete process.env.PARALLEL_REQUIRED;
   config.runtimeMode='hosted-demo';assert.equal((await get('/member/'+member.id,'GET',null,{'X-Cubit-Workspace':'parallel'})).status,503,'Demo never substitutes or exposes source data');
   console.log('PASS: integrated snapshot contracts, source/review isolation, all mutation methods denied, side-effect GET blocked, pinned generations, reports and missing-key attribution.');
  }finally{config.runtimeMode=old.mode;source.integratedSnapshot=old.reader;for(const [key,value]of [['PARALLEL_ENABLED',old.enabled],['PARALLEL_INTEGRATED',old.integrated]]){if(value===undefined)delete process.env[key];else process.env[key]=value;}}

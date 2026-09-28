@@ -16,7 +16,7 @@ export const integratedEnabled = () =>
   localConfig.runtimeMode === 'hosted-review' &&
   process.env.PARALLEL_INTEGRATED === 'true';
 export const integratedRequired = () =>
-  integratedEnabled() && process.env.PARALLEL_REQUIRED === 'true';
+  localConfig.runtimeMode === 'hosted-review' && process.env.PARALLEL_REQUIRED === 'true';
 const business =
   /^\/(?:member|plan|transaction|key|accessLog)(?:\/|$)|^\/api\/(?:cubit|waivers|portal)(?:\/|$)|^\/api\/account\/members(?:\/|$)/;
 const staffPreferences = /^\/api\/cubit\/staff\/preferences(?:\/|$)/;
@@ -34,7 +34,7 @@ integratedMiddleware.use((req, res, next) => {
     return next();
   }
   if (!integratedEnabled()) {
-    if (selection === 'parallel')
+    if (selection === 'parallel' || integratedRequired())
       return res
         .status(503)
         .json({ message: 'Parallel testing is not available in this environment.' });
