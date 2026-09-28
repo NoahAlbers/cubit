@@ -32,6 +32,7 @@ async function main(){
  await require('./backup-reviews.cjs')({db,request,Member,jwtHelper});
  await require('./system-health.cjs')({request,staffToken:token,memberToken:jwtHelper.GenerateJWT(existing)});
  await require('./parallel-api.cjs')({request,staff,member:existing});
+ await require('./parallel-integrated.cjs')({base,db,staff,member:existing});
  await require('./request-schemas.cjs')({request,db,memberId:existing.id});
  await require('./organization-management.cjs')({request,db,administrator:staff,member:existing});
  await require('./grace-reversibility.cjs')({request,db});
@@ -250,5 +251,6 @@ async function main(){
  console.log('PASS: password policy, next-request password/role/logout revocation, disabled logins, legacy-token rejection and ambiguous normalized email protection.');
  console.log('PASS: retained legacy history, transactional audit attribution/snapshots, payment/plan/fob/note/profile history, password redaction, audit filters/pagination, private preferences, stale edits and no-send alert preview.');
  console.log('PASS: explicit matching, ambiguity, atomic member creation, duplicate/concurrent capture and identity guards, refunds, permissions, catalog changes/retirement/restoration, stale edits and preserved historical/future rates and charges.');
+ await require('./retire-review.cjs')();
 }
 main().catch(e=>{console.error(e);process.exitCode=1}).finally(async()=>{if(server)await new Promise(resolve=>server.close(resolve));if(db.isInitialized)await db.destroy();});

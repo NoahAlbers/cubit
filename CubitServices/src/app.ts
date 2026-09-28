@@ -1,3 +1,8 @@
+import {
+  integratedEnabled,
+  integratedRequired,
+  integratedMiddleware,
+} from './parallel/integrated-routes';
 import { startHealthHistory } from './system/history';
 import { organizationCurrency } from './organization/currency';
 import { organizationTimeZone } from './organization/time';
@@ -47,6 +52,8 @@ app.get('/health', (req, res) => {
     mode: localConfig.runtimeMode === 'local' ? 'local-development' : localConfig.runtimeMode,
     dataMode: localConfig.dataMode,
     databaseReady: AppDataSource.isInitialized,
+    parallelIntegrated: integratedEnabled(),
+    parallelRequired: integratedRequired(),
     workspaceLabel:
       localConfig.runtimeMode === 'hosted-demo'
         ? 'Synthetic demo · fictional records only'
@@ -126,6 +133,7 @@ app.use(async (_req, _res, next) => {
     next(error);
   }
 });
+app.use(integratedMiddleware);
 app.use('/api/organization', require('./api/routes/organization'));
 app.use('/api/parallel', require('./api/routes/parallel'));
 app.use('/api/account', require('./api/routes/account-security'));

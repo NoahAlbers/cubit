@@ -109,10 +109,11 @@ Do not insert Cubit as a proxy or add synchronous Cubit requests to the live doo
 - `dev/import-legacy-data.cjs` is a **one-time local review importer**. It requires
   an empty local schema, recalculates charges/statuses and creates test credentials.
   Do not schedule it or adapt it by simply removing the empty-database safeguard.
-- The implemented `/parallel` workspace uses a separate SELECT-only connection to
+- The normal staff screens and `/parallel` inspector use a separate SELECT-only connection to
   `cubit_parallel`. Review authentication, audit and subscription annotations remain
-  in the control database. `PARALLEL_ENABLED` enables only these dedicated routes;
-  it does not make ordinary review routes read-only. The synthetic demo is denied.
+  in the control database. `PARALLEL_INTEGRATED` enables the normal-screen adapter;
+  `PARALLEL_REQUIRED` retires the editable review option. The source database remains
+  SELECT-only to the application. The synthetic demo cannot read it.
 - Hosted code in `CubitServices/src/app.ts` blocks `/paypal` and `/ACON`. Keep those
   blocks. The old ACON handlers can log events or update membership information,
   including on GET requests, so they are not safe discovery endpoints.
@@ -120,8 +121,8 @@ Do not insert Cubit as a proxy or add synchronous Cubit requests to the live doo
   charges, balances and statuses. For example, GET `/api/portal` invokes
   `ensureBilling()`. A read-only UI alone would not prevent changes.
 - The backup/audit server is connected with restricted credentials and independent
-  retention. Extend its coverage to the parallel-run dataset and test that restoration;
-  current review-backup success does not automatically prove the new dataset is covered.
+  retention. The mirror is included in encrypted off-server backups and isolated
+  recovery verification. Repeat recovery checks after backup/schema changes.
 
 ## Phase 1 — Confirm the actual operating setup
 

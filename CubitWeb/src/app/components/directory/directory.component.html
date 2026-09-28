@@ -4,17 +4,17 @@
       <div class="stats compact-stats">
         @if (!overdue) {
           <button type="button" class="stat stat-link" (click)="showActive()" aria-label="Show active members"><span>ACTIVE MEMBERS</span><strong>{{data.summary.active}}</strong></button>
-          <a class="stat stat-link" routerLink="/overdue"><span>PAST DUE MEMBERS</span><strong>{{data.summary.overdue}}</strong></a>
+          <a class="stat stat-link" routerLink="/overdue"><span>{{workspace.parallel?"ESTIMATED PAST DUE":"PAST DUE MEMBERS"}}</span><strong>{{data.summary.overdue}}</strong></a>
           <a class="stat stat-link" routerLink="/accessLog" [queryParams]="{period:'30',result:'granted',page:1}" aria-label="View successful check-ins in the last 30 days"><span>UNIQUE CHECK-INS · LAST 30 DAYS</span><strong>{{data.summary.uniqueCheckins30Days}}</strong></a>
         }
         @if (overdue) {
-          <div class="stat"><span>PAST DUE MEMBERS</span><strong>{{data.total}}</strong></div>
-          <button class="stat stat-link" (click)="filters.access='enabled';filtersOpen=true;apply()"><span>WITH ACCESS ENABLED</span><strong>{{data.summary.filteredAccessAllowed}}</strong></button>
+          <div class="stat"><span>{{workspace.parallel?"ESTIMATED PAST DUE":"PAST DUE MEMBERS"}}</span><strong>{{data.total}}</strong></div>
+          <button class="stat stat-link" (click)="filters.access='enabled';filtersOpen=true;apply()"><span>{{workspace.parallel?'SOURCE ELIGIBLE':'WITH ACCESS ENABLED'}}</span><strong>{{data.summary.filteredAccessAllowed}}</strong></button>
           <div class="stat"><span>LONGEST PAST DUE</span><strong>{{data.summary.oldestDays}} days</strong></div>
         }
       </div>
     }
-    @if (!overdue) {
+    @if (!overdue&&!workspace.parallel) {
       <a class="button primary" routerLink="/member/New" [queryParams]="navigation.memberQuery">＋ Add member</a>
     }
     @if (overdue) {
@@ -66,7 +66,7 @@
         <th [attr.aria-sort]="ariaSort('contact')"><button class="column-sort" (click)="sortBy('contact')" title="Sort by contact email">Contact <app-arrow [name]="sortIcon('contact')"></app-arrow></button></th>
         <th [attr.aria-sort]="ariaSort(overdue?'access':'status','plan')"><div class="split-sort"><button class="column-sort" (click)="sortBy(overdue?'access':'status')">{{overdue?'Access':'Status'}} <app-arrow [name]="sortIcon(overdue?'access':'status')"></app-arrow></button><span aria-hidden="true">&</span><button class="column-sort" (click)="sortBy('plan')">Plan <app-arrow [name]="sortIcon('plan')"></app-arrow></button></div></th>
         <th [attr.aria-sort]="ariaSort(overdue?'oldest':'recent')"><button class="column-sort" (click)="sortBy(overdue?'oldest':'recent')">{{overdue?'Behind by':'Last key use'}} <app-arrow [name]="sortIcon(overdue?'oldest':'recent')"></app-arrow></button></th>
-        <th class="number" [attr.aria-sort]="ariaSort(overdue?'amount':'balance')"><button class="column-sort" (click)="sortBy(overdue?'amount':'balance')">{{overdue?'Past due':'Balance'}} <app-arrow [name]="sortIcon(overdue?'amount':'balance')"></app-arrow></button></th>
+        <th class="number" [attr.aria-sort]="ariaSort(overdue?'amount':'balance')"><button class="column-sort" (click)="sortBy(overdue?'amount':'balance')">{{workspace.parallel?(overdue?'Estimated past due':'Tonic balance'):(overdue?'Past due':'Balance')}} <app-arrow [name]="sortIcon(overdue?'amount':'balance')"></app-arrow></button></th>
         @if (overdue) {
           <th><span class="sr-only">Member actions</span></th>
         }
@@ -80,7 +80,7 @@
         <td>@if (!overdue) {
           <span class="badge" [appMemberStatus]="m.status">{{m.status}}</span>
           }@if (overdue) {
-          <span class="badge" [class.active]="m.accessAllowed">{{m.accessAllowed ? 'Access enabled' : (m.status === 'Canceled' ? 'Membership ended' : 'Access disabled')}}</span>
+          <span class="badge" [class.active]="m.accessAllowed">{{workspace.parallel?(m.accessAllowed?'Source eligible':'Source ineligible'):(m.accessAllowed ? 'Access enabled' : (m.status === 'Canceled' ? 'Membership ended' : 'Access disabled'))}}</span>
           }<small>{{m.planName}}</small></td>
           @if (!overdue) {
             <td>{{m.lastKeyUsage ? (m.lastKeyUsage |orgDate:'MMM d, y') : 'Never used'}}</td>
@@ -108,7 +108,7 @@
   <option value="amount">Past due amount</option>
   }</select></label><button class="secondary" (click)="filters.order=filters.order==='asc'?'desc':'asc';apply()">{{filters.order==='asc'?'Ascending':'Descending'}} <app-arrow [name]="filters.order==='asc'?'sort-ascending':'sort-descending'"></app-arrow></button></div>
   @for (m of data.rows; track m) {
-    <article class="member-summary"><div class="section-heading"><div class="member-cell"><svg class="avatar member-identicon" width="36" height="36" [appMemberIcon]="m.id" aria-hidden="true" focusable="false"></svg><a class="member-name" [routerLink]="['/member',m.id]" [queryParams]="navigation.memberQuery">{{m.firstName}} {{m.lastName}}</a></div><span class="badge" [appMemberStatus]="m.status">{{m.status}}</span></div><p><b>{{m.accessAllowed?'Entry allowed':'Entry blocked'}}</b> · {{m.accessAllowed?(m.pastDue?'Within grace period':'Current'):m.statusReason||(!m.enabledKeys?'No enabled key':'Review membership')}}</p><div class="section-heading"><span>{{m.planName}}</span><b>{{overdue?'Past due':m.balance<0?'Credit':m.balance>0?'Amount due':'Balance'}}: {{(overdue?m.pastDue:m.balance<0?-m.balance:m.balance)|orgCurrency}}</b></div><small>{{overdue?m.daysPastDue+' days behind':'Last key use: '+(m.lastKeyUsage?(m.lastKeyUsage|orgDate:'MMM d, y'):'Never')}}</small><details><summary>Contact details</summary><a [href]="'mailto:'+m.email">{{m.email}}</a><p>{{(m.phone | phone)||'No phone on file'}}</p>@if (m.paypalEmail&&m.paypalEmail!==m.email) {
+    <article class="member-summary"><div class="section-heading"><div class="member-cell"><svg class="avatar member-identicon" width="36" height="36" [appMemberIcon]="m.id" aria-hidden="true" focusable="false"></svg><a class="member-name" [routerLink]="['/member',m.id]" [queryParams]="navigation.memberQuery">{{m.firstName}} {{m.lastName}}</a></div><span class="badge" [appMemberStatus]="m.status">{{m.status}}</span></div><p><b>{{workspace.parallel?(m.accessAllowed?'Source eligible':'Source ineligible'):(m.accessAllowed?'Entry allowed':'Entry blocked')}}</b> · {{workspace.parallel?'Physical door access not verified':m.accessAllowed?(m.pastDue?'Within grace period':'Current'):m.statusReason||(!m.enabledKeys?'No enabled key':'Review membership')}}</p><div class="section-heading"><span>{{m.planName}}</span><b>{{overdue?'Past due':m.balance<0?'Credit':m.balance>0?'Amount due':'Balance'}}: {{(overdue?m.pastDue:m.balance<0?-m.balance:m.balance)|orgCurrency}}</b></div><small>{{overdue?m.daysPastDue+' days behind':'Last key use: '+(m.lastKeyUsage?(m.lastKeyUsage|orgDate:'MMM d, y'):'Never')}}</small><details><summary>Contact details</summary><a [href]="'mailto:'+m.email">{{m.email}}</a><p>{{(m.phone | phone)||'No phone on file'}}</p>@if (m.paypalEmail&&m.paypalEmail!==m.email) {
     <p>PayPal: {{m.paypalEmail}}</p>
   }</details>@if (overdue) {
   <a [routerLink]="['/member',m.id]" [queryParams]="navigation.memberQuery" fragment="access-keys">Manage access <app-arrow name="arrow-right"></app-arrow></a>

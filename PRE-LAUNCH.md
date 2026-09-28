@@ -13,10 +13,15 @@ review alone does not approve launch. Owners marked **Unassigned** must be named
 by the makerspace; target dates and sign-off dates must not be invented.
 
 The [read-only parallel-run plan](deploy/PARALLEL-RUN-PLAN.md) keeps Tonic operational.
-The dedicated mirror feed is enabled; ordinary review screens remain an independent
-editable copy. This does not waive any cutover or integration gate below.
+The mirror feed is enabled. Normal staff screens support read-only Tonic data; the
+old editable member-data copy is retired after a recovery checkpoint. This does not waive any cutover or integration gate below.
 
 ## Verified foundations
+
+- [x] Integrate normal staff screens with pinned snapshots; reject parallel business
+  mutations; preserve source status/balance and label projections.
+- [ ] Complete staff acceptance testing against the same Tonic snapshot, including
+  canceled, overdue and credit cases and key ownership searches. Owner: Unassigned.
 
 On 2026-09-25, Codex deployed `0d8093f` after [GitHub CI 36182116117](https://github.com/NoahAlbers/cubit/actions/runs/36182116117) passed. A manual and a scheduled source snapshot published successfully; the next source run was scheduled 15 minutes later. Export/delivery took approximately 3–4 seconds. An exact replay was rejected as a duplicate without adding records. Source service start times and restart counts were unchanged. The source account has column-level SELECT only and password-column access was denied. Cubit's mirror reader has SELECT only; isolated tests rejected business writes, stale/conflicting links, demo access, malformed snapshots and interrupted imports. Desktop/mobile synthetic UI checks and the deployed reader passed. The backup VPS independently restored all three databases, including mirror counts/payment totals/table integrity, with no working database replaced. Recovery configuration was refreshed in the authorized root-only archive. Existing staff MFA was not bypassed for browser verification.
 

@@ -1,1 +1,5 @@
 @use './cubit';
+
+.parallel-context{margin:16px 4% 0;padding:14px 18px;border:1px solid #bdd4f3;border-left:4px solid #094fa3;border-radius:8px;background:#edf4ff;display:flex;align-items:center;justify-content:space-between;gap:16px;color:#19304a}
+.parallel-context div{display:grid;gap:6px}.parallel-context span,.parallel-context small{font-size:12px;line-height:1.5}.parallel-context button{flex-shrink:0}.parallel-context.review-context{background:#fff8e5;border-color:#e5d9b8}.workspace-picker select{max-width:240px;font-size:12px;min-height:38px}
+@media(max-width:800px){.parallel-context{margin:12px;flex-direction:column;align-items:stretch}.workspace-picker select{max-width:210px}.account-controls{flex-wrap:wrap}}

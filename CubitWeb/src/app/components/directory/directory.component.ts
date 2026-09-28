@@ -1,3 +1,4 @@
+import { WorkspaceService } from '../../services/workspace.service';
 import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -18,7 +19,7 @@ export class DirectoryComponent implements OnInit, OnDestroy {
   pageSizes = [10,20,50,100];
   private changes = new Subject<void>(); private subscription = new Subscription();
   private restorePosition = true;
-  constructor(private http: HttpClient, private route: ActivatedRoute, private router: Router, public navigation: ListNavigationService) {}
+  constructor(public workspace:WorkspaceService,private http: HttpClient, private route: ActivatedRoute, private router: Router, public navigation: ListNavigationService) {}
   ngOnInit() {
     this.overdue = this.route.snapshot.data.overdue === true;
     this.filters.sort = this.overdue ? 'oldest' : 'name';

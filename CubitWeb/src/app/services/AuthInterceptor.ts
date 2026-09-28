@@ -1,3 +1,4 @@
+import { WorkspaceService } from './workspace.service';
 import { OrganizationService } from './organization.service';
 import { Injector, Injectable } from "@angular/core";
 import { from as fromPromise, Observable } from "rxjs";
@@ -19,9 +20,11 @@ export class AuthInterceptor implements HttpInterceptor {
         "Bearer " + this.auth.authToken
       ),
     });
+    const workspace=this.injector.get(WorkspaceService);
+    if(workspace.ready){reqClone=reqClone.clone({setHeaders:{'X-Cubit-Workspace':workspace.parallel?'parallel':'review',...(workspace.parallel&&workspace.snapshot?.id?{'X-Cubit-Snapshot':workspace.snapshot.id,'X-Cubit-Grace-Days':String(workspace.snapshot.comparisonGraceDays??60)}:{})}});}
     return next.handle(reqClone).pipe(
       tap(
-        event => {if(event instanceof HttpResponse){const timezone=event.headers.get('X-Cubit-Timezone');if(timezone)this.injector.get(OrganizationService).acceptTimezone(timezone);const currency=event.headers.get('X-Cubit-Currency');if(currency&&Intl.supportedValuesOf('currency').includes(currency))this.injector.get(OrganizationService).currency=currency;}},
+        event => {if(event instanceof HttpResponse){const timezone=event.headers.get('X-Cubit-Timezone');if(timezone)this.injector.get(OrganizationService).acceptTimezone(timezone);const currency=workspace.parallel?'USD':event.headers.get('X-Cubit-Currency');if(currency&&Intl.supportedValuesOf('currency').includes(currency))this.injector.get(OrganizationService).currency=currency;}},
         (err: any) => {
           if (err instanceof HttpErrorResponse) {
             if (err.status !== 401 || req.url==='/login' || req.url==='/api/account/redeem') {

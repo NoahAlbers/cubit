@@ -1,3 +1,4 @@
+import { WorkspaceService } from './services/workspace.service';
 import { OrganizationService } from './services/organization.service';
 import { IdleSessionService } from './services/security/idle-session.service';
 import { Component, HostListener, OnInit, ChangeDetectionStrategy } from '@angular/core';
@@ -44,13 +45,36 @@ export class AppComponent implements OnInit {
     {label:'Access log',icon:'access',path:'/accessLog'},
     {label:'Audit log',icon:'audit',path:'/audit'},
     {label:'Reports',icon:'reports',path:'/reports'},
-    {label:'Parallel workspace',icon:'reports',path:'/parallel',liveOnly:true},
+    {label:'Snapshot & subscription links',icon:'reports',path:'/parallel',liveOnly:true},
     {id:'settings',label:'Settings & automation',icon:'settings',path:'/automation',children:[{label:'Billing & processing',path:'/automation'},{label:'Plan catalog',path:'/plans'},{label:'Backups & recovery',path:'/automation',fragment:'backups'},{label:'System health',path:'/automation',fragment:'system-health'}]},
     {label:'Organization Management',icon:'organization',path:'/organization',administration:true},
   ];
-  constructor(public organization:OrganizationService,public auth: AuthService, public router: Router, private http: HttpClient, public navigation:ListNavigationService, private idle:IdleSessionService) {
+  constructor(public workspace:WorkspaceService,public organization:OrganizationService,public auth: AuthService, public router: Router, private http: HttpClient, public navigation:ListNavigationService, private idle:IdleSessionService) {
     try {const saved=JSON.parse(localStorage.getItem('cubit.navigation')||'null');if(saved)this.sidebarCollapsed=saved.compact===true;}catch{}
     router.events.subscribe(e=>{if(e instanceof NavigationEnd){this.refreshAccountNotices();this.menuOpen=false;this.compactGroup=null;for(const item of this.staffNavigation.filter(item=>item.children))this.expandedGroups[item.id]=this.groupCurrent(item);}});
+  }
+  get parallelUnavailable(){
+    if(!this.workspace.parallel)return '';
+    const p=this.router.url.split(/[?#]/)[0];
+    if(p==='/member/New')return 'Create members in Tonic while parallel testing is active.';
+    if(p.startsWith('/account/access/'))return 'Source members are not Cubit login accounts. Source members cannot receive Cubit invitations during parallel testing.';
+    if(p.startsWith('/portal'))return 'The member portal uses separate review identities. Source records are not automatically enrolled as Cubit login accounts.';
+    if(p==='/waivers')return 'Waiver documents and signature records are not included in this Tonic feed. Review documents are not evidence of live compliance.';
+    if(p==='/payments')return 'The snapshot contains recorded transactions, but not unresolved PayPal events. Provider reconciliation is not connected yet.';
+    if(p==='/audit')return 'Tonic does not supply staff audit history in this export. Snapshot changes are separate from Cubit staff actions; review audit records are not substituted.';
+    return '';
+  }
+  async switchWorkspace(value:string){if(this.workspace.locked||!['parallel','review'].includes(value)||value===this.workspace.selection)return;if(await this.router.navigateByUrl('/memberlist'))this.workspace.choose(value as any);}
+  refreshSnapshot(){sessionStorage.removeItem('cubit.parallel.snapshot');window.location.reload();}
+  async prepareWorkspace(d:any){
+    this.workspace.available=!!d.parallelIntegrated&&this.auth.isStaff&&!this.auth.isDemo;this.workspace.locked=!!d.parallelRequired;if(this.workspace.locked)this.workspace.selection='parallel';this.workspace.error='';
+    if(!this.workspace.parallel){this.workspace.ready=true;return;}
+    try{
+      const snapshot=await this.http.get<any>('/api/parallel/status').toPromise();
+      if(!snapshot?.ready)throw Error('No complete snapshot is available yet.');
+      // Pin only for this page/navigation session. An explicit refresh adopts new data.
+      this.workspace.snapshot=snapshot;this.workspace.ready=true;
+    }catch(e){this.workspace.error=e.error?.message||e.message||'Could not load the parallel snapshot.';this.workspace.ready=true;}
   }
   get compactNavigation(){return this.sidebarCollapsed&&window.innerWidth>800;}
   get showWorkspace(){return this.isAuthenticated&&!['/','/app-login'].includes(this.router.url.split(/[?#]/)[0]);}
@@ -119,9 +143,9 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     this.auth.isAuthenticated$.pipe(switchMap(signedIn=>{
-      this.organization.load();this.isAuthenticated=signedIn;this.lastNoticeCheck=0;this.refreshAccountNotices();this.workspaceLabel='';this.dataMode='';
+      this.organization.load();this.isAuthenticated=signedIn;this.lastNoticeCheck=0;this.refreshAccountNotices();this.workspaceLabel='';this.dataMode='';this.workspace.ready=false;
       return this.http.get<any>('/health').pipe(catchError(()=>of({dataMode:'',workspaceLabel:this.auth.isDemo?'Synthetic demo unavailable':'Workspace unavailable'})));
-    })).subscribe(d=>{this.dataMode=d.dataMode;this.workspaceLabel=d.mode==='hosted-review'?'':d.workspaceLabel||'Workspace';});
+    })).subscribe(d=>{this.dataMode=d.dataMode;this.workspaceLabel=d.mode==='hosted-review'?'':d.workspaceLabel||'Workspace';this.prepareWorkspace(d);});
   }
 
 

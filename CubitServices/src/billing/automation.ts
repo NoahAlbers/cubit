@@ -63,6 +63,8 @@ export async function automationPlan(
 }
 
 export async function runAutomation(preview: boolean, trigger: string, daily = false) {
+  if (process.env.PARALLEL_REQUIRED === 'true')
+    return { skipped: true, reason: 'Read-only Tonic sync; billing processing is disabled.' };
   await refreshOrganizationSettings();
   const id = daily ? `daily:${organizationDay()}` : randomUUID();
   try {

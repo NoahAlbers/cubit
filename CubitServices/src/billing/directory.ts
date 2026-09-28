@@ -49,7 +49,7 @@ export async function directoryRows() {
       .setParameters({ since, now })
       .groupBy('log.memberId')
       .getRawMany(),
-    AppDataSource.manager.find(MemberKey, { where: { status: 'Active' } }),
+    AppDataSource.manager.find(MemberKey),
     AppDataSource.manager.find(MemberPlan, { relations: { plan: true } }),
     AppDataSource.manager.find(Transaction),
     AppDataSource.manager.find(BillingCharge),
@@ -63,7 +63,10 @@ export async function directoryRows() {
     groupedAdjustments = byMember(adjustments);
   const logMap = new Map(logs.map((log) => [log.memberId, log]));
   const keyCounts = new Map<string, number>();
-  for (const key of keys) keyCounts.set(key.memberId, (keyCounts.get(key.memberId) || 0) + 1);
+  const groupedKeys = byMember(keys);
+  for (const key of keys)
+    if (key.status === 'Active')
+      keyCounts.set(key.memberId, (keyCounts.get(key.memberId) || 0) + 1);
   const result: any[] = [];
   for (const member of members) {
     const snapshot = directoryBilling(
@@ -92,6 +95,7 @@ export async function directoryRows() {
       statusReason: reason,
       billingSuspended: suspended,
       enabledKeys,
+      accessKeys: (groupedKeys.get(member.id) || []).map((k) => k.serialNumber).join(' '),
       accessAllowed: status === 'Active' && enabledKeys > 0,
       checkedIn30Days: Number(log?.checkedIn30Days || 0) === 1,
       balance: ledger.balance,
@@ -109,7 +113,7 @@ export async function directoryRows() {
   return result;
 }
 
-export function filterDirectory(rows: any[], query: Record<string, any>) {
+export function filterDirectory(rows: any[], query: Record<string, any>, asOf = organizationDay()) {
   let result = rows.filter((m) => matchesSearch(m, String(query.q || ''), query.field || 'all'));
   if (query.status) result = result.filter((m) => m.status === query.status);
   if (query.plan) result = result.filter((m) => m.planId === query.plan);
@@ -120,7 +124,7 @@ export function filterDirectory(rows: any[], query: Record<string, any>) {
   if (query.access === 'disabled') result = result.filter((m) => !m.accessAllowed);
   if (query.minDays) result = result.filter((m) => m.daysPastDue >= Number(query.minDays));
   if (query.minAmount) result = result.filter((m) => m.pastDue >= Number(query.minAmount));
-  const today = Date.parse(organizationDay());
+  const today = Date.parse(asOf);
   if (query.activity === 'never') result = result.filter((m) => !m.lastKeyUsage);
   if (query.activity === '30' || query.activity === '90')
     result = result.filter(
@@ -197,6 +201,6 @@ export function filterDirectory(rows: any[], query: Record<string, any>) {
       filteredPastDue: Math.round(result.reduce((sum, m) => sum + m.pastDue, 0) * 100) / 100,
       oldestDays: Math.max(0, ...result.map((m) => m.daysPastDue)),
     },
-    asOf: organizationDay(),
+    asOf,
   };
 }

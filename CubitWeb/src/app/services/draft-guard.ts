@@ -23,7 +23,7 @@ export class DraftGuard  {
   async confirmDiscard(){return (await this.dialog.open(DraftDialogComponent,{data:{canSave:false},ariaLabel:'Unsaved changes',width:'440px'}).afterClosed().toPromise())==='discard';}
   async canDeactivate(page:DraftPage) {
     if(!this.auth.validToken())return true;
-    if(!page.hasUnsavedChanges())return true;
+    if(!page || !page.hasUnsavedChanges())return true;
     const canSave=!!page.saveDraft && (page.canSaveDraft?.()??true);
     const choice=await this.dialog.open(DraftDialogComponent,{data:{canSave},ariaLabel:'Unsaved changes',width:'440px'}).afterClosed().toPromise();
     if(choice==='save')return page.saveDraft!();

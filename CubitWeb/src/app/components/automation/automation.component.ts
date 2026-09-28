@@ -1,3 +1,4 @@
+import { WorkspaceService } from '../../services/workspace.service';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ListNavigationService } from '../../services/list-navigation.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -10,7 +11,7 @@ import { HttpClient } from '@angular/common/http';
 export class AutomationComponent implements OnInit {
   data:any; settings:any; error='';message='';busy=false;preview:any;
   graceEnabled=true; graceDays=60;
-  constructor(private http:HttpClient, public navigation:ListNavigationService, private route:ActivatedRoute, private router:Router){}
+  constructor(public workspace:WorkspaceService,private http:HttpClient, public navigation:ListNavigationService, private route:ActivatedRoute, private router:Router){}
   ngOnInit(){this.load();}
   scrollToSection(){const fragment=this.route.snapshot.fragment;if(fragment)requestAnimationFrame(()=>document.getElementById(fragment)?.scrollIntoView());}
   load(){this.http.get<any>('/api/cubit/automation').subscribe({next:d=>{this.data=d;this.settings={...d.settings};this.graceEnabled=d.settings.graceDays>0;if(this.graceEnabled)this.graceDays=d.settings.graceDays;const fragment=this.route.snapshot.fragment;if(fragment)requestAnimationFrame(()=>document.getElementById(fragment)?.scrollIntoView());},error:e=>this.error=e.error?.message||'Could not load automation.'});}

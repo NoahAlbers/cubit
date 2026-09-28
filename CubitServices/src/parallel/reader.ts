@@ -23,15 +23,30 @@ function readerPool() {
   return pool;
 }
 export const json = (value: any) => (typeof value === 'string' ? JSON.parse(value) : value);
-export async function readParallel<T>(action: (db: PoolConnection, generation: any) => Promise<T>) {
+export async function readParallel<T>(
+  action: (db: PoolConnection, generation: any) => Promise<T>,
+  expected?: string,
+) {
   const db = await readerPool().getConnection();
   try {
     await db.query('SET SESSION MAX_EXECUTION_TIME=4000');
     await db.query('SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ');
     await db.query('START TRANSACTION WITH CONSISTENT SNAPSHOT, READ ONLY');
+    if (expected && !/^[a-f0-9]{64}$/.test(expected))
+      throw Object.assign(Error('Invalid snapshot identifier.'), { status: 400 });
     const [rows] = await db.query<any[]>(
-      'SELECT g.* FROM parallel_current c JOIN parallel_generation g ON g.id=c.generation WHERE c.id=1',
+      expected
+        ? 'SELECT * FROM parallel_generation WHERE id=?'
+        : 'SELECT g.* FROM parallel_current c JOIN parallel_generation g ON g.id=c.generation WHERE c.id=1',
+      expected ? [expected] : [],
     );
+    if (expected && !rows[0])
+      throw Object.assign(
+        Error(
+          'This snapshot has expired. Refresh the parallel workspace to use the latest complete snapshot.',
+        ),
+        { status: 409 },
+      );
     const generation = rows[0];
     const result = await action(db, generation);
     await db.rollback();

@@ -27,11 +27,47 @@ have payment, email or access side effects.
   EnvironmentFile for the review service only. The synthetic demo rejects this API.
   No imported identity becomes a Cubit login or grants staff access.
 
-The first version exposes source lists and member billing comparisons through
-`/parallel`, rather than replacing the existing review database. Estimates are
-labelled because legacy price and end-date history may be incomplete. Source balances
-and source status remain visible. No payment, email, waiver or door automation runs
-against the mirror. A stale snapshot is visibly marked after 30 minutes.
+## Normal staff screens
+
+On the review service only, enable `PARALLEL_ENABLED`, `PARALLEL_INTEGRATED` and
+`PARALLEL_REQUIRED` in the root-owned reader EnvironmentFile. Restart only Cubit.
+Members, Overdue, profiles, Access Log, Reports, four CSV exports and the catalog
+use a SELECT-only adapter before normal business handlers. Business mutations,
+processing and unsupported reads are denied. The synthetic demo remains separate.
+
+The UI pins a generation and comparison grace window until a full reload or
+**Load latest snapshot**. Retained generations allow roughly 30–45 minutes of
+navigation. Requests for pruned generations return 409; refresh instead of silently
+mixing batches. Snapshots older than 30 minutes are marked stale.
+
+Source status and stored balance remain unchanged. Payments, plans, keys and scans
+come from the six allowlisted source datasets. Past-due amounts and historical
+membership charts are estimates using source prices/dates and the comparison grace
+window. Historical corrections and access holds may be missing. No charges are
+posted. Source amounts remain USD; no currency conversion is implied. Member scans
+cannot be attributed to individual keys without source attribution. Copied key and
+membership flags do not verify physical controller behavior.
+
+Waivers/documents, staff notes, staff audit history, unresolved PayPal events and
+portal identities are not in the feed. Their pages state this instead of using old
+review records. Account security, staff administration, system health and backups
+continue to manage Cubit itself. Subscription annotations remain local and audited.
+
+## Retiring the old review business data
+
+`dev/retire-review-data.cjs` is operator-only and is never called at startup. First
+create and verify a fresh encrypted backup and retain a protected recovery archive
+on the backup host. Stop Cubit review during the final preview/apply transaction.
+The script refuses unexpected schemas or an absent enabled administrator, verifies
+its preview, rolls back on failure, and checks zero remaining business rows plus
+unchanged staff credential fingerprints before committing. It preserves staff
+accounts/security, organization/backup settings, audit history, waiver templates,
+and source subscription annotations. Member-linked documents remain recoverable
+from the archive. The source mirror, demo and live Tonic are not deleted.
+
+Keep all three flags enabled after retirement. Disabling them does not restore the
+old copy: use the operator recovery archive if rollback is needed. The app must not
+silently create a new editable member database or provision source identities.
 
 ## Subscription matching
 

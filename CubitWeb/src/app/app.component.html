@@ -60,13 +60,17 @@
         <div class="page-location">@if (headerBackTarget) {
           <a class="button secondary header-back" [routerLink]="headerBackTarget" [queryParams]="headerBackQuery" [attr.aria-label]="'Back to '+headerBackLabel" [attr.title]="'Back to '+headerBackLabel"><app-arrow name="arrow-left"></app-arrow><span>{{headerBackLabel}}</span></a>
           }<h1 class="page-title">{{sectionName}}</h1></div>
-          <div class="account-controls"><div class="account-identity"><a [routerLink]="auth.isStaff?'/staff/settings':'/account/security'" title="Account settings">{{auth.accountLabel}}</a><small>{{auth.isDemo?'Demo administrator':auth.roleLabel}}</small></div>@if (auth.isStaff) {
+          <div class="account-controls">@if(workspace.available&&!workspace.locked){<label class="workspace-picker"><span class="sr-only">Data workspace</span><select [ngModel]="workspace.selection" (ngModelChange)="switchWorkspace($event)"><option value="parallel">Parallel testing · read-only</option><option value="review">Editable review · test copy</option></select></label>}<div class="account-identity"><a [routerLink]="auth.isStaff?'/staff/settings':'/account/security'" title="Account settings">{{auth.accountLabel}}</a><small>{{auth.isDemo?'Demo administrator':auth.roleLabel}}</small></div>@if (auth.isStaff) {
           <a class="button notification-button" routerLink="/staff/settings" routerLinkActive="current" aria-label="Staff user settings" title="Staff user settings"><img src="assets/icons/staff-settings-gear.svg" alt="" width="24" height="24">@if(accountNotices){<span class="account-notice-count" aria-label="Unreviewed account changes">{{accountNotices}}</span>}</a>
           }<button class="secondary sign-out-button" (click)="logout()" [disabled]="auth.signingOut" title="Sign out on all devices">Sign out</button></div>
         </header>
       }
       @if (showWorkspace && auth.isDemo) {
         <div class="synthetic-demo-banner"><strong>Synthetic demo</strong> Fictional members, payments and visits. Changes affect the shared demo only; use fictional details.</div>
-        }<main id="main" tabindex="-1"><router-outlet></router-outlet></main>
+        }@if(showWorkspace&&workspace.available){<aside class="parallel-context" [class.review-context]="!workspace.parallel" aria-label="Data workspace">
+          @if(workspace.parallel){<div><strong>Parallel testing · read-only</strong><span>Status, payments and scans come from Tonic. Past-due amounts and historical membership charts are Cubit estimates. Doors remain controlled by Tonic. Account settings, staff administration and backups manage Cubit itself.</span>@if(workspace.snapshot){<small [class.debt]="workspace.stale">Snapshot: {{workspace.snapshot.sourceTime|orgDate:'medium'}} · {{workspace.stale?'Stale — refresh or check the feed':'Pinned across these screens'}} · USD source amounts</small>}</div><button class="secondary" (click)="refreshSnapshot()">Load latest snapshot</button>}
+          @else{<div><strong>Editable review · separate test copy</strong><span>Edits here do not affect Tonic or the parallel snapshot. This copy is not refreshed by the feed.</span></div>}
+        </aside>}
+        <main id="main" tabindex="-1">@if(showWorkspace&&auth.validToken()&&!workspace.ready){<app-loading label="Preparing workspace…"></app-loading>}@else if(workspace.parallel&&(workspace.error||parallelUnavailable)){<section class="page"><div class="panel detail-panel"><h2>{{workspace.error?'Snapshot unavailable':'Not available from this feed'}}</h2><p role="status">{{workspace.error||parallelUnavailable}}</p><a class="button secondary" routerLink="/parallel">Snapshot & subscription links</a></div></section>}@else{<router-outlet></router-outlet>}</main>
       </div>
     </div>

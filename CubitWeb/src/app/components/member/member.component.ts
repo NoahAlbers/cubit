@@ -1,3 +1,4 @@
+import { WorkspaceService } from '../../services/workspace.service';
 import { organizationDay, organizationTimeZone } from '../../services/org-time';
 import { AuthService } from '../../services/security/auth.service';
 import { formatPhone } from '../../services/contact-format';
@@ -84,7 +85,7 @@ export class MemberComponent implements OnInit, OnDestroy {
   get visibleHistory(){return this.filteredHistory.slice((this.historyPage-1)*this.historySize,this.historyPage*this.historySize);}
   get enabledKeys(){return this.memberKeys.data.filter(k=>k.status==='Active').length;}
   get entryAllowed(){return this.memberStatus==='Active'&&this.enabledKeys>0;}
-  get entryReason(){return this.memberStatus==='Active'?(this.enabledKeys?(this.billing?.pastDue>0?'Within the billing grace period':'Membership is current'):'No enabled key'):this.billing?.accessReason||'Review membership status';}
+  get entryReason(){if(this.workspace.parallel)return 'Tonic snapshot status; controller permissions are not verified.';return this.memberStatus==='Active'?(this.enabledKeys?(this.billing?.pastDue>0?'Within the billing grace period':'Membership is current'):'No enabled key'):this.billing?.accessReason||'Review membership status';}
   jump(id:string){document.getElementById(id)?.scrollIntoView({block:'start'});document.getElementById(id)?.focus({preventScroll:true});}
   contactFieldChanged(name:string){
     if(this.memberId==='New'||!this.originalContact)return false;
@@ -140,7 +141,7 @@ export class MemberComponent implements OnInit, OnDestroy {
 
   memberBalance = '';
 
-  constructor(
+  constructor(public workspace:WorkspaceService,
     public auth:AuthService,
     private drafts:DraftGuard,
     private router: Router,
@@ -177,7 +178,7 @@ export class MemberComponent implements OnInit, OnDestroy {
       this.memberId = params.id;
       this.lastEntry=null;this.activityError='';this.activityLoading=params.id!=='New';
       this.form.reset(this.emptyContact(params.id));this.originalContact=null;this.billing=null;this.memberPlans.data=[];this.memberKeys.data=[];
-      this.contactLoading=params.id!=='New';if(this.contactLoading)this.form.disable();else this.form.enable();
+      this.contactLoading=params.id!=='New';if(this.contactLoading)this.form.disable();else this.workspace.parallel?this.form.disable():this.form.enable();
       this.initialSections.clear();this.changingPlan=false;this.cutoffPlan=null;this.planBusy=false;
       this.anchorScroll?.unsubscribe();
       this.anchorScroll = undefined;
@@ -227,7 +228,7 @@ export class MemberComponent implements OnInit, OnDestroy {
 
   sectionLoaded(section: string) {
     this.initialSections.add(section);
-    if (this.initialSections.size !== 6 || this.anchorScroll || this.activatedRoute.snapshot.fragment !== 'access-keys') return;
+    if (this.initialSections.size !== (this.workspace.parallel ? 4 : 6) || this.anchorScroll || this.activatedRoute.snapshot.fragment !== 'access-keys') return;
     // Wait for async profile sections to render before positioning the shortcut.
     this.anchorScroll = this.zone.onStable.pipe(take(1)).subscribe(() => {
       document.getElementById('access-keys')?.scrollIntoView({ block: 'start' });
@@ -377,7 +378,7 @@ export class MemberComponent implements OnInit, OnDestroy {
       this.memberPicture = data.picture || '';
       this.navigation.rememberMember(memberId,`${data.firstName} ${data.lastName}`.trim());
       this.originalContact={...this.form.getRawValue()};this.form.markAsPristine();
-      this.form.enable();if(!this.auth.isAdmin&&data.role!=='member')this.form.disable();this.contactLoading=false;
+      this.workspace.parallel?this.form.disable():this.form.enable();if(!this.auth.isAdmin&&data.role!=='member')this.form.disable();this.contactLoading=false;
       this.sectionLoaded('member');
     },error:()=>{this.saveError='Could not load contact details. Refresh before editing.';}});
   }
@@ -405,6 +406,6 @@ export class MemberComponent implements OnInit, OnDestroy {
       if(isNew&&navigateAfterCreate){this.created=true;await this.router.navigate(['/member',data.id],{queryParams:{returnTo:this.returnUrl},replaceUrl:true});}
       this.snackBar.open(isNew?'Member created':'Contact details saved',null,{duration:2500});return true;
     }catch(err){this.saveError=err.error?.message||'Could not save contact details. Please try again.';return false;}
-    finally{this.saving=false;if(!this.contactLoading)this.form.enable();}
+    finally{this.saving=false;if(!this.contactLoading)this.workspace.parallel?this.form.disable():this.form.enable();}
   }
 }

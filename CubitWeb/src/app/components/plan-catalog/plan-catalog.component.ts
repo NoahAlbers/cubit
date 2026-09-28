@@ -1,3 +1,4 @@
+import { WorkspaceService } from '../../services/workspace.service';
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -10,10 +11,10 @@ import { ListNavigationService } from '../../services/list-navigation.service';
 })
 export class PlanCatalogComponent implements OnInit {
   data:any;error='';message='';busy=false;filter='available';draft:any;baseline='';creating=false;
-  constructor(private http:HttpClient,private route:ActivatedRoute,private router:Router,private guard:DraftGuard,public navigation:ListNavigationService){}
+  constructor(public workspace:WorkspaceService,private http:HttpClient,private route:ActivatedRoute,private router:Router,private guard:DraftGuard,public navigation:ListNavigationService){}
   ngOnInit(){this.route.queryParamMap.subscribe(p=>this.filter=['all','retired'].includes(p.get('state'))?p.get('state'):'available');this.load();}
   load(){this.http.get<any>('/api/cubit/plan-catalog').subscribe({next:d=>{this.data=d;this.navigation.restoreScroll();},error:e=>this.error=e.error?.message||'Could not load plans.'});}
-  get plans(){return (this.data?.plans||[]).filter(p=>this.filter==='all'||p.available===(this.filter==='available'));}
+  get plans(){return (this.data?.plans||[]).filter(p=>this.workspace.parallel||this.filter==='all'||p.available===(this.filter==='available'));}
   setFilter(){this.router.navigate([],{relativeTo:this.route,queryParams:{state:this.filter}});}
   hasUnsavedChanges(){return !!this.draft&&JSON.stringify(this.draft)!==this.baseline;}
   discardDraft(){this.draft=null;this.baseline='';}

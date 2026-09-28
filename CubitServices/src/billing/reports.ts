@@ -45,10 +45,44 @@ export async function reportData(query: any) {
     AppDataSource.manager.find(ChargeAdjustment),
     AppDataSource.manager.findOneByOrFail(OperationsSettings, { id: 'default' }),
   ]);
+  return buildReportData({
+    from,
+    to,
+    roster,
+    allPayments,
+    logs,
+    plans,
+    charges,
+    adjustments,
+    settings,
+  });
+}
+
+// Pure report assembly shared by the review database and immutable source snapshots.
+export function buildReportData(input: {
+  from: string;
+  to: string;
+  roster: any[];
+  allPayments: any[];
+  logs: any[];
+  plans: any[];
+  charges: any[];
+  adjustments: any[];
+  settings: { graceDays: number };
+  asOf?: string;
+  sourceTime?: string;
+}) {
+  const { from, to, roster, allPayments, logs, plans, charges, adjustments, settings } = input;
+  const asOf = input.asOf || organizationDay();
   const payments = allPayments.filter(
     (p) => day(p.transactionDate) >= from && day(p.transactionDate) <= to,
   );
-  const localVisits = localAccessEntries(logs, from, to);
+  const localVisits = localAccessEntries(
+    logs,
+    from,
+    to,
+    input.sourceTime ? new Date(input.sourceTime) : new Date(),
+  );
   const visits = localVisits.map((entry) => entry.event);
   const successful = visits.filter((l) => l.accessGranted);
   const successfulLocal = localVisits.filter((entry) => entry.event.accessGranted);
@@ -80,9 +114,10 @@ export async function reportData(query: any) {
         adjustments,
         settings.graceDays,
         membershipAsOf,
+        asOf,
       ),
       membershipAsOf,
-      membershipEstimated: membershipAsOf !== organizationDay(),
+      membershipEstimated: membershipAsOf !== asOf,
     });
   }
   const overdue = roster.filter((m) => m.pastDue > 0 && m.status !== 'Canceled');
@@ -98,7 +133,7 @@ export async function reportData(query: any) {
   return {
     from,
     to,
-    asOf: organizationDay(),
+    asOf,
     summary,
     months,
     busiestTimes: busiestTimes(localVisits, from, to),
@@ -113,7 +148,11 @@ export async function reportData(query: any) {
   };
 }
 
-export function exportReport(type: string, data: Awaited<ReturnType<typeof reportData>>) {
+export function exportReport(
+  type: string,
+  data: Awaited<ReturnType<typeof reportData>>,
+  currency = organizationCurrency,
+) {
   const names = new Map(data.roster.map((m) => [m.id, `${m.firstName} ${m.lastName}`]));
   if (type === 'roster')
     return csv([
@@ -126,8 +165,8 @@ export function exportReport(type: string, data: Awaited<ReturnType<typeof repor
         'Phone',
         'Status',
         'Plan',
-        `Balance (${organizationCurrency})`,
-        `Past due (${organizationCurrency})`,
+        `Balance (${currency})`,
+        `Past due (${currency})`,
         'Access enabled',
         'Last successful check-in (organization time)',
       ],
@@ -152,7 +191,7 @@ export function exportReport(type: string, data: Awaited<ReturnType<typeof repor
         'Transaction ID',
         'Member',
         'Date',
-        `Amount (${organizationCurrency})`,
+        `Amount (${currency})`,
         'Method',
         'Description',
         'Confirmation',
@@ -180,7 +219,7 @@ export function exportReport(type: string, data: Awaited<ReturnType<typeof repor
         'Name',
         'Email',
         'Phone',
-        `Past due (${organizationCurrency})`,
+        `Past due (${currency})`,
         'Days behind',
         'Access enabled',
         'Plan',

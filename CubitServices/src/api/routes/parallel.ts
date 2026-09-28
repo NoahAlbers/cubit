@@ -1,3 +1,4 @@
+import { OperationsSettings } from '../../entity/cubitOperations';
 import express from 'express';
 import { z } from 'zod';
 import { staffOnly } from '../common/staff-auth';
@@ -36,6 +37,9 @@ router.get('/status', async (_req, res, next) => {
           ...generationStatus(g),
           runs,
           intervalMinutes: 15,
+          comparisonGraceDays: (
+            await AppDataSource.manager.findOneByOrFail(OperationsSettings, { id: 'default' })
+          ).graceDays,
           links: await AppDataSource.manager.count(ParallelSubscriptionLink),
         };
       }),
