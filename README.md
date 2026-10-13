@@ -228,6 +228,13 @@ Docker, CI, and the hosted API use Node **22.23.3** and MySQL **8.4.11 LTS**
 supported engine versions. Plan the Node 24 LTS transition before April 2027.
 Never point development at an operational database.
 
+Backend development uses Node's built-in watch mode (`pnpm --dir CubitServices dev`);
+`debug` adds the Node inspector. The Windows launcher uses the same entry point.
+Nodemon was removed to eliminate its unpatched `braces` dependency. Frontend tests
+use Vitest; the unused Angular Karma peer is explicitly excluded. A dependency
+`source-map-js` override requires the patched 1.2.2 release or newer. Both full
+dependency audits remain required in CI, including development dependencies.
+
 Existing Windows installations using MySQL 8.0.19 need a one-time offline upgrade:
 stop the old app with its existing `dev/stop-local.cmd`, run the updated setup,
 then run `node dev/upgrade-native-mysql.cjs` before starting Cubit. The upgrader

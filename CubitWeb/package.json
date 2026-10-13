@@ -43,5 +43,11 @@
   "packageManager": "pnpm@9.15.9",
   "engines": {
     "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@angular/build>karma": "-",
+      "source-map-js": "^1.2.2"
+    }
   }
 }

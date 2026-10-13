@@ -9,7 +9,9 @@ const state = path.join(root, '.private/native')
 const appDirectory = path.join(root, 'CubitServices')
 const { nodeExe, mysqlBase } = require('./runtime.cjs')
 const mysqlExe = path.join(mysqlBase, 'bin/mysqld.exe')
-const nodemonScript = path.join(appDirectory, 'node_modules/nodemon/bin/nodemon.js')
+const serviceScript = path.join(__dirname, 'service-dev.cjs')
+// Recognize an already-running pre-upgrade watcher only for safe stop/reuse.
+const legacyWatcher = path.join(appDirectory, 'node_modules/nodemon/bin/nodemon.js')
 const appPidFile = path.join(state, 'app.pid')
 const dbHelper = path.join(__dirname, 'native-db.cjs')
 const slash = value => value.replace(/\\/g, '/')
@@ -32,7 +34,7 @@ function processDetails(pid) {
 }
 function verifyAppProcess(pid) {
   const info = processDetails(pid)
-  if (info && (info.ExecutablePath?.toLowerCase() !== nodeExe.toLowerCase() || !info.CommandLine?.includes(nodemonScript))) {
+  if (info && (info.ExecutablePath?.toLowerCase() !== nodeExe.toLowerCase() || ![serviceScript, legacyWatcher].some(script => info.CommandLine?.includes(script)))) {
     throw new Error('Recorded process no longer belongs to this workspace; refusing to stop or reuse it.')
   }
   return info
@@ -79,7 +81,7 @@ function health() {
 }
 
 async function start() {
-  for (const file of [nodeExe, mysqlExe, nodemonScript]) {
+  for (const file of [nodeExe, mysqlExe, serviceScript]) {
     if (!fs.existsSync(file)) throw new Error('Run dev\\setup-local.cmd first.')
   }
   fs.mkdirSync(state, { recursive: true })
@@ -131,13 +133,13 @@ async function start() {
   if (await portOpen(5001)) {
     if (!existing) throw new Error('Port 5001 is occupied by an unrecognized process.')
   } else {
-    // A previous crash can leave nodemon alive without an application listener.
+    // A previous crash can leave the watcher alive without an application listener.
     if (existing) execFileSync('taskkill.exe', ['/PID', fs.readFileSync(appPidFile, 'utf8').trim(), '/T', '/F'], { windowsHide: true, stdio: 'ignore' })
     const env = { ...process.env }
     // Windows environment keys are case-insensitive; retain one PATH key only.
     const pathKey = Object.keys(env).find(key => key.toLowerCase() === 'path') || 'PATH'
     env[pathKey] = `${path.dirname(nodeExe)};${path.join(appDirectory, 'node_modules/.bin')};${env[pathKey] || ''}`
-    const pid = launch(nodeExe, [nodemonScript, '--legacy-watch'], appDirectory, 'app', env)
+    const pid = launch(nodeExe, ['--watch', '--watch-preserve-output', serviceScript], appDirectory, 'app', env)
     write(appPidFile, String(pid))
   }
   for (let attempt = 0; attempt < 45; attempt++) {

@@ -18,6 +18,7 @@ const attempt=(e,body)=>request('/api/cubit/automation/events/'+e.id+'/process',
 async function main(){
  await db.initialize();assert.equal((await db.query('SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE()')).length,0,'Refusing a nonempty database');
  await db.runMigrations({transaction:'none'});assert.equal((await db.driver.createSchemaBuilder().log()).upQueries.length,0,'Migration/entity drift');await require('./migration-startup.cjs')(db); await db.manager.save(OperationsSettings,{id:'default',graceDays:60,dailyEnabled:false});
+ await require('./service-dev.cjs')(db);
  const members=[];for(const [firstName,role]of [['Staff','admin'],['Existing','member'],['Another','member'],['Future','member']])members.push(await db.manager.save(Member,db.manager.create(Member,{firstName,lastName:'Fixture',email:firstName.toLowerCase()+'@example.test',paypalEmail:firstName.toLowerCase()+'.billing@example.test',role,password:'Not Set'})));
  const [staff,existing,another,future]=members;token=jwtHelper.GenerateJWT(staff);
  const {StaffNote}=require('../src/entity/cubitOperations'),{StaffHistory1790250000006}=require('../src/migrations/review-baseline');
