@@ -33,7 +33,7 @@
     "@angular/build": "22.2.0",
     "@angular/cli": "22.2.0",
     "@angular/compiler-cli": "22.2.0",
-    "@angular/language-service": "22.2.0",
+    "@angular/language-service": "22.2.2",
     "@types/node": "^22.20.4",
     "jsdom": "30.1.1",
     "playwright": "1.63.0",
