@@ -17,6 +17,30 @@ and a recovery test every 30 days. Disable either schedule using Manual only.
 
 ## Operator setup
 
+### Database log retention on the review VPS
+
+MySQL binary logs are separate from Cubit's encrypted backup archives. The
+15-minute mirror publishes enough database changes to generate about 1.6 GiB of
+binary logs per day. The default 30-day retention exhausted the 38 GB review disk
+on 2026-10-13 and blocked sign-in writes despite a passing read-only health check.
+
+This standalone review database now retains three days of binary logs, using
+`SET PERSIST binlog_expire_logs_seconds = 259200` and
+`SET PERSIST binlog_expire_logs_auto_purge = ON`. Reapply and verify these settings
+when rebuilding this VPS. Use MySQL's `PURGE BINARY LOGS` command for cleanup,
+never filesystem deletion. Check replication consumers and recovery requirements
+before changing retention on another deployment. The current recovery procedure
+uses self-contained SQL snapshots; it does not replay these binary logs.
+
+The incident cleanup preserved all seven local and 27 off-server snapshots.
+Local backup files occupied about 235 MB; database logs occupied about 30 GB.
+After purging logs older than three days and clearing downloaded package cache,
+disk use fell to 35%, normal sign-in succeeded, and snapshot publication resumed.
+Binary-log retention is an operator setting, independent of the administrator's
+backup retention controls. See the [MySQL binary-log purge documentation](https://dev.mysql.com/doc/refman/8.4/en/purge-binary-logs.html).
+
+### Backup worker installation
+
 Install Python 3.12+, restic 0.18+, MySQL client, Docker, and curl. Run the
 versioned operator migrations in `deploy/migrate-billing-tools.sh` for both
 installed application schemas. Install the two `cubit-backup` systemd units from
